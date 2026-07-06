@@ -115,7 +115,7 @@ var CONFIG = {
 | 일정이 안 보임 | `PROP_DATE` 속성명 확인, DB Connections 확인 |
 | Guest 워크스페이스 | Sailing 등 타인 워크스페이스는 관리자가 연동해야 함 |
 | 시트 기록 안 됨 | `setupSheet` 실행 여부, 권한 허용 확인 |
-| 상담만 보고 싶음 | `TITLE_FILTER: '상담'` 유지 (제목에 '상담' 포함 일정만) |
+| 상담만 보고 싶음 | `CATEGORY_FILTER: '상담'` + `PROP_CATEGORY: '일정 구분'` (일정 구분에 '상담' 포함 일정만) |
 
 ---
 
