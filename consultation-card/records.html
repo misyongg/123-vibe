@@ -132,7 +132,20 @@
       text-decoration: underline;
       cursor: pointer;
     }
+
+    .nickname-chip {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #7e57c2;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 14px;
+    }
   </style>
+  <script src="config.js"></script>
+  <script src="store.js"></script>
 </head>
 <body>
 
@@ -142,26 +155,35 @@
   </div>
 
   <h1>📖 마음날씨 기록</h1>
-  <p class="subtitle">그동안의 마음날씨를 모아봤어요</p>
+  <p class="subtitle" id="subtitle">그동안의 마음날씨를 모아봤어요</p>
+  <div class="nickname-chip" id="nicknameChip" style="display:none;"></div>
 
   <div class="summary" id="summary"></div>
   <div class="records" id="records"></div>
   <button class="clear-all" id="clearAll" style="display:none;">전체 기록 지우기</button>
 
   <script>
-    const STORE_KEY = "moodWeatherRecords";
     const recordsEl = document.getElementById("records");
     const summaryEl = document.getElementById("summary");
     const clearAllBtn = document.getElementById("clearAll");
-
-    function load() {
-      try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
-      catch(e) { return []; }
-    }
-    function save(list) { localStorage.setItem(STORE_KEY, JSON.stringify(list)); }
+    const nicknameChip = document.getElementById("nicknameChip");
+    const subtitle = document.getElementById("subtitle");
 
     function render() {
-      const list = load().sort((a, b) => b.ts - a.ts);
+      const nick = mwGetNickname();
+      if (!nick) {
+        recordsEl.innerHTML = '<div class="empty">별칭을 먼저 정해 주세요!<br><a href="index.html">체크인 페이지</a>에서 별칭을 만들 수 있어요 🌟</div>';
+        summaryEl.innerHTML = "";
+        clearAllBtn.style.display = "none";
+        nicknameChip.style.display = "none";
+        return;
+      }
+
+      nicknameChip.textContent = "👋 " + nick + " 님의 기록";
+      nicknameChip.style.display = "inline-block";
+      subtitle.textContent = "내 폰에만 저장된 기록이에요";
+
+      const list = mwMyRecords().sort((a, b) => b.ts - a.ts);
 
       if (list.length === 0) {
         recordsEl.innerHTML = '<div class="empty">아직 저장된 기록이 없어요.<br><a href="index.html">오늘의 마음날씨</a>를 체크인하고 저장해 보세요! 🌈</div>';
@@ -196,13 +218,18 @@
       const btn = e.target.closest(".del");
       if (!btn) return;
       const ts = +btn.dataset.ts;
-      save(load().filter(r => r.ts !== ts));
+      const nick = mwGetNickname();
+      const kept = mwLoadRecords().filter(r => !(r.ts === ts && r.nickname === nick));
+      mwSaveRecords(kept);
       render();
     });
 
     clearAllBtn.addEventListener("click", () => {
-      if (confirm("모든 기록을 지울까요?")) {
-        localStorage.removeItem(STORE_KEY);
+      const nick = mwGetNickname();
+      if (!nick) return;
+      if (confirm(nick + " 님의 모든 기록을 지울까요?")) {
+        const kept = mwLoadRecords().filter(r => r.nickname !== nick);
+        mwSaveRecords(kept);
         render();
       }
     });

@@ -315,9 +315,121 @@
     .btn:disabled { opacity: 0.5; cursor: default; }
     .btn-save { background: #81c784; }
     .btn-reset { background: #ff8a80; }
+
+    .nickname-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .nickname-badge .chip {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #7e57c2;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    .nickname-badge button {
+      border: none;
+      background: transparent;
+      color: var(--ink-soft);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(107, 100, 128, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 200;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal {
+      width: 100%;
+      max-width: 360px;
+      background: #fff;
+      border-radius: 24px;
+      padding: 28px 22px;
+      text-align: center;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+    }
+    .modal h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #8a7fb0;
+      margin-bottom: 8px;
+    }
+    .modal p {
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .modal input {
+      width: 100%;
+      border: 2px solid #e8e0f0;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      text-align: center;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .modal input:focus {
+      outline: none;
+      border-color: var(--purple-deep);
+    }
+    .modal .err {
+      min-height: 1.2em;
+      font-size: 0.85rem;
+      color: #ef5350;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .modal .btn-confirm {
+      width: 100%;
+      border: none;
+      border-radius: 16px;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, #ce93d8, #b39ddb);
+      cursor: pointer;
+    }
+    .modal .btn-confirm:active { transform: scale(0.98); }
+    .modal .hint {
+      margin-top: 12px;
+      font-size: 0.78rem;
+      color: #c0b8d0;
+    }
   </style>
+  <script src="config.js"></script>
+  <script src="store.js"></script>
 </head>
 <body>
+
+  <div class="modal-overlay" id="nicknameModal">
+    <div class="modal">
+      <h2>🌟 나만의 별칭</h2>
+      <p>선생님은 별칭으로만 기록을 볼 수 있어요.<br>실명 말고 편한 이름을 정해 주세요!</p>
+      <input type="text" id="nicknameInput" maxlength="12" placeholder="예: 햇살이, 구름이" autocomplete="off">
+      <div class="err" id="nicknameErr"></div>
+      <button type="button" class="btn-confirm" id="nicknameConfirm">시작하기 ✨</button>
+      <p class="hint">2~12글자 · 한글·영문·숫자</p>
+    </div>
+  </div>
 
   <div class="top-bar">
     <a class="nav-link" href="../index.html">← 홈으로</a>
@@ -326,6 +438,11 @@
 
   <h1>🌈 오늘의 마음날씨</h1>
   <p class="subtitle">지금 나의 몸과 마음은 어떤 날씨일까?</p>
+
+  <div class="nickname-badge" id="nicknameBadge" style="display:none;">
+    <span class="chip" id="nicknameDisplay"></span>
+    <button type="button" id="nicknameChange">별칭 변경</button>
+  </div>
 
   <div class="step-guide" id="stepGuide">① 먼저 <b>몸 상태</b>를 골라요 🔋</div>
 
@@ -544,30 +661,64 @@
       stepGuide.style.color = "var(--pink-deep)";
     }
 
-    const ENERGY_LABELS = { 4: "풀충", 3: "충전", 2: "보통", 1: "살짝방전", 0: "방전" };
-    const STORE_KEY = "moodWeatherRecords";
+    const ENERGY_LABELS = MW_ENERGY_LABELS;
 
-    function saveRecord() {
+    function updateNicknameUI() {
+      const nick = mwGetNickname();
+      const badge = document.getElementById("nicknameBadge");
+      const modal = document.getElementById("nicknameModal");
+      if (nick) {
+        document.getElementById("nicknameDisplay").textContent = "👋 " + nick;
+        badge.style.display = "flex";
+        modal.classList.add("hidden");
+      } else {
+        badge.style.display = "none";
+        modal.classList.remove("hidden");
+        document.getElementById("nicknameInput").focus();
+      }
+    }
+
+    function confirmNickname() {
+      const input = document.getElementById("nicknameInput");
+      const err = document.getElementById("nicknameErr");
+      const msg = mwValidateNickname(input.value);
+      if (msg) {
+        err.textContent = msg;
+        return;
+      }
+      mwSetNickname(input.value.trim());
+      err.textContent = "";
+      updateNicknameUI();
+    }
+
+    async function saveRecord() {
+      if (!mwGetNickname()) {
+        document.getElementById("nicknameModal").classList.remove("hidden");
+        return;
+      }
       if (state.energy === null || state.mood === null) return;
+
       const weather = classify(state.energy, state.mood);
-      const now = new Date();
-      const record = {
-        ts: now.getTime(),
-        date: now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,"0") + "-" + String(now.getDate()).padStart(2,"0"),
-        time: String(now.getHours()).padStart(2,"0") + ":" + String(now.getMinutes()).padStart(2,"0"),
+      const record = mwBuildRecord({
         energy: state.energy,
-        energyLabel: ENERGY_LABELS[state.energy],
         mood: state.mood,
-        weather: weather,
+        weather,
         weatherEmoji: WEATHER[weather].emoji,
         weatherTitle: WEATHER[weather].title
-      };
-      let list = [];
-      try { list = JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch(e) {}
-      list.push(record);
-      localStorage.setItem(STORE_KEY, JSON.stringify(list));
-      savedNote.textContent = "✅ 오늘의 마음날씨를 기록했어요!";
+      });
+
       btnSave.disabled = true;
+      btnSave.textContent = "저장 중…";
+
+      const result = await mwSaveRecord(record);
+
+      if (result.sync.ok) {
+        savedNote.textContent = "✅ 내 폰 + 선생님 시트에 기록했어요!";
+      } else if (result.sync.skipped) {
+        savedNote.textContent = "✅ 내 폰에 기록했어요! (시트 연동은 아직 설정 전이에요)";
+      } else {
+        savedNote.textContent = "✅ 내 폰에 저장! (시트 전송은 나중에 다시 시도해 주세요)";
+      }
       btnSave.textContent = "저장 완료";
     }
 
@@ -581,6 +732,20 @@
     });
     btnSave.addEventListener("click", saveRecord);
     btnReset.addEventListener("click", reset);
+
+    document.getElementById("nicknameConfirm").addEventListener("click", confirmNickname);
+    document.getElementById("nicknameInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") confirmNickname();
+    });
+    document.getElementById("nicknameChange").addEventListener("click", () => {
+      const nick = mwGetNickname();
+      document.getElementById("nicknameInput").value = nick;
+      document.getElementById("nicknameErr").textContent = "";
+      document.getElementById("nicknameModal").classList.remove("hidden");
+      document.getElementById("nicknameInput").focus();
+    });
+
+    updateNicknameUI();
   </script>
 </body>
 </html>
