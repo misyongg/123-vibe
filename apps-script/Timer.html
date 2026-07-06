@@ -72,7 +72,7 @@
     .timer-display.tappable:active { opacity: 0.92; }
     .mode-label { font-size: 1rem; color: #a09aad; margin-bottom: 8px; }
     .time { font-size: clamp(3.5rem,16vw,5.5rem); font-weight: 700; color: #6a6290; font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
-    .time.warning { color: #d48484; }
+    .time.overtime { color: #d48484; }
     .time.paused { opacity: 0.55; }
     .status { font-size: 0.92rem; color: #b0aab8; margin-top: 12px; }
     .info-line { font-size: 0.82rem; color: #c0bac8; margin-top: 6px; }
@@ -141,7 +141,7 @@
     let countdownId = null;
     let isRunning = false;
     let isPaused = false;
-    let endAlarmFired = false;
+    let zeroAlarmFired = false;
     let currentLabel = '';
     let firedAlarms = {};
 
@@ -160,7 +160,11 @@
     function pad(n) { return String(n).padStart(2, '0'); }
 
     function formatDuration(sec) {
-      return pad(Math.floor(sec / 60)) + ':' + pad(sec % 60);
+      const neg = sec < 0;
+      const abs = Math.abs(sec);
+      const m = Math.floor(abs / 60);
+      const s = abs % 60;
+      return (neg ? '-' : '') + pad(m) + ':' + pad(s);
     }
 
     function format24H(date, withSec) {
@@ -202,15 +206,23 @@
     }
 
     function updateDisplay() {
-      if (totalSeconds === 0) {
+      if (!sessionStartTime && totalSeconds === 0) {
         timeDisplay.textContent = '--:--';
-        timeDisplay.classList.remove('paused', 'warning');
+        timeDisplay.classList.remove('paused', 'overtime');
         return;
       }
       timeDisplay.textContent = formatDuration(remainingSeconds);
       timeDisplay.classList.toggle('paused', isPaused);
-      if (isPaused) statusText.textContent = '탭하여 재개';
-      else if (isRunning) statusText.textContent = '탭하여 일시정지';
+      timeDisplay.classList.toggle('overtime', remainingSeconds <= 0);
+      if (isPaused) {
+        statusText.textContent = remainingSeconds <= 0
+          ? '일시정지 · 상담종료를 눌러주세요'
+          : '탭하여 재개';
+      } else if (isRunning) {
+        statusText.textContent = remainingSeconds <= 0
+          ? '예정 시간 종료 · 상담종료를 눌러주세요'
+          : '탭하여 일시정지';
+      }
     }
 
     function playAlarm() {
@@ -308,22 +320,22 @@
         .logConsultation(data);
     }
 
-    function endSession(manual) {
-      if (!isActive() && totalSeconds === 0) return;
+    function endSession() {
+      if (!sessionStartTime) return;
       stopCountdown();
       isRunning = false;
       isPaused = false;
       const endTime = new Date();
-      if (manual && !endAlarmFired) playAlarm();
-      endAlarmFired = true;
+      logToSheet(endTime);
       remainingSeconds = 0;
       totalSeconds = 0;
+      sessionStartTime = null;
+      zeroAlarmFired = false;
       timeDisplay.textContent = '--:--';
-      timeDisplay.classList.remove('paused', 'warning');
-      logToSheet(endTime);
+      timeDisplay.classList.remove('paused', 'overtime');
       setModeButtonsDisabled(false);
       updateControls();
-      statusText.textContent = manual ? '상담 종료 · 시트 기록됨' : '상담 시간이 끝났습니다';
+      statusText.textContent = '상담 종료 · 시트 기록됨';
     }
 
     function stopCountdown() { clearInterval(countdownId); countdownId = null; }
@@ -338,10 +350,12 @@
     }
 
     function tick() {
-      if (remainingSeconds <= 0) { endSession(false); return; }
       remainingSeconds--;
+      if (remainingSeconds === 0 && !zeroAlarmFired) {
+        zeroAlarmFired = true;
+        playAlarm();
+      }
       updateDisplay();
-      if (remainingSeconds <= 0) endSession(false);
     }
 
     function beginSession(btn, fromSchedule) {
@@ -352,7 +366,7 @@
       totalSeconds = parseInt(btn.dataset.min) * 60;
       remainingSeconds = totalSeconds;
       currentLabel = btn.dataset.label;
-      endAlarmFired = false;
+      zeroAlarmFired = false;
       if (!fromSchedule) selectedSchedule = null;
       modeLabel.textContent = selectedSchedule ? selectedSchedule.title : currentLabel;
       statusText.textContent = '탭하여 일시정지';
@@ -382,7 +396,7 @@
       stopCountdown();
       isRunning = false;
       isPaused = false;
-      endAlarmFired = false;
+      zeroAlarmFired = false;
       totalSeconds = 0;
       remainingSeconds = 0;
       sessionStartTime = null;
@@ -392,14 +406,14 @@
       statusText.textContent = '노션 일정 또는 버튼을 눌러 시작';
       infoLine.textContent = '';
       timeDisplay.textContent = '--:--';
-      timeDisplay.classList.remove('paused', 'warning');
+      timeDisplay.classList.remove('paused', 'overtime');
       updateControls();
       renderSchedules();
     }
 
     modeBtns.forEach(btn => btn.addEventListener('click', () => beginSession(btn, false)));
     timerDisplay.addEventListener('click', togglePause);
-    btnEnd.addEventListener('click', () => endSession(true));
+    btnEnd.addEventListener('click', () => endSession());
     btnReset.addEventListener('click', resetSession);
     btnSync.addEventListener('click', loadSchedules);
 
