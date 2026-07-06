@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>마음날씨 기록</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(160deg, #fff5fa 0%, #f3f0ff 45%, #eafaff 100%);
+      min-height: 100vh;
+      min-height: 100dvh;
+      color: #6b6480;
+      padding: 20px 14px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .top-bar {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .nav-link {
+      color: #6b6480;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    .nav-link:active { transform: scale(0.96); }
+
+    h1 {
+      font-size: clamp(1.5rem, 6vw, 2rem);
+      font-weight: 800;
+      color: #8a7fb0;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: clamp(0.9rem, 3.5vw, 1.05rem);
+      color: #9e97b3;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .summary {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+    .summary-chip {
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .records {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .record {
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 18px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+      border-left: 6px solid #ddd;
+    }
+    .record.thunder { border-left-color: #b39ddb; }
+    .record.sun     { border-left-color: #ffca28; }
+    .record.rain    { border-left-color: #4fc3f7; }
+    .record.cloud   { border-left-color: #9ccabd; }
+
+    .record .emoji { font-size: 2rem; line-height: 1; }
+    .record .info { flex: 1; }
+    .record .info .title { font-size: 1.05rem; font-weight: 800; color: #7e57c2; }
+    .record .info .datetime { font-size: 0.85rem; color: #9e97b3; margin-top: 2px; }
+    .record .info .detail { font-size: 0.85rem; color: #8a83a0; margin-top: 4px; }
+    .record .del {
+      border: none;
+      background: #ffebee;
+      color: #ef5350;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .record .del:active { transform: scale(0.92); }
+
+    .empty {
+      width: 100%;
+      max-width: 560px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 20px;
+      padding: 40px 20px;
+      color: #9e97b3;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+    .empty a { color: #8a7fb0; font-weight: 700; }
+
+    .clear-all {
+      margin-top: 22px;
+      border: none;
+      background: transparent;
+      color: #bcaecd;
+      font-size: 0.85rem;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <a class="nav-link" href="index.html">← 체크인으로</a>
+    <a class="nav-link" href="../index.html">🏠 홈</a>
+  </div>
+
+  <h1>📖 마음날씨 기록</h1>
+  <p class="subtitle">그동안의 마음날씨를 모아봤어요</p>
+
+  <div class="summary" id="summary"></div>
+  <div class="records" id="records"></div>
+  <button class="clear-all" id="clearAll" style="display:none;">전체 기록 지우기</button>
+
+  <script>
+    const STORE_KEY = "moodWeatherRecords";
+    const recordsEl = document.getElementById("records");
+    const summaryEl = document.getElementById("summary");
+    const clearAllBtn = document.getElementById("clearAll");
+
+    function load() {
+      try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+      catch(e) { return []; }
+    }
+    function save(list) { localStorage.setItem(STORE_KEY, JSON.stringify(list)); }
+
+    function render() {
+      const list = load().sort((a, b) => b.ts - a.ts);
+
+      if (list.length === 0) {
+        recordsEl.innerHTML = '<div class="empty">아직 저장된 기록이 없어요.<br><a href="index.html">오늘의 마음날씨</a>를 체크인하고 저장해 보세요! 🌈</div>';
+        summaryEl.innerHTML = "";
+        clearAllBtn.style.display = "none";
+        return;
+      }
+
+      const counts = {};
+      list.forEach(r => { counts[r.weather] = (counts[r.weather] || 0) + 1; });
+      const names = { sun: "☀️ 맑음", thunder: "⚡ 천둥번개", rain: "🌧️ 비", cloud: "☁️ 구름" };
+      summaryEl.innerHTML =
+        '<span class="summary-chip">총 ' + list.length + '번</span>' +
+        Object.keys(counts).map(k => '<span class="summary-chip">' + names[k] + ' ' + counts[k] + '</span>').join("");
+
+      recordsEl.innerHTML = list.map(r =>
+        '<div class="record ' + r.weather + '">' +
+          '<div class="emoji">' + r.weatherEmoji + '</div>' +
+          '<div class="info">' +
+            '<div class="title">' + r.weatherTitle + '</div>' +
+            '<div class="datetime">' + r.date + ' ' + r.time + '</div>' +
+            '<div class="detail">몸: ' + r.energyLabel + ' · 기분: ' + r.mood + '/10</div>' +
+          '</div>' +
+          '<button class="del" data-ts="' + r.ts + '">삭제</button>' +
+        '</div>'
+      ).join("");
+
+      clearAllBtn.style.display = "block";
+    }
+
+    recordsEl.addEventListener("click", e => {
+      const btn = e.target.closest(".del");
+      if (!btn) return;
+      const ts = +btn.dataset.ts;
+      save(load().filter(r => r.ts !== ts));
+      render();
+    });
+
+    clearAllBtn.addEventListener("click", () => {
+      if (confirm("모든 기록을 지울까요?")) {
+        localStorage.removeItem(STORE_KEY);
+        render();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>
