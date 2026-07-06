@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>상담 타이머</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(160deg, #fce4ec 0%, #e8f5e9 50%, #e3f2fd 100%);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px 32px;
+      color: #5d5d6d;
+    }
+
+    h1 {
+      font-size: clamp(1.4rem, 5vw, 1.8rem);
+      font-weight: 700;
+      color: #7b6f8e;
+      margin-bottom: 24px;
+      letter-spacing: -0.02em;
+    }
+
+    .mode-select {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 28px;
+    }
+
+    .mode-btn {
+      border: none;
+      border-radius: 16px;
+      padding: 16px 10px;
+      font-size: clamp(1rem, 4vw, 1.15rem);
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      color: #5d5d6d;
+      background: rgba(255, 255, 255, 0.7);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .mode-btn:active {
+      transform: scale(0.97);
+    }
+
+    .mode-btn.selected {
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    }
+
+    .mode-btn[data-min="40"] { background: #f8bbd0; }
+    .mode-btn[data-min="40"].selected { background: #f48fb1; }
+    .mode-btn[data-min="45"] { background: #c8e6c9; }
+    .mode-btn[data-min="45"].selected { background: #81c784; }
+    .mode-btn[data-min="50"] { background: #bbdefb; }
+    .mode-btn[data-min="50"].selected { background: #64b5f6; }
+    .mode-btn[data-min="30"] { background: #ffe0b2; grid-column: 1 / -1; }
+    .mode-btn[data-min="30"].selected { background: #ffb74d; }
+
+    .timer-display {
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 28px;
+      padding: 36px 24px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      margin-bottom: 28px;
+    }
+
+    .mode-label {
+      font-size: clamp(1rem, 4vw, 1.2rem);
+      color: #9e9eb0;
+      margin-bottom: 8px;
+    }
+
+    .time {
+      font-size: clamp(4rem, 18vw, 6.5rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      line-height: 1.1;
+      color: #6a5acd;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .time.warning {
+      color: #e57373;
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .status {
+      font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+      color: #b0a8c0;
+      margin-top: 12px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .ctrl-btn {
+      flex: 1;
+      border: none;
+      border-radius: 18px;
+      padding: 20px 8px;
+      font-size: clamp(1.1rem, 4.5vw, 1.35rem);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s;
+      color: #fff;
+    }
+
+    .ctrl-btn:active {
+      transform: scale(0.96);
+    }
+
+    .ctrl-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    #btnStart { background: #a5d6a7; }
+    #btnPause { background: #ffcc80; }
+    #btnReset { background: #ef9a9a; }
+
+    .alarm-note {
+      margin-top: 20px;
+      font-size: clamp(0.85rem, 3.2vw, 1rem);
+      color: #b0a8c0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🕐 상담 타이머</h1>
+
+  <div class="mode-select">
+    <button class="mode-btn selected" data-min="40" data-label="초급 상담">초 40분</button>
+    <button class="mode-btn" data-min="45" data-label="중급 상담">중 45분</button>
+    <button class="mode-btn" data-min="50" data-label="고급 상담">고 50분</button>
+    <button class="mode-btn" data-min="30" data-label="학부모 상담">학부모 30분</button>
+  </div>
+
+  <div class="timer-display">
+    <div class="mode-label" id="modeLabel">초급 상담</div>
+    <div class="time" id="timeDisplay">40:00</div>
+    <div class="status" id="statusText">시작 버튼을 눌러주세요</div>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl-btn" id="btnStart">▶ 시작</button>
+    <button class="ctrl-btn" id="btnPause" disabled>⏸ 일시정지</button>
+    <button class="ctrl-btn" id="btnReset">↺ 초기화</button>
+  </div>
+
+  <p class="alarm-note">🔔 종료 10분 전에 알람이 울립니다</p>
+
+  <script>
+    const ALARM_BEFORE_SEC = 10 * 60; // 10분 전
+
+    let totalSeconds = 40 * 60;
+    let remainingSeconds = totalSeconds;
+    let timerId = null;
+    let isRunning = false;
+    let alarmFired = false;
+    let currentLabel = "초급 상담";
+
+    const timeDisplay = document.getElementById("timeDisplay");
+    const modeLabel = document.getElementById("modeLabel");
+    const statusText = document.getElementById("statusText");
+    const btnStart = document.getElementById("btnStart");
+    const btnPause = document.getElementById("btnPause");
+    const btnReset = document.getElementById("btnReset");
+    const modeBtns = document.querySelectorAll(".mode-btn");
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    }
+
+    function updateDisplay() {
+      timeDisplay.textContent = formatTime(remainingSeconds);
+      timeDisplay.classList.toggle("warning", remainingSeconds > 0 && remainingSeconds <= ALARM_BEFORE_SEC);
+
+      if (remainingSeconds === 0) {
+        statusText.textContent = "⏰ 상담 시간이 끝났습니다!";
+      } else if (remainingSeconds <= ALARM_BEFORE_SEC && isRunning) {
+        statusText.textContent = "🔔 10분 전 알람!";
+      } else if (isRunning) {
+        statusText.textContent = "진행 중...";
+      }
+    }
+
+    function playAlarm() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [523, 659, 784, 659, 523];
+        let t = ctx.currentTime;
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = "sine";
+          gain.gain.setValueAtTime(0.3, t + i * 0.25);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.25 + 0.22);
+          osc.start(t + i * 0.25);
+          osc.stop(t + i * 0.25 + 0.25);
+        });
+      } catch (e) {}
+
+      if (navigator.vibrate) {
+        navigator.vibrate([300, 150, 300, 150, 300]);
+      }
+    }
+
+    function tick() {
+      if (remainingSeconds <= 0) {
+        stopTimer();
+        playAlarm();
+        return;
+      }
+
+      if (!alarmFired && remainingSeconds === ALARM_BEFORE_SEC) {
+        alarmFired = true;
+        playAlarm();
+      }
+
+      remainingSeconds--;
+      updateDisplay();
+
+      if (remainingSeconds <= 0) {
+        stopTimer();
+        playAlarm();
+      }
+    }
+
+    function startTimer() {
+      if (remainingSeconds <= 0) return;
+      if (isRunning) return;
+
+      isRunning = true;
+      btnStart.disabled = true;
+      btnPause.disabled = false;
+      modeBtns.forEach(b => b.disabled = true);
+      statusText.textContent = "진행 중...";
+      timerId = setInterval(tick, 1000);
+    }
+
+    function pauseTimer() {
+      if (!isRunning) return;
+      isRunning = false;
+      clearInterval(timerId);
+      timerId = null;
+      btnStart.disabled = false;
+      btnPause.disabled = true;
+      statusText.textContent = "일시정지됨";
+      modeBtns.forEach(b => b.disabled = false);
+    }
+
+    function stopTimer() {
+      isRunning = false;
+      clearInterval(timerId);
+      timerId = null;
+      btnStart.disabled = remainingSeconds <= 0;
+      btnPause.disabled = true;
+      modeBtns.forEach(b => b.disabled = false);
+    }
+
+    function resetTimer() {
+      stopTimer();
+      remainingSeconds = totalSeconds;
+      alarmFired = false;
+      updateDisplay();
+      statusText.textContent = "시작 버튼을 눌러주세요";
+      btnStart.disabled = false;
+    }
+
+    modeBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (isRunning) return;
+        modeBtns.forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        totalSeconds = parseInt(btn.dataset.min) * 60;
+        remainingSeconds = totalSeconds;
+        currentLabel = btn.dataset.label;
+        modeLabel.textContent = currentLabel;
+        alarmFired = false;
+        updateDisplay();
+        statusText.textContent = "시작 버튼을 눌러주세요";
+      });
+    });
+
+    btnStart.addEventListener("click", startTimer);
+    btnPause.addEventListener("click", pauseTimer);
+    btnReset.addEventListener("click", resetTimer);
+
+    updateDisplay();
+  </script>
+</body>
+</html>
