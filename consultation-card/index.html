@@ -2,62 +2,576 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>상담 카드</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>오늘의 마음날씨</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink: #f8bbd0;
+      --pink-deep: #f48fb1;
+      --yellow: #ffe082;
+      --yellow-deep: #ffca28;
+      --blue: #b3e5fc;
+      --blue-deep: #4fc3f7;
+      --purple: #d1c4e9;
+      --purple-deep: #b39ddb;
+      --ink: #6b6480;
+      --ink-soft: #9e97b3;
     }
 
     body {
       font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      background: linear-gradient(160deg, #fff8e1 0%, #fce4ec 50%, #e8eaf6 100%);
+      background: linear-gradient(160deg, #fff5fa 0%, #f3f0ff 45%, #eafaff 100%);
       min-height: 100vh;
       min-height: 100dvh;
+      color: var(--ink);
+      padding: 20px 14px 40px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 24px 16px;
-      color: #5d5d6d;
     }
 
-    .back-link {
-      position: fixed;
-      top: 16px;
-      left: 16px;
-      color: #7b6f8e;
+    .top-bar {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .nav-link {
+      color: var(--ink);
       text-decoration: none;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
+      font-weight: 600;
       padding: 8px 14px;
-      background: rgba(255, 255, 255, 0.75);
-      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 14px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
-
-    .back-link:hover {
-      background: rgba(255, 255, 255, 0.95);
-    }
+    .nav-link:active { transform: scale(0.96); }
 
     h1 {
-      font-size: clamp(1.5rem, 5vw, 2rem);
-      font-weight: 700;
-      color: #7b6f8e;
-      margin-bottom: 12px;
+      font-size: clamp(1.5rem, 6vw, 2rem);
+      font-weight: 800;
+      color: #8a7fb0;
+      letter-spacing: -0.02em;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      font-size: clamp(0.9rem, 3.5vw, 1.05rem);
+      color: var(--ink-soft);
+      text-align: center;
+      margin-bottom: 20px;
     }
 
-    p {
-      font-size: 1rem;
-      color: #9e9eb0;
+    .step-guide {
+      font-size: clamp(0.95rem, 4vw, 1.15rem);
+      font-weight: 700;
+      color: var(--pink-deep);
+      background: rgba(255, 255, 255, 0.85);
+      padding: 10px 18px;
+      border-radius: 999px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+      margin-bottom: 18px;
       text-align: center;
+      transition: color 0.3s;
     }
+    .step-guide.shake { animation: shake 0.4s; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    /* ===== board layout: y-axis | grid , x-axis under grid ===== */
+    .board {
+      width: 100%;
+      max-width: 560px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      grid-template-rows: auto auto;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .y-axis {
+      grid-column: 1;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .axis-title-y {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      text-align: center;
+      font-weight: 700;
+      color: var(--ink);
+      font-size: 0.85rem;
+      align-self: center;
+    }
+    .energy-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+    .energy-btn {
+      border: 2px solid transparent;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 14px;
+      padding: 6px 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--ink);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      min-width: 58px;
+      flex: 1;
+      transition: transform 0.12s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .energy-btn .bat { font-size: 1.05rem; }
+    .energy-btn:active { transform: scale(0.95); }
+    .energy-btn.selected {
+      border-color: var(--purple-deep);
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(179, 157, 219, 0.5);
+      color: #7e57c2;
+    }
+
+    .grid-wrap { grid-column: 2; grid-row: 1; }
+    .grid {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1);
+    }
+    .quad {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: filter 0.3s;
+    }
+    .quad svg { width: 62%; height: 62%; }
+    .quad .quad-name {
+      position: absolute;
+      bottom: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.95);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+    .q-thunder { background: linear-gradient(135deg, #d1c4e9, #b39ddb); }
+    .q-sun     { background: linear-gradient(135deg, #fff3c4, #ffd54f); }
+    .q-rain    { background: linear-gradient(135deg, #cfeffc, #81d4fa); }
+    .q-cloud   { background: linear-gradient(135deg, #e8f5e9, #c5e1e8); }
+
+    .quad.sparkle { animation: glow 1.2s ease-in-out infinite; z-index: 2; }
+    @keyframes glow {
+      0%, 100% { filter: brightness(1) saturate(1); }
+      50% { filter: brightness(1.25) saturate(1.35); }
+    }
+    .quad.sparkle::after {
+      content: "✨";
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      font-size: 1.4rem;
+      animation: twinkle 0.9s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.4; transform: scale(0.8) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1.2) rotate(20deg); }
+    }
+
+    .heart {
+      position: absolute;
+      font-size: 2rem;
+      transform: translate(-50%, -50%) scale(0);
+      pointer-events: none;
+      z-index: 5;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+      transition: left 0.35s cubic-bezier(.34,1.56,.64,1), top 0.35s cubic-bezier(.34,1.56,.64,1);
+    }
+    .heart.show { animation: pop 0.5s cubic-bezier(.34,1.56,.64,1) forwards, bounce 1.4s ease-in-out 0.5s infinite; }
+    @keyframes pop { to { transform: translate(-50%, -50%) scale(1); } }
+    @keyframes bounce {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -60%) scale(1.12); }
+    }
+
+    .x-axis {
+      grid-column: 2;
+      grid-row: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .axis-title-x { text-align: center; font-weight: 700; color: var(--ink); font-size: 0.85rem; }
+    .mood-btns {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 4px;
+    }
+    .mood-btn {
+      border: 2px solid transparent;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      padding: 8px 0;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .mood-btn:active { transform: scale(0.9); }
+    .mood-btn.selected {
+      border-color: var(--pink-deep);
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(244, 143, 177, 0.5);
+      color: var(--pink-deep);
+    }
+    .mood-btns[data-locked="true"] .mood-btn { opacity: 0.45; cursor: not-allowed; }
+    .mood-ends {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      padding: 0 2px;
+    }
+
+    /* ===== result ===== */
+    .result {
+      width: 100%;
+      max-width: 560px;
+      margin-top: 22px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 22px;
+      padding: 22px 20px;
+      text-align: center;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s, transform 0.4s;
+      pointer-events: none;
+    }
+    .result.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .result .result-weather { font-size: 2.6rem; margin-bottom: 6px; }
+    .result .result-title {
+      font-size: clamp(1.15rem, 5vw, 1.5rem);
+      font-weight: 800;
+      color: #8a7fb0;
+      margin-bottom: 6px;
+    }
+    .result .result-msg {
+      font-size: clamp(0.95rem, 3.8vw, 1.08rem);
+      color: var(--ink-soft);
+      line-height: 1.55;
+      margin-bottom: 16px;
+    }
+    .result .saved-note {
+      font-size: 0.9rem;
+      color: #66bb6a;
+      font-weight: 700;
+      margin-bottom: 12px;
+      min-height: 1.2em;
+    }
+    .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      border: none;
+      border-radius: 16px;
+      padding: 14px 22px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      transition: transform 0.12s, opacity 0.15s;
+    }
+    .btn:active { transform: scale(0.95); }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .btn-save { background: #81c784; }
+    .btn-reset { background: #ff8a80; }
   </style>
 </head>
 <body>
-  <a class="back-link" href="../index.html">← 홈으로</a>
-  <h1>📋 상담 카드</h1>
-  <p>곧 만들 예정입니다.</p>
+
+  <div class="top-bar">
+    <a class="nav-link" href="../index.html">← 홈으로</a>
+    <a class="nav-link" href="records.html">📖 기록 보기</a>
+  </div>
+
+  <h1>🌈 오늘의 마음날씨</h1>
+  <p class="subtitle">지금 나의 몸과 마음은 어떤 날씨일까?</p>
+
+  <div class="step-guide" id="stepGuide">① 먼저 <b>몸 상태</b>를 골라요 🔋</div>
+
+  <div class="board">
+    <!-- y axis -->
+    <div class="y-axis">
+      <div class="axis-title-y">몸은 어때?</div>
+      <div class="energy-btns" id="energyBtns">
+        <button class="energy-btn" data-e="4"><span class="bat">🔋</span>풀충</button>
+        <button class="energy-btn" data-e="3"><span class="bat">🔋</span>충전</button>
+        <button class="energy-btn" data-e="2"><span class="bat">⚡</span>보통</button>
+        <button class="energy-btn" data-e="1"><span class="bat">🪫</span>살짝방전</button>
+        <button class="energy-btn" data-e="0"><span class="bat">🪫</span>방전</button>
+      </div>
+    </div>
+
+    <!-- grid -->
+    <div class="grid-wrap">
+      <div class="grid" id="grid">
+        <div class="quad q-thunder" data-q="thunder">
+          <!-- 천둥번개 -->
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="50" cy="42" rx="34" ry="20" fill="#9e8fc4"/>
+            <ellipse cx="32" cy="46" rx="18" ry="14" fill="#b3a4d6"/>
+            <ellipse cx="66" cy="46" rx="18" ry="14" fill="#b3a4d6"/>
+            <circle cx="40" cy="40" r="3" fill="#5e548e"/>
+            <circle cx="60" cy="40" r="3" fill="#5e548e"/>
+            <path d="M42 50 q8 6 16 0" stroke="#5e548e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <polygon points="52,58 40,80 49,80 44,96 64,70 53,70 60,58" fill="#ffd54f" stroke="#fbc02d" stroke-width="1.5"/>
+          </svg>
+          <span class="quad-name">천둥번개</span>
+        </div>
+        <div class="quad q-sun" data-q="sun">
+          <!-- 햇빛 맑음 -->
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <g stroke="#ffb300" stroke-width="4" stroke-linecap="round">
+              <line x1="50" y1="8" x2="50" y2="20"/>
+              <line x1="50" y1="80" x2="50" y2="92"/>
+              <line x1="8" y1="50" x2="20" y2="50"/>
+              <line x1="80" y1="50" x2="92" y2="50"/>
+              <line x1="20" y1="20" x2="29" y2="29"/>
+              <line x1="71" y1="71" x2="80" y2="80"/>
+              <line x1="80" y1="20" x2="71" y2="29"/>
+              <line x1="29" y1="71" x2="20" y2="80"/>
+            </g>
+            <circle cx="50" cy="50" r="24" fill="#ffd54f" stroke="#ffb300" stroke-width="2"/>
+            <circle cx="42" cy="46" r="3" fill="#e65100"/>
+            <circle cx="58" cy="46" r="3" fill="#e65100"/>
+            <path d="M40 56 q10 9 20 0" stroke="#e65100" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <circle cx="35" cy="54" r="3.5" fill="#ffab91" opacity="0.8"/>
+            <circle cx="65" cy="54" r="3.5" fill="#ffab91" opacity="0.8"/>
+          </svg>
+          <span class="quad-name">햇빛 맑음</span>
+        </div>
+        <div class="quad q-rain" data-q="rain">
+          <!-- 비, 웅덩이 -->
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="50" cy="34" rx="30" ry="17" fill="#90caf9"/>
+            <ellipse cx="34" cy="38" rx="15" ry="12" fill="#a9d6fb"/>
+            <ellipse cx="66" cy="38" rx="15" ry="12" fill="#a9d6fb"/>
+            <circle cx="42" cy="33" r="2.6" fill="#1976d2"/>
+            <circle cx="58" cy="33" r="2.6" fill="#1976d2"/>
+            <path d="M44 42 q6 4 12 0" stroke="#1976d2" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <g fill="#4fc3f7">
+              <path d="M36 54 q-3 6 0 8 q3 -2 0 -8"/>
+              <path d="M50 58 q-3 6 0 8 q3 -2 0 -8"/>
+              <path d="M64 54 q-3 6 0 8 q3 -2 0 -8"/>
+            </g>
+            <ellipse cx="50" cy="84" rx="26" ry="7" fill="#64b5f6" opacity="0.75"/>
+            <ellipse cx="50" cy="82" rx="16" ry="4" fill="#bbdefb" opacity="0.8"/>
+          </svg>
+          <span class="quad-name">비·웅덩이</span>
+        </div>
+        <div class="quad q-cloud" data-q="cloud">
+          <!-- 바람잔잔, 구름 -->
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="50" cy="46" rx="30" ry="18" fill="#ffffff"/>
+            <ellipse cx="34" cy="50" rx="16" ry="13" fill="#f2f7f4"/>
+            <ellipse cx="66" cy="50" rx="16" ry="13" fill="#f2f7f4"/>
+            <circle cx="42" cy="45" r="2.8" fill="#8aa899"/>
+            <circle cx="58" cy="45" r="2.8" fill="#8aa899"/>
+            <path d="M44 52 q6 5 12 0" stroke="#8aa899" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+            <g stroke="#9ccabd" stroke-width="3" fill="none" stroke-linecap="round">
+              <path d="M20 72 q10 -5 20 0 t20 0"/>
+              <path d="M26 82 q10 -5 20 0 t18 0"/>
+            </g>
+          </svg>
+          <span class="quad-name">바람잔잔·구름</span>
+        </div>
+
+        <div class="heart" id="heart">💗</div>
+      </div>
+    </div>
+
+    <!-- x axis -->
+    <div class="x-axis">
+      <div class="mood-btns" id="moodBtns" data-locked="true">
+        <button class="mood-btn" data-m="0">0</button>
+        <button class="mood-btn" data-m="1">1</button>
+        <button class="mood-btn" data-m="2">2</button>
+        <button class="mood-btn" data-m="3">3</button>
+        <button class="mood-btn" data-m="4">4</button>
+        <button class="mood-btn" data-m="5">5</button>
+        <button class="mood-btn" data-m="6">6</button>
+        <button class="mood-btn" data-m="7">7</button>
+        <button class="mood-btn" data-m="8">8</button>
+        <button class="mood-btn" data-m="9">9</button>
+        <button class="mood-btn" data-m="10">10</button>
+      </div>
+      <div class="mood-ends"><span>😞 별로예요</span><span>기분은 어때?</span><span>아주 좋아요 😄</span></div>
+    </div>
+  </div>
+
+  <!-- result -->
+  <div class="result" id="result">
+    <div class="result-weather" id="resultWeather">☀️</div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="saved-note" id="savedNote"></div>
+    <div class="btn-row">
+      <button class="btn btn-save" id="btnSave">💾 오늘 기록 저장</button>
+      <button class="btn btn-reset" id="btnReset">↺ 다시하기</button>
+    </div>
+  </div>
+
+  <script>
+    const WEATHER = {
+      thunder: { emoji: "⚡", title: "천둥번개", msg: "기운은 넘치는데 마음이 울렁이나 봐.\n무슨 일이 있었는지 이야기해 볼까?" },
+      sun:     { emoji: "☀️", title: "햇빛 맑음", msg: "몸도 마음도 반짝반짝!\n오늘 참 좋은 하루구나 :)" },
+      rain:    { emoji: "🌧️", title: "비·웅덩이", msg: "몸도 마음도 조금 지쳤구나.\n괜찮아, 천천히 쉬어가도 돼." },
+      cloud:   { emoji: "☁️", title: "바람잔잔·구름", msg: "차분하고 편안한 하루네.\n포근하게 쉬어가는 마음이야." }
+    };
+
+    const state = { energy: null, mood: null };
+
+    const energyBtns = document.getElementById("energyBtns");
+    const moodBtns = document.getElementById("moodBtns");
+    const heart = document.getElementById("heart");
+    const stepGuide = document.getElementById("stepGuide");
+    const grid = document.getElementById("grid");
+    const quads = grid.querySelectorAll(".quad");
+    const result = document.getElementById("result");
+    const btnSave = document.getElementById("btnSave");
+    const btnReset = document.getElementById("btnReset");
+    const savedNote = document.getElementById("savedNote");
+
+    function classify(energy, mood) {
+      const top = energy >= 2;          // 풀충·충전·보통 => 위 / 살짝방전·방전 => 아래
+      const right = mood >= 5;          // 5 이상 => 오른쪽(가운데는 맑음 쪽으로)
+      if (top && right) return "sun";
+      if (top && !right) return "thunder";
+      if (!top && right) return "cloud";
+      return "rain";
+    }
+
+    function selectEnergy(v) {
+      state.energy = v;
+      [...energyBtns.children].forEach(b => b.classList.toggle("selected", +b.dataset.e === v));
+      moodBtns.dataset.locked = "false";
+      if (state.mood === null) {
+        stepGuide.innerHTML = "② 이제 <b>기분</b>을 골라요 💗";
+        stepGuide.style.color = "var(--pink-deep)";
+      }
+      update();
+    }
+
+    function selectMood(v) {
+      if (state.energy === null) {
+        stepGuide.textContent = "먼저 왼쪽에서 몸 상태를 골라요! 🔋";
+        stepGuide.classList.remove("shake");
+        void stepGuide.offsetWidth;
+        stepGuide.classList.add("shake");
+        return;
+      }
+      state.mood = v;
+      [...moodBtns.children].forEach(b => b.classList.toggle("selected", +b.dataset.m === v));
+      update();
+    }
+
+    function update() {
+      if (state.energy === null || state.mood === null) return;
+
+      const xPct = (state.mood / 10) * 100;
+      const yPct = ((4 - state.energy) / 4) * 100;
+      heart.style.left = xPct + "%";
+      heart.style.top = yPct + "%";
+      heart.classList.add("show");
+
+      const weather = classify(state.energy, state.mood);
+      quads.forEach(q => q.classList.toggle("sparkle", q.dataset.q === weather));
+
+      const info = WEATHER[weather];
+      document.getElementById("resultWeather").textContent = info.emoji;
+      document.getElementById("resultTitle").textContent = "오늘 나의 마음날씨는 " + info.title + "!";
+      document.getElementById("resultMsg").textContent = info.msg;
+      savedNote.textContent = "";
+      btnSave.disabled = false;
+      btnSave.textContent = "💾 오늘 기록 저장";
+      result.classList.add("show");
+      stepGuide.innerHTML = "완성! 오늘의 마음날씨를 확인해 봐요 🌈";
+      stepGuide.style.color = "var(--purple-deep)";
+    }
+
+    function reset() {
+      state.energy = null;
+      state.mood = null;
+      [...energyBtns.children].forEach(b => b.classList.remove("selected"));
+      [...moodBtns.children].forEach(b => b.classList.remove("selected"));
+      moodBtns.dataset.locked = "true";
+      heart.classList.remove("show");
+      heart.style.transform = "translate(-50%, -50%) scale(0)";
+      quads.forEach(q => q.classList.remove("sparkle"));
+      result.classList.remove("show");
+      savedNote.textContent = "";
+      stepGuide.innerHTML = "① 먼저 <b>몸 상태</b>를 골라요 🔋";
+      stepGuide.style.color = "var(--pink-deep)";
+    }
+
+    const ENERGY_LABELS = { 4: "풀충", 3: "충전", 2: "보통", 1: "살짝방전", 0: "방전" };
+    const STORE_KEY = "moodWeatherRecords";
+
+    function saveRecord() {
+      if (state.energy === null || state.mood === null) return;
+      const weather = classify(state.energy, state.mood);
+      const now = new Date();
+      const record = {
+        ts: now.getTime(),
+        date: now.getFullYear() + "-" + String(now.getMonth()+1).padStart(2,"0") + "-" + String(now.getDate()).padStart(2,"0"),
+        time: String(now.getHours()).padStart(2,"0") + ":" + String(now.getMinutes()).padStart(2,"0"),
+        energy: state.energy,
+        energyLabel: ENERGY_LABELS[state.energy],
+        mood: state.mood,
+        weather: weather,
+        weatherEmoji: WEATHER[weather].emoji,
+        weatherTitle: WEATHER[weather].title
+      };
+      let list = [];
+      try { list = JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch(e) {}
+      list.push(record);
+      localStorage.setItem(STORE_KEY, JSON.stringify(list));
+      savedNote.textContent = "✅ 오늘의 마음날씨를 기록했어요!";
+      btnSave.disabled = true;
+      btnSave.textContent = "저장 완료";
+    }
+
+    energyBtns.addEventListener("click", e => {
+      const b = e.target.closest(".energy-btn");
+      if (b) selectEnergy(+b.dataset.e);
+    });
+    moodBtns.addEventListener("click", e => {
+      const b = e.target.closest(".mood-btn");
+      if (b) selectMood(+b.dataset.m);
+    });
+    btnSave.addEventListener("click", saveRecord);
+    btnReset.addEventListener("click", reset);
+  </script>
 </body>
 </html>
