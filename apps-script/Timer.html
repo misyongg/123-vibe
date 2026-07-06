@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(165deg, #f7f3f8 0%, #f0f6f2 45%, #f2f5fa 100%);
+      min-height: 100vh; min-height: 100dvh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 24px 16px 32px; color: #4a4a5a;
+    }
+    .app { width: 100%; max-width: 420px; }
+    h1 { font-size: 1.4rem; font-weight: 600; color: #6b6578; text-align: center; margin-bottom: 20px; letter-spacing: 0.06em; }
+
+    .panel {
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(180,170,195,0.2);
+      border-radius: 14px; padding: 14px; margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .panel-title { font-size: 0.82rem; color: #9a94a8; margin-bottom: 10px; }
+
+    .schedule-list { display: flex; flex-direction: column; gap: 8px; }
+    .schedule-item {
+      border: 1px solid rgba(180,170,195,0.2); border-radius: 10px;
+      padding: 12px; cursor: pointer; background: #fff;
+      transition: transform 0.1s;
+    }
+    .schedule-item:active { transform: scale(0.98); }
+    .schedule-item.active { border-color: #9bbde0; background: #f2f7fc; }
+    .schedule-item.alarm-soon { border-color: #e0a8a8; background: #fdf5f5; }
+    .sched-time { font-size: 1.1rem; font-weight: 700; color: #5a5470; }
+    .sched-title { font-size: 0.9rem; color: #6b6578; margin-top: 2px; }
+    .sched-meta { font-size: 0.78rem; color: #b0aab8; margin-top: 4px; }
+    .empty-msg { font-size: 0.88rem; color: #b0aab8; text-align: center; padding: 12px; }
+
+    .start-time-input { display: flex; flex-direction: column; gap: 8px; }
+    .time-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .start-time-field { display: flex; align-items: center; gap: 4px; font-size: 1.15rem; font-weight: 600; color: #5a5470; font-variant-numeric: tabular-nums; }
+    .time-part { width: 2.4em; border: none; background: transparent; font: inherit; color: inherit; text-align: center; outline: none; }
+    .time-part:disabled { opacity: 0.6; }
+    .now-time { font-size: 0.85rem; color: #b0aab8; font-variant-numeric: tabular-nums; }
+    .now-time span { color: #5a5470; font-weight: 600; }
+
+    .mode-select { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 16px; }
+    .mode-btn {
+      border: 1px solid rgba(180,170,195,0.2); border-radius: 10px; padding: 10px 4px;
+      font-size: 0.75rem; font-weight: 600; cursor: pointer; color: #5a5470;
+      background: rgba(255,255,255,0.8);
+    }
+    .mode-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .mode-btn.selected { color: #fff; border-color: transparent; }
+    .mode-btn[data-min="40"] { background: #f5dce6; }
+    .mode-btn[data-min="40"].selected { background: #dfa8bc; }
+    .mode-btn[data-min="45"] { background: #dceee0; }
+    .mode-btn[data-min="45"].selected { background: #9ec9a8; }
+    .mode-btn[data-min="50"] { background: #dce8f5; }
+    .mode-btn[data-min="50"].selected { background: #9bbde0; }
+    .mode-btn[data-min="30"] { background: #f5ead8; }
+    .mode-btn[data-min="30"].selected { background: #dfc49a; }
+
+    .timer-display {
+      background: rgba(255,255,255,0.88); border: 1px solid rgba(180,170,195,0.18);
+      border-radius: 22px; padding: 36px 20px 28px; text-align: center; margin-bottom: 16px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.06);
+    }
+    .mode-label { font-size: 1rem; color: #a09aad; margin-bottom: 8px; }
+    .time { font-size: clamp(3.5rem,16vw,5.5rem); font-weight: 700; color: #6a6290; font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
+    .time.warning { color: #d48484; }
+    .status { font-size: 0.92rem; color: #b0aab8; margin-top: 12px; }
+    .info-line { font-size: 0.82rem; color: #c0bac8; margin-top: 6px; }
+
+    .controls { display: flex; gap: 10px; }
+    .ctrl-btn {
+      flex: 1; border: none; border-radius: 14px; padding: 16px 8px;
+      font-size: 1.05rem; font-weight: 600; color: #fff; cursor: pointer;
+    }
+    .ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    #btnPause { background: #d4b896; }
+    #btnReset { background: #c9a8a8; }
+
+    .sync-btn {
+      width: 100%; border: none; border-radius: 10px; padding: 10px;
+      font-size: 0.82rem; color: #7b6f8e; background: rgba(255,255,255,0.7);
+      cursor: pointer; margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>상담 타이머</h1>
+
+    <button class="sync-btn" id="btnSync">노션 일정 새로고침</button>
+
+    <div class="panel">
+      <div class="panel-title">오늘 노션 일정 (탭하여 시작)</div>
+      <div class="schedule-list" id="scheduleList">
+        <div class="empty-msg">일정 불러오는 중...</div>
+      </div>
+    </div>
+
+    <div class="panel start-time-section">
+      <div class="start-time-input">
+        <span class="panel-title">상담 시작 시간</span>
+        <div class="time-row">
+          <div class="start-time-field">
+            <input type="number" class="time-part" id="startHour" min="0" max="23" inputmode="numeric">
+            <span>:</span>
+            <input type="number" class="time-part" id="startMinute" min="0" max="59" inputmode="numeric">
+          </div>
+          <div class="now-time">현 <span id="nowTimeDisplay">--:--:--</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mode-select">
+      <button class="mode-btn" data-min="40" data-label="초등학생">초 40분</button>
+      <button class="mode-btn" data-min="45" data-label="중학생">중 45분</button>
+      <button class="mode-btn" data-min="50" data-label="고등학생">고 50분</button>
+      <button class="mode-btn" data-min="30" data-label="학부모">학부모 30분</button>
+    </div>
+
+    <div class="timer-display">
+      <div class="mode-label" id="modeLabel">일정을 선택해 주세요</div>
+      <div class="time" id="timeDisplay">--:--</div>
+      <div class="status" id="statusText">노션 일정 또는 버튼을 눌러 시작</div>
+      <div class="info-line" id="infoLine"></div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn" id="btnPause" disabled>일시정지</button>
+      <button class="ctrl-btn" id="btnReset" disabled>초기화</button>
+    </div>
+  </div>
+
+  <script>
+    const ALARM_BEFORE_START_SEC = 10 * 60;
+    const TYPE_TO_MIN = { '초등학생': 40, '중학생': 45, '고등학생': 50, '학부모': 30 };
+
+    let schedules = [];
+    let selectedSchedule = null;
+    let actualStartTime = null;
+    let totalSeconds = 0;
+    let remainingSeconds = 0;
+    let countdownId = null;
+    let isRunning = false;
+    let isPaused = false;
+    let prepAlarmFired = false;
+    let endAlarmFired = false;
+    let currentLabel = '';
+    let firedAlarms = {};
+
+    const scheduleList = document.getElementById('scheduleList');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const modeLabel = document.getElementById('modeLabel');
+    const statusText = document.getElementById('statusText');
+    const infoLine = document.getElementById('infoLine');
+    const btnPause = document.getElementById('btnPause');
+    const btnReset = document.getElementById('btnReset');
+    const btnSync = document.getElementById('btnSync');
+    const startHour = document.getElementById('startHour');
+    const startMinute = document.getElementById('startMinute');
+    const nowTimeDisplay = document.getElementById('nowTimeDisplay');
+    const modeBtns = document.querySelectorAll('.mode-btn');
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function formatDuration(sec) {
+      return pad(Math.floor(sec / 60)) + ':' + pad(sec % 60);
+    }
+
+    function format24H(date, withSec) {
+      const h = date.getHours(), m = date.getMinutes();
+      if (!withSec) return pad(h) + ':' + pad(m);
+      return pad(h) + ':' + pad(m) + ':' + pad(date.getSeconds());
+    }
+
+    function clampTimeInputs() {
+      let h = parseInt(startHour.value, 10), m = parseInt(startMinute.value, 10);
+      if (isNaN(h)) h = 0; if (isNaN(m)) m = 0;
+      h = Math.min(23, Math.max(0, h)); m = Math.min(59, Math.max(0, m));
+      startHour.value = pad(h); startMinute.value = pad(m);
+      return { h, m };
+    }
+
+    function getStartDateTime() {
+      const { h, m } = clampTimeInputs();
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+    }
+
+    function getPrepAlarmTime() {
+      return new Date(getStartDateTime().getTime() - ALARM_BEFORE_START_SEC * 1000);
+    }
+
+    function setStartTimeDisabled(d) { startHour.disabled = d; startMinute.disabled = d; }
+    function setModeButtonsDisabled(d) { modeBtns.forEach(b => { b.disabled = d; }); }
+
+    function updateNowTime() { nowTimeDisplay.textContent = format24H(new Date(), true); }
+
+    function updateInfoLine() {
+      const start = getStartDateTime();
+      const prep = getPrepAlarmTime();
+      const end = new Date(start.getTime() + totalSeconds * 1000);
+      let line = '알람 ' + format24H(prep);
+      if (selectedSchedule && selectedSchedule.caseNo) line += ' · 케이스 ' + selectedSchedule.caseNo;
+      if (totalSeconds > 0) line += ' · 종료 ' + format24H(end);
+      infoLine.textContent = line;
+    }
+
+    function updateDisplay() {
+      if (totalSeconds === 0) { timeDisplay.textContent = '--:--'; return; }
+      timeDisplay.textContent = formatDuration(remainingSeconds);
+      timeDisplay.classList.toggle('warning', prepAlarmFired && remainingSeconds > 0);
+      if (remainingSeconds === 0 && !isRunning) statusText.textContent = '상담 시간이 끝났습니다';
+      else if (isPaused) statusText.textContent = '일시정지';
+      else if (isRunning) statusText.textContent = '진행 중';
+    }
+
+    function playAlarm() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [523,659,784,659,523].forEach((f,i) => {
+          const t = ctx.currentTime + i * 0.25;
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.frequency.value = f; o.type = 'sine';
+          g.gain.setValueAtTime(0.28, t);
+          g.gain.exponentialRampToValueAtTime(0.01, t + 0.22);
+          o.start(t); o.stop(t + 0.25);
+        });
+      } catch(e) {}
+      if (navigator.vibrate) navigator.vibrate([300,150,300,150,300]);
+    }
+
+    function checkAlarms() {
+      const now = new Date();
+      if (!prepAlarmFired) {
+        const target = getPrepAlarmTime();
+        if (now >= target) {
+          prepAlarmFired = true;
+          playAlarm();
+          if (isRunning || isPaused) {
+            statusText.textContent = '상담 시작 10분 전 알람';
+            timeDisplay.classList.add('warning');
+          }
+        }
+      }
+      schedules.forEach(s => {
+        const alarmTime = new Date(s.startISO).getTime() - ALARM_BEFORE_START_SEC * 1000;
+        if (!firedAlarms[s.pageId] && now.getTime() >= alarmTime) {
+          firedAlarms[s.pageId] = true;
+          playAlarm();
+          statusText.textContent = s.startLabel + ' 상담 10분 전';
+        }
+      });
+    }
+
+    function renderSchedules() {
+      if (!schedules.length) {
+        scheduleList.innerHTML = '<div class="empty-msg">오늘 상담 일정이 없습니다</div>';
+        return;
+      }
+      const now = Date.now();
+      scheduleList.innerHTML = schedules.map(s => {
+        const alarmSoon = now >= new Date(s.startISO).getTime() - ALARM_BEFORE_START_SEC * 1000
+          && now < new Date(s.startISO).getTime();
+        const active = selectedSchedule && selectedSchedule.pageId === s.pageId;
+        return '<div class="schedule-item' + (active ? ' active' : '') + (alarmSoon ? ' alarm-soon' : '') + '" data-id="' + s.pageId + '">' +
+          '<div class="sched-time">' + s.startLabel + '</div>' +
+          '<div class="sched-title">' + s.title + '</div>' +
+          '<div class="sched-meta">' + (s.caseNo ? '케이스 ' + s.caseNo + ' · ' : '') + (s.type || '') + ' ' + s.durationMin + '분</div>' +
+          '</div>';
+      }).join('');
+      scheduleList.querySelectorAll('.schedule-item').forEach(el => {
+        el.addEventListener('click', () => selectSchedule(el.dataset.id));
+      });
+    }
+
+    function selectSchedule(pageId) {
+      if (isRunning || isPaused) return;
+      selectedSchedule = schedules.find(s => s.pageId === pageId);
+      if (!selectedSchedule) return;
+      startHour.value = pad(selectedSchedule.startHour);
+      startMinute.value = pad(selectedSchedule.startMinute);
+      prepAlarmFired = false;
+      renderSchedules();
+      updateInfoLine();
+      const min = selectedSchedule.durationMin || 40;
+      const label = selectedSchedule.type || '상담';
+      const btn = document.querySelector('.mode-btn[data-min="' + min + '"]');
+      if (btn) beginSession(btn, true);
+      else {
+        modeLabel.textContent = label;
+        statusText.textContent = '유형 버튼을 눌러 시작하세요';
+      }
+    }
+
+    function loadSchedules() {
+      scheduleList.innerHTML = '<div class="empty-msg">일정 불러오는 중...</div>';
+      google.script.run
+        .withSuccessHandler(res => {
+          if (!res.ok) {
+            scheduleList.innerHTML = '<div class="empty-msg">오류: ' + (res.error || '불러오기 실패') + '</div>';
+            return;
+          }
+          schedules = res.schedules || [];
+          renderSchedules();
+        })
+        .withFailureHandler(err => {
+          scheduleList.innerHTML = '<div class="empty-msg">연결 오류: ' + err.message + '</div>';
+        })
+        .getTodaySchedules();
+    }
+
+    function logToSheet(actualEnd) {
+      if (!selectedSchedule && !currentLabel) return;
+      const data = {
+        caseNo: selectedSchedule ? selectedSchedule.caseNo : '',
+        title: selectedSchedule ? selectedSchedule.title : currentLabel,
+        type: currentLabel,
+        scheduledStart: selectedSchedule ? selectedSchedule.startLabel : format24H(getStartDateTime()),
+        actualStart: actualStartTime ? format24H(actualStartTime) : '',
+        actualEnd: format24H(actualEnd),
+        durationMin: actualStartTime ? Math.round((actualEnd - actualStartTime) / 60000) : '',
+        pageId: selectedSchedule ? selectedSchedule.pageId : ''
+      };
+      google.script.run
+        .withSuccessHandler(() => { statusText.textContent = '시트에 기록 완료'; })
+        .withFailureHandler(err => { statusText.textContent = '시트 기록 실패: ' + err.message; })
+        .logConsultation(data);
+    }
+
+    function finishSession() {
+      stopCountdown();
+      isRunning = false;
+      const endTime = new Date();
+      remainingSeconds = 0;
+      updateDisplay();
+      setModeButtonsDisabled(false);
+      setStartTimeDisabled(false);
+      btnPause.disabled = true;
+      btnReset.disabled = false;
+      if (!endAlarmFired) { endAlarmFired = true; playAlarm(); }
+      logToSheet(endTime);
+    }
+
+    function stopCountdown() { clearInterval(countdownId); countdownId = null; }
+
+    function startCountdown() {
+      stopCountdown();
+      isRunning = true; isPaused = false;
+      if (!actualStartTime) actualStartTime = new Date();
+      countdownId = setInterval(tick, 1000);
+    }
+
+    function tick() {
+      if (remainingSeconds <= 0) { finishSession(); return; }
+      remainingSeconds--;
+      updateDisplay();
+      if (remainingSeconds <= 0) finishSession();
+    }
+
+    function beginSession(btn, fromSchedule) {
+      if (isRunning || isPaused) return;
+      modeBtns.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      totalSeconds = parseInt(btn.dataset.min) * 60;
+      remainingSeconds = totalSeconds;
+      currentLabel = btn.dataset.label;
+      endAlarmFired = false;
+      if (!fromSchedule) { selectedSchedule = null; actualStartTime = null; }
+      const prepTarget = getPrepAlarmTime();
+      prepAlarmFired = new Date() >= prepTarget;
+      modeLabel.textContent = selectedSchedule ? selectedSchedule.title : currentLabel;
+      statusText.textContent = '진행 중';
+      updateInfoLine(); updateDisplay();
+      setModeButtonsDisabled(true);
+      setStartTimeDisabled(true);
+      btnPause.disabled = false;
+      btnReset.disabled = false;
+      startCountdown();
+    }
+
+    function pauseSession() {
+      if (!isRunning) return;
+      isRunning = false; isPaused = true;
+      stopCountdown();
+      btnPause.textContent = '재개';
+      statusText.textContent = '일시정지';
+      updateDisplay();
+    }
+
+    function resumeSession() {
+      if (!isPaused) return;
+      isPaused = false; isRunning = true;
+      btnPause.textContent = '일시정지';
+      statusText.textContent = '진행 중';
+      startCountdown();
+      updateDisplay();
+    }
+
+    function resetSession() {
+      stopCountdown();
+      isRunning = false; isPaused = false;
+      prepAlarmFired = false; endAlarmFired = false;
+      totalSeconds = 0; remainingSeconds = 0;
+      actualStartTime = null; selectedSchedule = null;
+      modeBtns.forEach(b => { b.classList.remove('selected'); b.disabled = false; });
+      modeLabel.textContent = '일정을 선택해 주세요';
+      statusText.textContent = '노션 일정 또는 버튼을 눌러 시작';
+      infoLine.textContent = '';
+      timeDisplay.textContent = '--:--';
+      timeDisplay.classList.remove('warning');
+      setStartTimeDisabled(false);
+      btnPause.textContent = '일시정지';
+      btnPause.disabled = true;
+      btnReset.disabled = true;
+      renderSchedules();
+    }
+
+    modeBtns.forEach(btn => btn.addEventListener('click', () => beginSession(btn, false)));
+    btnPause.addEventListener('click', () => { if (isRunning) pauseSession(); else if (isPaused) resumeSession(); });
+    btnReset.addEventListener('click', resetSession);
+    btnSync.addEventListener('click', loadSchedules);
+    startHour.addEventListener('change', () => { clampTimeInputs(); updateInfoLine(); });
+    startMinute.addEventListener('change', () => { clampTimeInputs(); updateInfoLine(); });
+
+    const now = new Date();
+    startHour.value = pad(now.getHours());
+    startMinute.value = pad(now.getMinutes());
+    updateNowTime();
+    setInterval(updateNowTime, 1000);
+    setInterval(checkAlarms, 1000);
+    loadSchedules();
+  </script>
+</body>
+</html>
