@@ -108,10 +108,10 @@
     }
     .axis-title-y {
       writing-mode: vertical-rl;
-      text-orientation: mixed;
-      transform: rotate(180deg);
+      text-orientation: upright;
+      letter-spacing: 2px;
       text-align: center;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--ink);
       font-size: 0.85rem;
       align-self: center;
@@ -156,8 +156,10 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-template-rows: 1fr 1fr;
-      border-radius: 22px;
-      overflow: hidden;
+      gap: 6px;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.55);
+      border-radius: 26px;
       box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1);
     }
     .quad {
@@ -165,16 +167,23 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      border-radius: 20px;
+      overflow: hidden;
       transition: filter 0.3s;
     }
     .quad svg { width: 62%; height: 62%; }
     .quad .quad-name {
       position: absolute;
-      bottom: 8px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: rgba(255,255,255,0.95);
-      text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      bottom: 9px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #6b6480;
+      background: rgba(255, 255, 255, 0.88);
+      padding: 3px 11px;
+      border-radius: 999px;
+      box-shadow: 0 2px 7px rgba(0, 0, 0, 0.12);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
     }
     .q-thunder { background: linear-gradient(135deg, #d1c4e9, #b39ddb); }
     .q-sun     { background: linear-gradient(135deg, #fff3c4, #ffd54f); }
