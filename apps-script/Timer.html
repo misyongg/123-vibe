@@ -31,8 +31,19 @@
       font-variant-numeric: tabular-nums; flex-shrink: 0;
     }
     .now-time span { color: #5a5470; font-weight: 600; }
+    .refresh-link {
+      background: none; border: none; padding: 0;
+      font-size: 0.82rem; color: #9bbde0; cursor: pointer;
+      font-family: inherit;
+    }
+    .refresh-link:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .schedule-list { display: flex; flex-direction: column; gap: 8px; }
+    .schedule-list {
+      display: flex; flex-direction: column; gap: 8px;
+      max-height: min(240px, 35vh);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
     .schedule-item {
       border: 1px solid rgba(180,170,195,0.2); border-radius: 10px;
       padding: 12px; cursor: pointer; background: #fff;
@@ -85,25 +96,19 @@
     .ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     #btnReset { background: #c9a8a8; }
     #btnEnd { background: #9bbde0; }
-
-    .sync-btn {
-      width: 100%; border: none; border-radius: 10px; padding: 10px;
-      font-size: 0.82rem; color: #7b6f8e; background: rgba(255,255,255,0.7);
-      cursor: pointer; margin-bottom: 12px;
-    }
-    .sync-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <div class="app">
     <h1>상담 타이머</h1>
 
-    <button class="sync-btn" id="btnSync">노션 일정 새로고침</button>
-
     <div class="panel">
       <div class="panel-header">
         <span class="panel-title">오늘 노션 일정 (탭하여 시작)</span>
-        <div class="now-time">현 <span id="nowTimeDisplay">--:--:--</span></div>
+        <div class="now-time">
+          <button type="button" class="refresh-link" id="btnSync">새로고침</button>
+          · 현 <span id="nowTimeDisplay">--:--:--</span>
+        </div>
       </div>
       <div class="schedule-list" id="scheduleList">
         <div class="empty-msg">일정 불러오는 중...</div>
