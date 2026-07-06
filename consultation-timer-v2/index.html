@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>상담 타이머</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(165deg, #f7f3f8 0%, #f0f6f2 45%, #f2f5fa 100%);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 72px;
+      color: #4a4a5a;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 420px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      font-size: clamp(1.3rem, 4.5vw, 1.6rem);
+      font-weight: 600;
+      color: #6b6578;
+      margin-bottom: 32px;
+      letter-spacing: 0.08em;
+    }
+
+    .start-time-section {
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    .start-time-input {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(180, 170, 195, 0.25);
+      border-radius: 12px;
+      padding: 10px 16px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .section-label {
+      font-size: clamp(0.78rem, 3vw, 0.88rem);
+      color: #9a94a8;
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+
+    .start-time-input input[type="time"] {
+      border: none;
+      background: transparent;
+      font-size: clamp(1.1rem, 4.2vw, 1.35rem);
+      font-weight: 600;
+      color: #5a5470;
+      text-align: right;
+      outline: none;
+      font-family: inherit;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mode-select {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+      margin-bottom: 28px;
+    }
+
+    .mode-btn {
+      border: 1px solid rgba(180, 170, 195, 0.2);
+      border-radius: 10px;
+      padding: 10px 4px;
+      font-size: clamp(0.72rem, 2.8vw, 0.85rem);
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+      color: #5a5470;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+      white-space: nowrap;
+    }
+
+    .mode-btn:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    .mode-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .mode-btn.selected {
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .mode-btn[data-min="40"] { background: #f5dce6; }
+    .mode-btn[data-min="40"].selected { background: #dfa8bc; }
+    .mode-btn[data-min="45"] { background: #dceee0; }
+    .mode-btn[data-min="45"].selected { background: #9ec9a8; }
+    .mode-btn[data-min="50"] { background: #dce8f5; }
+    .mode-btn[data-min="50"].selected { background: #9bbde0; }
+    .mode-btn[data-min="30"] { background: #f5ead8; }
+    .mode-btn[data-min="30"].selected { background: #dfc49a; }
+
+    .timer-display {
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(180, 170, 195, 0.18);
+      border-radius: 24px;
+      padding: 40px 24px 32px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+      margin-bottom: 24px;
+    }
+
+    .mode-label {
+      font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+      color: #a09aad;
+      margin-bottom: 10px;
+      letter-spacing: 0.02em;
+    }
+
+    .time {
+      font-size: clamp(3.8rem, 17vw, 6rem);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      line-height: 1.1;
+      color: #6a6290;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .time.warning {
+      color: #d48484;
+    }
+
+    .status {
+      font-size: clamp(0.9rem, 3.2vw, 1rem);
+      color: #b0aab8;
+      margin-top: 14px;
+      line-height: 1.5;
+    }
+
+    .info-line {
+      font-size: clamp(0.82rem, 3vw, 0.92rem);
+      color: #c0bac8;
+      margin-top: 6px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .ctrl-btn {
+      flex: 1;
+      border: none;
+      border-radius: 16px;
+      padding: 18px 8px;
+      font-size: clamp(1rem, 4vw, 1.2rem);
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.12s;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+
+    .ctrl-btn:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    .ctrl-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    #btnPause { background: #d4b896; }
+    #btnReset { background: #c9a8a8; }
+
+    .clock-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px;
+      text-align: center;
+      font-size: clamp(1rem, 4vw, 1.15rem);
+      font-weight: 500;
+      color: #8a8498;
+      background: rgba(255, 255, 255, 0.85);
+      border-top: 1px solid rgba(180, 170, 195, 0.15);
+      backdrop-filter: blur(8px);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+    }
+    .back-link {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
+      color: #7b6f8e;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    .back-link:active { transform: scale(0.96); }
+  </style>
+</head>
+<body>
+
+  <a class="back-link" href="../index.html">← 홈으로</a>
+
+  <div class="app">
+    <h1>상담 타이머</h1>
+
+    <div class="start-time-section">
+      <div class="start-time-input">
+        <span class="section-label">상담 시작 시간</span>
+        <input type="time" id="startTimeInput">
+      </div>
+    </div>
+
+    <div class="mode-select">
+      <button class="mode-btn" data-min="40" data-label="초등학생">초 40분</button>
+      <button class="mode-btn" data-min="45" data-label="중학생">중 45분</button>
+      <button class="mode-btn" data-min="50" data-label="고등학생">고 50분</button>
+      <button class="mode-btn" data-min="30" data-label="학부모">학부모 30분</button>
+    </div>
+
+    <div class="timer-display">
+      <div class="mode-label" id="modeLabel">상담을 선택해 주세요</div>
+      <div class="time" id="timeDisplay">--:--</div>
+      <div class="status" id="statusText">초·중·고·학부모 버튼을 눌러 시작</div>
+      <div class="info-line" id="infoLine"></div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn" id="btnPause" disabled>일시정지</button>
+      <button class="ctrl-btn" id="btnReset" disabled>초기화</button>
+    </div>
+  </div>
+
+  <div class="clock-bar" id="clockBar"></div>
+
+  <script>
+    const ALARM_BEFORE_START_SEC = 10 * 60;
+
+    let totalSeconds = 0;
+    let remainingSeconds = 0;
+    let countdownId = null;
+    let clockCheckId = null;
+    let isRunning = false;
+    let isPaused = false;
+    let prepAlarmFired = false;
+    let endAlarmFired = false;
+    let currentLabel = "";
+    let pausedAt = null;
+    let prepAlarmTarget = null;
+
+    const timeDisplay = document.getElementById("timeDisplay");
+    const modeLabel = document.getElementById("modeLabel");
+    const statusText = document.getElementById("statusText");
+    const infoLine = document.getElementById("infoLine");
+    const btnPause = document.getElementById("btnPause");
+    const btnReset = document.getElementById("btnReset");
+    const startTimeInput = document.getElementById("startTimeInput");
+    const clockBar = document.getElementById("clockBar");
+    const modeBtns = document.querySelectorAll(".mode-btn");
+
+    function pad(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function formatDuration(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return pad(m) + ":" + pad(s);
+    }
+
+    function formatClock(date) {
+      const h = date.getHours();
+      const m = date.getMinutes();
+      const s = date.getSeconds();
+      const ampm = h < 12 ? "오전" : "오후";
+      const h12 = h % 12 || 12;
+      return ampm + " " + h12 + ":" + pad(m) + ":" + pad(s);
+    }
+
+    function formatTimeShort(date) {
+      const h = date.getHours();
+      const m = date.getMinutes();
+      const ampm = h < 12 ? "오전" : "오후";
+      const h12 = h % 12 || 12;
+      return ampm + " " + h12 + ":" + pad(m);
+    }
+
+    function getStartDateTime() {
+      const val = startTimeInput.value;
+      if (!val) return null;
+      const [h, m] = val.split(":").map(Number);
+      const now = new Date();
+      const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+      return dt;
+    }
+
+    function getPrepAlarmTime() {
+      const start = getStartDateTime();
+      if (!start) return null;
+      return new Date(start.getTime() - ALARM_BEFORE_START_SEC * 1000);
+    }
+
+    function updateClockBar() {
+      clockBar.textContent = formatClock(new Date());
+    }
+
+    function updateInfoLine() {
+      const start = getStartDateTime();
+      if (!start) {
+        infoLine.textContent = "";
+        return;
+      }
+      const prep = getPrepAlarmTime();
+      const end = new Date(start.getTime() + totalSeconds * 1000);
+      if (totalSeconds > 0) {
+        infoLine.textContent =
+          "알람 " + formatTimeShort(prep) + " · 종료 " + formatTimeShort(end);
+      } else {
+        infoLine.textContent = "알람 " + formatTimeShort(prep);
+      }
+    }
+
+    function updateDisplay() {
+      if (totalSeconds === 0) {
+        timeDisplay.textContent = "--:--";
+        return;
+      }
+      timeDisplay.textContent = formatDuration(remainingSeconds);
+      timeDisplay.classList.toggle("warning", prepAlarmFired && remainingSeconds > 0);
+
+      if (remainingSeconds === 0 && !isRunning) {
+        statusText.textContent = "상담 시간이 끝났습니다";
+      } else if (isPaused) {
+        statusText.textContent = "일시정지";
+      } else if (isRunning) {
+        statusText.textContent = "진행 중";
+      }
+    }
+
+    function setModeButtonsDisabled(disabled) {
+      modeBtns.forEach(b => { b.disabled = disabled; });
+    }
+
+    function playAlarm() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [523, 659, 784, 659, 523];
+        let t = ctx.currentTime;
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = "sine";
+          gain.gain.setValueAtTime(0.28, t + i * 0.25);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.25 + 0.22);
+          osc.start(t + i * 0.25);
+          osc.stop(t + i * 0.25 + 0.25);
+        });
+      } catch (e) {}
+
+      if (navigator.vibrate) {
+        navigator.vibrate([300, 150, 300, 150, 300]);
+      }
+    }
+
+    function checkPrepAlarm() {
+      if (prepAlarmFired) return;
+      const target = getPrepAlarmTime();
+      if (!target) return;
+      if (new Date() >= target) {
+        prepAlarmFired = true;
+        playAlarm();
+        if (isRunning || isPaused) {
+          statusText.textContent = "상담 시작 10분 전 알람";
+          timeDisplay.classList.add("warning");
+        }
+      }
+    }
+
+    function tick() {
+      if (remainingSeconds <= 0) {
+        finishSession();
+        return;
+      }
+      remainingSeconds--;
+      updateDisplay();
+      if (remainingSeconds <= 0) {
+        finishSession();
+      }
+    }
+
+    function finishSession() {
+      stopCountdown();
+      isRunning = false;
+      remainingSeconds = 0;
+      updateDisplay();
+      setModeButtonsDisabled(false);
+      btnPause.disabled = true;
+      btnReset.disabled = false;
+      startTimeInput.disabled = false;
+      if (!endAlarmFired) {
+        endAlarmFired = true;
+        playAlarm();
+      }
+    }
+
+    function stopCountdown() {
+      clearInterval(countdownId);
+      countdownId = null;
+    }
+
+    function startCountdown() {
+      stopCountdown();
+      isRunning = true;
+      isPaused = false;
+      countdownId = setInterval(tick, 1000);
+    }
+
+    function beginSession(btn) {
+      if (isRunning || isPaused) return;
+
+      modeBtns.forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+
+      totalSeconds = parseInt(btn.dataset.min) * 60;
+      remainingSeconds = totalSeconds;
+      currentLabel = btn.dataset.label;
+      endAlarmFired = false;
+      pausedAt = null;
+
+      const prepTarget = getPrepAlarmTime();
+      prepAlarmFired = prepTarget ? new Date() >= prepTarget : true;
+
+      modeLabel.textContent = currentLabel;
+      statusText.textContent = "진행 중";
+      updateInfoLine();
+      updateDisplay();
+
+      setModeButtonsDisabled(true);
+      startTimeInput.disabled = true;
+      btnPause.disabled = false;
+      btnReset.disabled = false;
+
+      startCountdown();
+    }
+
+    function pauseSession() {
+      if (!isRunning) return;
+      isRunning = false;
+      isPaused = true;
+      pausedAt = new Date();
+      stopCountdown();
+      btnPause.textContent = "재개";
+      statusText.textContent = "일시정지";
+      updateDisplay();
+    }
+
+    function resumeSession() {
+      if (!isPaused) return;
+      isPaused = false;
+      isRunning = true;
+      pausedAt = null;
+      btnPause.textContent = "일시정지";
+      statusText.textContent = "진행 중";
+      startCountdown();
+      updateDisplay();
+    }
+
+    function resetSession() {
+      stopCountdown();
+      isRunning = false;
+      isPaused = false;
+      prepAlarmFired = false;
+      endAlarmFired = false;
+      totalSeconds = 0;
+      remainingSeconds = 0;
+      pausedAt = null;
+
+      modeBtns.forEach(b => {
+        b.classList.remove("selected");
+        b.disabled = false;
+      });
+
+      modeLabel.textContent = "상담을 선택해 주세요";
+      statusText.textContent = "초·중·고·학부모 버튼을 눌러 시작";
+      infoLine.textContent = "";
+      timeDisplay.textContent = "--:--";
+      timeDisplay.classList.remove("warning");
+
+      startTimeInput.disabled = false;
+      btnPause.textContent = "일시정지";
+      btnPause.disabled = true;
+      btnReset.disabled = true;
+    }
+
+    modeBtns.forEach(btn => {
+      btn.addEventListener("click", () => beginSession(btn));
+    });
+
+    btnPause.addEventListener("click", () => {
+      if (isRunning) pauseSession();
+      else if (isPaused) resumeSession();
+    });
+
+    btnReset.addEventListener("click", resetSession);
+
+    startTimeInput.addEventListener("change", updateInfoLine);
+
+    const now = new Date();
+    startTimeInput.value = pad(now.getHours()) + ":" + pad(now.getMinutes());
+
+    updateClockBar();
+    setInterval(updateClockBar, 1000);
+    clockCheckId = setInterval(checkPrepAlarm, 1000);
+    updateInfoLine();
+  </script>
+</body>
+</html>
