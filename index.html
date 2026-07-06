@@ -49,12 +49,11 @@
     .start-time-input {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
       background: rgba(255, 255, 255, 0.75);
       border: 1px solid rgba(180, 170, 195, 0.25);
       border-radius: 12px;
-      padding: 10px 16px;
+      padding: 10px 14px;
       box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
     }
 
@@ -66,17 +65,39 @@
       flex-shrink: 0;
     }
 
+    .time-values {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+      min-width: 0;
+    }
+
     .start-time-input input[type="time"] {
       border: none;
       background: transparent;
-      font-size: clamp(1.1rem, 4.2vw, 1.35rem);
+      font-size: clamp(1rem, 3.8vw, 1.25rem);
       font-weight: 600;
       color: #5a5470;
-      text-align: right;
+      text-align: center;
       outline: none;
       font-family: inherit;
-      flex: 1;
-      min-width: 0;
+      width: 5.2em;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .now-time {
+      font-size: clamp(0.78rem, 3vw, 0.88rem);
+      color: #b0aab8;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      flex-shrink: 0;
+    }
+
+    .now-time span {
+      color: #8a8498;
+      font-weight: 600;
     }
 
     .mode-select {
@@ -226,7 +247,10 @@
     <div class="start-time-section">
       <div class="start-time-input">
         <span class="section-label">상담 시작 시간</span>
-        <input type="time" id="startTimeInput">
+        <div class="time-values">
+          <input type="time" id="startTimeInput">
+          <div class="now-time">현 <span id="nowTimeDisplay">--:--:--</span></div>
+        </div>
       </div>
     </div>
 
@@ -274,6 +298,7 @@
     const btnPause = document.getElementById("btnPause");
     const btnReset = document.getElementById("btnReset");
     const startTimeInput = document.getElementById("startTimeInput");
+    const nowTimeDisplay = document.getElementById("nowTimeDisplay");
     const clockBar = document.getElementById("clockBar");
     const modeBtns = document.querySelectorAll(".mode-btn");
 
@@ -285,6 +310,14 @@
       const m = Math.floor(sec / 60);
       const s = sec % 60;
       return pad(m) + ":" + pad(s);
+    }
+
+    function format24H(date, withSeconds) {
+      const h = date.getHours();
+      const m = date.getMinutes();
+      if (!withSeconds) return pad(h) + ":" + pad(m);
+      const s = date.getSeconds();
+      return pad(h) + ":" + pad(m) + ":" + pad(s);
     }
 
     function formatClock(date) {
@@ -320,7 +353,9 @@
     }
 
     function updateClockBar() {
-      clockBar.textContent = formatClock(new Date());
+      const now = new Date();
+      clockBar.textContent = formatClock(now);
+      nowTimeDisplay.textContent = format24H(now, true);
     }
 
     function updateInfoLine() {
