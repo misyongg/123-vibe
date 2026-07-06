@@ -10,8 +10,9 @@ var CONFIG = {
   PROP_DATE: 'Date',           // 일정 날짜 속성명 (예: Date, 일정, 날짜)
   PROP_CASE: '케이스번호',      // 상담케이스 번호 속성명
   PROP_TYPE: '유형',           // (선택) 초등/중등/고등/학부모
+  PROP_CATEGORY: '일정 구분',   // 일정 구분 속성명
+  CATEGORY_FILTER: '상담',      // 일정 구분에 포함된 값만 표시 (비우면 전체)
   SHEET_NAME: '상담기록',
-  TITLE_FILTER: '상담',        // 제목에 포함된 일정만 표시 (비우면 전체)
 };
 
 var DURATION_MAP = {
@@ -84,7 +85,7 @@ function getTodaySchedules() {
   (body.results || []).forEach(function(page) {
     var item = parsePage_(page);
     if (!item) return;
-    if (CONFIG.TITLE_FILTER && item.title.indexOf(CONFIG.TITLE_FILTER) === -1) return;
+    if (CONFIG.CATEGORY_FILTER && item.category.indexOf(CONFIG.CATEGORY_FILTER) === -1) return;
     schedules.push(item);
   });
 
@@ -165,6 +166,7 @@ function parsePage_(page) {
   var startDate = new Date(dateStart);
   var caseNo = getTextProp_(props, CONFIG.PROP_CASE);
   var type = getSelectProp_(props, CONFIG.PROP_TYPE) || guessType_(title);
+  var category = getSelectProp_(props, CONFIG.PROP_CATEGORY);
   var durationMin = DURATION_MAP[type] || 40;
 
   return {
@@ -172,6 +174,7 @@ function parsePage_(page) {
     title: title,
     caseNo: caseNo,
     type: type,
+    category: category,
     durationMin: durationMin,
     startISO: dateStart,
     startHour: startDate.getHours(),
