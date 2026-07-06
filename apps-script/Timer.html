@@ -40,7 +40,6 @@
     }
     .schedule-item:active { transform: scale(0.98); }
     .schedule-item.active { border-color: #9bbde0; background: #f2f7fc; }
-    .schedule-item.alarm-soon { border-color: #e0a8a8; background: #fdf5f5; }
     .sched-time { font-size: 1.1rem; font-weight: 700; color: #5a5470; }
     .sched-title { font-size: 0.9rem; color: #6b6578; margin-top: 2px; }
     .sched-meta { font-size: 0.78rem; color: #b0aab8; margin-top: 4px; }
@@ -131,8 +130,6 @@
   </div>
 
   <script>
-    const ALARM_BEFORE_START_SEC = 10 * 60;
-
     let schedules = [];
     let selectedSchedule = null;
     let sessionStartTime = null;
@@ -143,7 +140,6 @@
     let isPaused = false;
     let zeroAlarmFired = false;
     let currentLabel = '';
-    let firedAlarms = {};
 
     const scheduleList = document.getElementById('scheduleList');
     const timerDisplay = document.getElementById('timerDisplay');
@@ -241,29 +237,14 @@
       if (navigator.vibrate) navigator.vibrate([300,150,300,150,300]);
     }
 
-    function checkAlarms() {
-      const now = Date.now();
-      schedules.forEach(s => {
-        const alarmTime = new Date(s.startISO).getTime() - ALARM_BEFORE_START_SEC * 1000;
-        if (!firedAlarms[s.pageId] && now >= alarmTime) {
-          firedAlarms[s.pageId] = true;
-          playAlarm();
-          if (!isActive()) statusText.textContent = s.startLabel + ' 상담 10분 전';
-        }
-      });
-    }
-
     function renderSchedules() {
       if (!schedules.length) {
         scheduleList.innerHTML = '<div class="empty-msg">오늘 상담 일정이 없습니다</div>';
         return;
       }
-      const now = Date.now();
       scheduleList.innerHTML = schedules.map(s => {
-        const alarmSoon = now >= new Date(s.startISO).getTime() - ALARM_BEFORE_START_SEC * 1000
-          && now < new Date(s.startISO).getTime();
         const active = selectedSchedule && selectedSchedule.pageId === s.pageId;
-        return '<div class="schedule-item' + (active ? ' active' : '') + (alarmSoon ? ' alarm-soon' : '') + '" data-id="' + s.pageId + '">' +
+        return '<div class="schedule-item' + (active ? ' active' : '') + '" data-id="' + s.pageId + '">' +
           '<div class="sched-time">' + s.startLabel + '</div>' +
           '<div class="sched-title">' + s.title + '</div>' +
           '<div class="sched-meta">' + (s.caseNo ? '케이스 ' + s.caseNo + ' · ' : '') + (s.type || '') + ' ' + s.durationMin + '분</div>' +
@@ -419,7 +400,6 @@
 
     updateNowTime();
     setInterval(updateNowTime, 1000);
-    setInterval(checkAlarms, 1000);
     updateControls();
     loadSchedules();
   </script>
