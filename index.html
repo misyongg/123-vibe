@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>상담 타이머</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: linear-gradient(160deg, #fdf6f0 0%, #f0f4ff 50%, #f5f0ff 100%);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px 32px;
+      color: #4a4a6a;
+    }
+
+    h1 {
+      font-size: clamp(1.4rem, 5vw, 2rem);
+      font-weight: 700;
+      color: #7b8cde;
+      margin-bottom: 24px;
+      letter-spacing: -0.02em;
+    }
+
+    /* 시간 선택 버튼 */
+    .presets {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 32px;
+    }
+
+    .preset-btn {
+      padding: 18px 12px;
+      border: none;
+      border-radius: 20px;
+      font-size: clamp(1.1rem, 4vw, 1.35rem);
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .preset-btn:active {
+      transform: scale(0.96);
+    }
+
+    .preset-btn.selected {
+      box-shadow: 0 0 0 3px #fff, 0 0 0 6px currentColor;
+      transform: scale(1.02);
+    }
+
+    .btn-elem  { background: #ffd6e0; color: #c0607a; }
+    .btn-mid   { background: #d4f0e8; color: #3d8a72; }
+    .btn-high  { background: #dce8ff; color: #4a6fc0; }
+    .btn-parent{ background: #fff0d4; color: #b08030; }
+
+    /* 타이머 표시 */
+    .timer-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 480px;
+      margin: 16px 0 32px;
+    }
+
+    .label {
+      font-size: clamp(1rem, 3.5vw, 1.25rem);
+      color: #9a9ab8;
+      margin-bottom: 8px;
+    }
+
+    .timer {
+      font-size: clamp(4.5rem, 22vw, 7rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      line-height: 1;
+      color: #5a5a8a;
+      font-variant-numeric: tabular-nums;
+      transition: color 0.3s;
+    }
+
+    .timer.warning {
+      color: #e07050;
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    .timer.done {
+      color: #c05050;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.65; }
+    }
+
+    .status {
+      margin-top: 16px;
+      font-size: clamp(0.95rem, 3.5vw, 1.15rem);
+      color: #b0b0cc;
+      min-height: 1.5em;
+    }
+
+    /* 컨트롤 버튼 */
+    .controls {
+      display: flex;
+      gap: 14px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .ctrl-btn {
+      flex: 1;
+      padding: 20px 8px;
+      border: none;
+      border-radius: 18px;
+      font-size: clamp(1.1rem, 4.5vw, 1.4rem);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .ctrl-btn:active { transform: scale(0.95); }
+    .ctrl-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .btn-start  { background: #b8e0d2; color: #2d6e58; }
+    .btn-pause  { background: #ffe0b8; color: #a06020; }
+    .btn-reset  { background: #e8d8f8; color: #7050a0; }
+
+    /* 알람 배너 */
+    .alarm-banner {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: #ffb8a8;
+      color: #7a2010;
+      text-align: center;
+      padding: 16px;
+      font-size: clamp(1rem, 4vw, 1.3rem);
+      font-weight: 700;
+      z-index: 100;
+      animation: slideDown 0.4s ease;
+    }
+
+    .alarm-banner.show { display: block; }
+
+    @keyframes slideDown {
+      from { transform: translateY(-100%); }
+      to   { transform: translateY(0); }
+    }
+
+    /* 알람 안내 */
+    .alarm-note {
+      margin-top: 24px;
+      font-size: clamp(0.85rem, 3vw, 1rem);
+      color: #b8b8d0;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="alarm-banner" id="alarmBanner">
+    ⏰ 상담 종료 10분 전입니다!
+  </div>
+
+  <h1>📋 상담 타이머</h1>
+
+  <!-- 시간 선택 -->
+  <div class="presets">
+    <button class="preset-btn btn-elem"   data-min="40" onclick="selectPreset(this)">초등 40분</button>
+    <button class="preset-btn btn-mid"    data-min="45" onclick="selectPreset(this)">중등 45분</button>
+    <button class="preset-btn btn-high"   data-min="50" onclick="selectPreset(this)">고등 50분</button>
+    <button class="preset-btn btn-parent" data-min="30" onclick="selectPreset(this)">학부모 30분</button>
+  </div>
+
+  <!-- 타이머 -->
+  <div class="timer-wrap">
+    <div class="label" id="timerLabel">시간을 선택하세요</div>
+    <div class="timer" id="timerDisplay">00:00</div>
+    <div class="status" id="statusText"></div>
+  </div>
+
+  <!-- 컨트롤 -->
+  <div class="controls">
+    <button class="ctrl-btn btn-start" id="btnStart" onclick="startTimer()" disabled>▶ 시작</button>
+    <button class="ctrl-btn btn-pause" id="btnPause" onclick="pauseTimer()" disabled>⏸ 일시정지</button>
+    <button class="ctrl-btn btn-reset" id="btnReset" onclick="resetTimer()" disabled>↺ 초기화</button>
+  </div>
+
+  <p class="alarm-note">🔔 종료 10분 전에 알람이 울립니다</p>
+
+  <script>
+  // ── 상태 변수 ──
+  let totalSeconds = 0;       // 선택된 전체 시간(초)
+  let remaining = 0;          // 남은 시간(초)
+  let intervalId = null;      // setInterval ID
+  let isRunning = false;
+  let alarmFired = false;     // 10분 전 알람 발동 여부
+  let selectedLabel = "";
+
+  // ── 시간 선택 ──
+  function selectPreset(btn) {
+    if (isRunning) return; // 실행 중에는 변경 불가
+
+    document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
+
+    const min = parseInt(btn.dataset.min);
+    totalSeconds = min * 60;
+    remaining = totalSeconds;
+    selectedLabel = btn.textContent.trim();
+    alarmFired = false;
+
+    updateDisplay();
+    document.getElementById("timerLabel").textContent = selectedLabel;
+    document.getElementById("statusText").textContent = "";
+    document.getElementById("btnStart").disabled = false;
+    document.getElementById("btnReset").disabled = false;
+    document.getElementById("btnPause").disabled = true;
+    hideAlarm();
+  }
+
+  // ── 화면 갱신 ──
+  function updateDisplay() {
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    const display = document.getElementById("timerDisplay");
+    display.textContent =
+      String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+
+    display.classList.remove("warning", "done");
+    if (remaining === 0 && totalSeconds > 0) {
+      display.classList.add("done");
+    } else if (remaining > 0 && remaining <= 600) {
+      display.classList.add("warning");
+    }
+  }
+
+  // ── 시작 ──
+  function startTimer() {
+    if (totalSeconds === 0 || isRunning) return;
+    isRunning = true;
+    document.getElementById("btnStart").disabled = true;
+    document.getElementById("btnPause").disabled = false;
+    document.getElementById("statusText").textContent = "진행 중...";
+
+    intervalId = setInterval(tick, 1000);
+  }
+
+  // ── 1초마다 실행 ──
+  function tick() {
+    if (remaining <= 0) {
+      finishTimer();
+      return;
+    }
+    remaining--;
+    updateDisplay();
+
+    // 10분(600초) 전 알람
+    if (remaining === 600 && !alarmFired) {
+      alarmFired = true;
+      showAlarm();
+      playAlarmSound();
+      vibrate();
+    }
+
+    if (remaining === 0) {
+      finishTimer();
+    }
+  }
+
+  // ── 종료 ──
+  function finishTimer() {
+    clearInterval(intervalId);
+    isRunning = false;
+    document.getElementById("btnStart").disabled = true;
+    document.getElementById("btnPause").disabled = true;
+    document.getElementById("statusText").textContent = "⏰ 상담 시간이 끝났습니다!";
+    playAlarmSound();
+    vibrate();
+  }
+
+  // ── 일시정지 ──
+  function pauseTimer() {
+    if (!isRunning) return;
+    clearInterval(intervalId);
+    isRunning = false;
+    document.getElementById("btnStart").disabled = false;
+    document.getElementById("btnStart").textContent = "▶ 재개";
+    document.getElementById("btnPause").disabled = true;
+    document.getElementById("statusText").textContent = "일시정지";
+  }
+
+  // ── 초기화 ──
+  function resetTimer() {
+    clearInterval(intervalId);
+    isRunning = false;
+    remaining = totalSeconds;
+    alarmFired = false;
+    updateDisplay();
+    hideAlarm();
+
+    document.getElementById("btnStart").disabled = totalSeconds === 0;
+    document.getElementById("btnStart").textContent = "▶ 시작";
+    document.getElementById("btnPause").disabled = true;
+    document.getElementById("btnReset").disabled = totalSeconds === 0;
+    document.getElementById("statusText").textContent = totalSeconds > 0 ? "" : "";
+  }
+
+  // ── 알람 배너 ──
+  function showAlarm() {
+    document.getElementById("alarmBanner").classList.add("show");
+  }
+  function hideAlarm() {
+    document.getElementById("alarmBanner").classList.remove("show");
+  }
+
+  // ── 알람 소리 (Web Audio API) ──
+  function playAlarmSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const notes = [523, 659, 784, 659]; // 도-미-솔-미
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = "sine";
+        const t = ctx.currentTime + i * 0.3;
+        gain.gain.setValueAtTime(0.4, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+        osc.start(t);
+        osc.stop(t + 0.3);
+      });
+    } catch(e) { /* 소리 재생 실패 시 무시 */ }
+  }
+
+  // ── 진동 (모바일) ──
+  function vibrate() {
+    if (navigator.vibrate) {
+      navigator.vibrate([300, 100, 300, 100, 300]);
+    }
+  }
+  </script>
+</body>
+</html>
