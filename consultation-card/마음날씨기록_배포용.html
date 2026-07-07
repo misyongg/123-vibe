@@ -33,6 +33,26 @@
       padding: 6px;
       border-radius: 18px;
     }
+    .top-actions {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+    .btn-download {
+      border: none;
+      border-radius: 14px;
+      padding: 10px 16px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #7e57c2;
+      background: rgba(255,255,255,0.9);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .btn-download:active { transform: scale(0.96); }
     .tab {
       flex: 1;
       border: none;
@@ -431,6 +451,10 @@
       <button type="button" class="btn-confirm" id="nicknameConfirm">시작하기 ✨</button>
       <p class="hint">2~12글자 · 한글·영문·숫자</p>
     </div>
+  </div>
+
+  <div class="top-actions">
+    <a class="btn-download" href="마음날씨기록_배포용.html" download="마음날씨기록_배포용.html">⬇️ HTML 파일 저장</a>
   </div>
 
   <div class="tab-bar">
