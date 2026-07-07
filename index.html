@@ -108,6 +108,43 @@
       border-color: #81c784;
     }
 
+    .project-card.deploy {
+      border-color: #b3e5fc;
+      cursor: default;
+    }
+    .project-card.deploy:hover {
+      transform: none;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      margin-top: 4px;
+    }
+    .card-btn {
+      flex: 1;
+      display: block;
+      text-align: center;
+      padding: 12px 10px;
+      border-radius: 14px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.12s, opacity 0.15s;
+    }
+    .card-btn:active { transform: scale(0.96); }
+    .card-btn.open {
+      background: linear-gradient(135deg, #ce93d8, #b39ddb);
+      color: #fff;
+    }
+    .card-btn.download {
+      background: rgba(255, 255, 255, 0.95);
+      color: #7e57c2;
+      border: 2px solid #d1c4e9;
+    }
+
     footer {
       margin-top: auto;
       padding-top: 48px;
@@ -126,8 +163,18 @@
     <a class="project-card card" href="consultation-card/">
       <span class="icon">🌈</span>
       <span class="title">오늘의 마음날씨</span>
-      <span class="desc">상담실 체크인 활동 · 감정 파라미터로 마음 살피기</span>
+      <span class="desc">상담실 체크인 · Google 시트 연동 · 선생님용</span>
     </a>
+
+    <div class="project-card deploy">
+      <span class="icon">📱</span>
+      <span class="title">마음날씨 배포용</span>
+      <span class="desc">시트 연동 없음 · HTML 1개 · 학생·다른 센터 배포용</span>
+      <div class="card-actions">
+        <a class="card-btn open" href="consultation-card/%EB%A7%88%EC%9D%8C%EB%82%A0%EC%94%A8%EA%B8%B0%EB%A1%9D_%EB%B0%B0%ED%8F%AC%EC%9A%A9.html">열기</a>
+        <a class="card-btn download" href="consultation-card/%EB%A7%88%EC%9D%8C%EB%82%A0%EC%94%A8%EA%B8%B0%EB%A1%9D_%EB%B0%B0%ED%8F%AC%EC%9A%A9.html" download="마음날씨기록_배포용.html">⬇️ 다운로드</a>
+      </div>
+    </div>
 
     <a class="project-card timer" href="https://script.google.com/macros/s/AKfycbyy2F2mNCKxWDsZb_ePLzbt2Ol0xKTxPQ0YgNWjbaJuN9FtIMRxbwC51Ktapy0jotJ69Q/exec">
       <span class="icon">🕐</span>
