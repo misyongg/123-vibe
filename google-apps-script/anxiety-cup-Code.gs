@@ -3,10 +3,16 @@
  * - 학생 쪽지 저장 (doPost, recordType: note)
  * - 상담 연동 기록 저장 (doPost, recordType: session)
  * - 쪽지 조회 (doGet, ?action=get[&nickname=별칭])
+ *
+ * ⚠️ 코드 수정 후 Apps Script에서 반드시 「새 배포」하세요.
  */
 
 var NOTE_SHEET = "불안종이컵기록";
 var SESSION_SHEET = "상담연동기록";
+
+function norm_(s) {
+  return String(s || "").replace(/\s+/g, " ").trim();
+}
 
 function getOrCreateNoteSheet_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -38,6 +44,9 @@ function getOrCreateSessionSheet_() {
 
 function doPost(e) {
   try {
+    if (!e || !e.postData || !e.postData.contents) {
+      return jsonOut_({ ok: false, error: "empty body" });
+    }
     var data = JSON.parse(e.postData.contents);
     var type = data.recordType || "note";
 
@@ -54,19 +63,19 @@ function saveNote_(data) {
   var sheet = getOrCreateNoteSheet_();
   sheet.appendRow([
     data.timestamp || new Date().toLocaleString("ko-KR"),
-    data.nickname || "",
-    data.emotion || "",
-    data.thought || "",
-    data.situation || ""
+    norm_(data.nickname),
+    norm_(data.emotion),
+    norm_(data.thought),
+    norm_(data.situation)
   ]);
   return jsonOut_({ ok: true, saved: "note" });
 }
 
 function saveSession_(data) {
   var sheet = getOrCreateSessionSheet_();
-  var nickname = data.nickname || "";
+  var nickname = norm_(data.nickname);
   if (!nickname && data.nicknames && data.nicknames.length) {
-    nickname = data.nicknames.join(", ");
+    nickname = data.nicknames.map(norm_).join(", ");
   }
 
   sheet.appendRow([
@@ -76,7 +85,7 @@ function saveSession_(data) {
     JSON.stringify(data.canNotes || []),
     JSON.stringify(data.cantNotes || []),
     data.dbtTechnique || "",
-    data.observationMemo || ""
+    norm_(data.observationMemo)
   ]);
 
   return jsonOut_({ ok: true, saved: "session" });
@@ -97,7 +106,7 @@ function getNotes_(e) {
     var sheet = getOrCreateNoteSheet_();
     var rows = sheet.getDataRange().getValues();
     var notes = [];
-    var filterNick = e.parameter.nickname || "";
+    var filterNick = norm_(e.parameter.nickname || "");
 
     for (var i = 1; i < rows.length; i++) {
       var row = rows[i];
@@ -105,10 +114,10 @@ function getNotes_(e) {
 
       var note = {
         timestamp: String(row[0] || ""),
-        nickname: String(row[1] || ""),
-        emotion: String(row[2] || ""),
-        thought: String(row[3] || ""),
-        situation: String(row[4] || "")
+        nickname: norm_(row[1]),
+        emotion: norm_(row[2]),
+        thought: norm_(row[3]),
+        situation: norm_(row[4])
       };
 
       if (filterNick && note.nickname !== filterNick) continue;

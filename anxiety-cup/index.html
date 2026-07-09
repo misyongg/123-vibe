@@ -328,31 +328,19 @@ input[type="text"]:focus, textarea:focus {
             <stop offset="0%" stop-color="#9a8b74"/>
             <stop offset="100%" stop-color="#ddd4c4"/>
           </linearGradient>
-          <linearGradient id="cupRim" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#fffdf8"/>
-            <stop offset="100%" stop-color="#d8cdb8"/>
-          </linearGradient>
         </defs>
-
         <ellipse cx="100" cy="252" rx="54" ry="8" fill="rgba(45,38,28,0.11)"/>
         <ellipse cx="100" cy="242" rx="42" ry="6.5" fill="#d2c7b2" stroke="#b8ad98" stroke-width="0.8"/>
-
-        <path d="M30 66 L52 238 Q56 246 100 246 Q144 246 148 238 L170 66 Z"
+        <path d="M28 64 C28 46, 46 36, 100 36 C154 36, 172 46, 172 64 L148 238 Q144 248 100 248 Q56 248 52 238 Z"
               fill="url(#cupBody)" stroke="#b5a88e" stroke-width="1.1" stroke-linejoin="round"/>
-
-        <path d="M30 66 L52 238 Q56 246 72 246 L58 66 Z" fill="#000" opacity="0.04"/>
-
-        <ellipse cx="100" cy="70" rx="66" ry="14.5" fill="url(#cupInner)"/>
-
-        <ellipse cx="100" cy="48" rx="74" ry="17" fill="url(#cupRim)" stroke="#d0c4ae" stroke-width="0.8"/>
-        <ellipse cx="100" cy="44" rx="74" ry="15" fill="none" stroke="#fffdf9" stroke-width="3"/>
-        <ellipse cx="100" cy="52" rx="68" ry="9" fill="none" stroke="#c4b8a2" stroke-width="1.2" opacity="0.55"/>
-
-        <line x1="100" y1="76" x2="100" y2="232" stroke="#c8bba4" stroke-width="0.7" opacity="0.35"/>
-        <path d="M64 72 Q58 155 68 228" fill="none" stroke="#c8bba4" stroke-width="0.55" opacity="0.22"/>
-        <path d="M136 72 Q142 155 132 228" fill="none" stroke="#c8bba4" stroke-width="0.55" opacity="0.22"/>
-        <path d="M42 82 Q34 160 48 218" fill="none" stroke="#fff" stroke-width="3" opacity="0.38" stroke-linecap="round"/>
-
+        <path d="M28 64 L52 238 Q56 248 76 248 L60 64 Z" fill="#000" opacity="0.05"/>
+        <ellipse cx="100" cy="58" rx="64" ry="13" fill="url(#cupInner)"/>
+        <path d="M28 64 C28 48, 46 38, 100 38 C154 38, 172 48, 172 64" fill="none" stroke="#fffef9" stroke-width="3" stroke-linecap="round"/>
+        <path d="M30 62 C30 52, 48 46, 100 46 C152 46, 170 52, 170 62" fill="none" stroke="#c9bcaa" stroke-width="1" opacity="0.45"/>
+        <line x1="100" y1="72" x2="100" y2="232" stroke="#c8bba4" stroke-width="0.7" opacity="0.32"/>
+        <path d="M64 70 Q58 155 68 228" fill="none" stroke="#c8bba4" stroke-width="0.55" opacity="0.2"/>
+        <path d="M136 70 Q142 155 132 228" fill="none" stroke="#c8bba4" stroke-width="0.55" opacity="0.2"/>
+        <path d="M40 80 Q32 158 46 218" fill="none" stroke="#fff" stroke-width="3" opacity="0.36" stroke-linecap="round"/>
         <text x="100" y="168" text-anchor="middle" font-size="10" fill="#a89878" opacity="0.5" font-family="sans-serif">불안 종이컵</text>
       </svg>
       <div class="notes-in-cup" id="notesStack"></div>
@@ -521,12 +509,7 @@ async function handleSubmit() {
   let syncMsg = "";
   if (SCRIPT_URL) {
     try {
-      await fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload)
-      });
+      await postToSheet(payload);
       syncMsg = "ok";
     } catch (e) {
       console.warn("전송 오류:", e);
@@ -622,6 +605,15 @@ function setMsg(text, type) {
   const el = document.getElementById("statusMsg");
   el.textContent = text;
   el.className = "status-msg " + type;
+}
+
+async function postToSheet(payload) {
+  await fetch(SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  });
 }
 </script>
 </body>
