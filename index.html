@@ -152,6 +152,15 @@
       color: #7e57c2;
       border: 2px solid #d1c4e9;
     }
+    .card-btn.cup-student {
+      background: linear-gradient(135deg, #a5b4fc, #6c7ef0);
+      color: #fff;
+    }
+    .card-btn.cup-teacher {
+      background: rgba(255, 255, 255, 0.95);
+      color: #5568e0;
+      border: 2px solid #c7d2fe;
+    }
 
     footer {
       margin-top: auto;
@@ -174,11 +183,15 @@
       <span class="desc">상담실 체크인 · Google 시트 연동 · 선생님용</span>
     </a>
 
-    <a class="project-card cup" href="anxiety-cup/">
+    <div class="project-card deploy cup">
       <span class="icon">🫙</span>
       <span class="title">불안 종이컵</span>
       <span class="desc">학생 쪽지 적기 · 선생님 파도타기 · Google 시트 연동</span>
-    </a>
+      <div class="card-actions">
+        <a class="card-btn cup-student" href="anxiety-cup/">📝 학생용</a>
+        <a class="card-btn cup-teacher" href="anxiety-cup/%EB%B6%88%EC%95%88%EC%9D%98%ED%8C%8C%EB%8F%84%ED%83%80%EA%B8%B0.html">🌊 선생님용</a>
+      </div>
+    </div>
 
     <div class="project-card deploy">
       <span class="icon">📱</span>

@@ -25,8 +25,34 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 36px 16px 80px;
+  padding: 20px 16px 80px;
   color: var(--text);
+}
+
+.top-bar {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 8px;
+}
+.nav-link {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--shadow);
+  white-space: nowrap;
+}
+.nav-link:active { transform: scale(0.96); }
+.nav-link.teacher {
+  color: var(--accent);
+  border: 1.5px solid #c7d2fe;
 }
 
 .app-title {
@@ -224,6 +250,11 @@ input[type="text"]:focus, textarea:focus {
 </style>
 </head>
 <body>
+
+<nav class="top-bar">
+  <a class="nav-link" href="../index.html">← 프로젝트 홈</a>
+  <a class="nav-link teacher" href="불안의파도타기.html">🌊 선생님용</a>
+</nav>
 
 <div class="app-title">🫙 불안 종이컵</div>
 <p class="app-sub">
