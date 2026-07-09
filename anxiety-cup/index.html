@@ -34,7 +34,7 @@ body {
   width: 100%;
   max-width: 420px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 16px;
   gap: 8px;
@@ -132,6 +132,13 @@ input[type="text"]:focus, textarea:focus {
   width: 220px;
   height: 260px;
 }
+.cup-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
+}
 .cup-note-count {
   font-size: 0.82rem;
   color: var(--muted);
@@ -140,42 +147,20 @@ input[type="text"]:focus, textarea:focus {
 }
 .notes-in-cup {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 44px;
+  left: 54px;
+  width: 112px;
+  height: 172px;
   z-index: 2;
   pointer-events: none;
+  overflow: hidden;
 }
 .mini-note {
   position: absolute;
-  left: 50%;
-  margin-left: -38px;
-  width: 76px;
-  height: 42px;
-  background: linear-gradient(135deg, #fff9e6 0%, #ffeebb 100%);
-  border: 1.5px solid #f0c040;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(100, 150, 200, 0.2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 6px 8px;
-}
-.mini-note-line {
-  display: block;
-  width: 52px;
-  height: 0;
-  border-top: 1.3px dashed rgba(240, 160, 32, 0.55);
-}
-.mini-note-txt {
-  font-size: 9px;
-  color: #b07800;
-  font-family: sans-serif;
-  line-height: 1.2;
-  text-align: center;
+  width: 56px;
+  height: 44px;
+  background: center/contain no-repeat url("../emotion-hotel/paper.png");
+  filter: drop-shadow(0 2px 3px rgba(90, 70, 20, 0.22));
 }
 
 @keyframes foldAndDrop {
@@ -188,15 +173,15 @@ input[type="text"]:focus, textarea:focus {
 .fly-note {
   position: fixed;
   z-index: 9999;
-  background: var(--paper);
-  border: 2px solid #e8d06a;
+  background: linear-gradient(135deg, #fff9e6, #ffeebb);
+  border: 2px solid #f0c040;
   border-radius: 8px;
   padding: 14px 18px;
-  font-size: 0.95rem;
-  color: #7a6000;
+  font-size: 0.9rem;
+  color: #b07800;
   width: 165px;
   text-align: center;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 16px rgba(100, 150, 200, 0.25);
   pointer-events: none;
   animation: foldAndDrop 1.0s cubic-bezier(0.4,0,0.2,1) forwards;
 }
@@ -299,7 +284,6 @@ input[type="text"]:focus, textarea:focus {
 <body>
 
 <nav class="top-bar">
-  <a class="nav-link" href="../index.html">← 프로젝트 홈</a>
   <a class="nav-link teacher" href="불안의파도타기.html">🌊 선생님용</a>
 </nav>
 
@@ -323,33 +307,7 @@ input[type="text"]:focus, textarea:focus {
 <div class="card" id="mainCard">
   <div class="cup-area">
     <div class="cup-wrap" id="cupWrap">
-      <!-- 12oz 종이컵 비율: 윗입 90mm / 바닥 65mm / 높이 110mm (약 72% taper) -->
-      <svg viewBox="0 0 200 260" width="230" height="299" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs>
-          <linearGradient id="cupBody" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#ddd2be"/>
-            <stop offset="38%" stop-color="#fffef9"/>
-            <stop offset="100%" stop-color="#cfc4ae"/>
-          </linearGradient>
-          <linearGradient id="cupInner" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#9a8b74"/>
-            <stop offset="100%" stop-color="#ddd4c4"/>
-          </linearGradient>
-        </defs>
-        <ellipse cx="100" cy="252" rx="54" ry="8" fill="rgba(45,38,28,0.11)"/>
-        <ellipse cx="100" cy="242" rx="42" ry="6.5" fill="#d2c7b2" stroke="#b8ad98" stroke-width="0.8"/>
-        <path d="M28 64 C28 46, 46 36, 100 36 C154 36, 172 46, 172 64 L148 238 Q144 248 100 248 Q56 248 52 238 Z"
-              fill="url(#cupBody)" stroke="#b5a88e" stroke-width="1.1" stroke-linejoin="round"/>
-        <path d="M28 64 L52 238 Q56 248 76 248 L60 64 Z" fill="#000" opacity="0.05"/>
-        <ellipse cx="100" cy="58" rx="64" ry="13" fill="url(#cupInner)"/>
-        <path d="M28 64 C28 48, 46 38, 100 38 C154 38, 172 48, 172 64" fill="none" stroke="#fffef9" stroke-width="3" stroke-linecap="round"/>
-        <path d="M30 62 C30 52, 48 46, 100 46 C152 46, 170 52, 170 62" fill="none" stroke="#c9bcaa" stroke-width="1" opacity="0.45"/>
-        <line x1="100" y1="72" x2="100" y2="232" stroke="#c8bba4" stroke-width="0.7" opacity="0.32"/>
-        <path d="M64 70 Q58 155 68 228" fill="none" stroke="#c8bba4" stroke-width="0.55" opacity="0.2"/>
-        <path d="M136 70 Q142 155 132 228" fill="none" stroke="#c8bba4" stroke-width="0.55" opacity="0.2"/>
-        <path d="M40 80 Q32 158 46 218" fill="none" stroke="#fff" stroke-width="3" opacity="0.36" stroke-linecap="round"/>
-        <text x="100" y="168" text-anchor="middle" font-size="10" fill="#a89878" opacity="0.5" font-family="sans-serif">불안 종이컵</text>
-      </svg>
+      <img class="cup-image" src="../emotion-hotel/emptycup.png" alt="종이컵">
       <div class="notes-in-cup" id="notesStack"></div>
     </div>
     <div class="cup-note-count" id="noteCountLabel">아직 쪽지가 없어요</div>
@@ -581,11 +539,25 @@ function renderCup() {
   }
 
   label.textContent = `쪽지 ${noteCount}장이 들어있어요`;
-  const show = Math.min(noteCount, 5);
+  const slots = [
+    { top: 12, left: 6, rot: -9 },
+    { top: 24, left: 42, rot: 7 },
+    { top: 38, left: 20, rot: -4 },
+    { top: 56, left: 50, rot: 8 },
+    { top: 70, left: 10, rot: -10 },
+    { top: 86, left: 38, rot: 6 },
+    { top: 102, left: 16, rot: -5 },
+    { top: 118, left: 46, rot: 9 },
+    { top: 132, left: 24, rot: -3 },
+    { top: 144, left: 8, rot: 5 }
+  ];
+  const show = Math.min(noteCount, slots.length);
   for (let i = 0; i < show; i++) {
     const n = document.createElement("div");
     n.className = "mini-note";
-    n.textContent = "✉";
+    n.style.top = slots[i].top + "px";
+    n.style.left = slots[i].left + "px";
+    n.style.transform = `rotate(${slots[i].rot}deg)`;
     stack.appendChild(n);
   }
 }
