@@ -434,6 +434,16 @@ function saveRecordLocal(record) {
   localStorage.setItem(RECORDS_KEY, JSON.stringify(list));
 }
 
+function syncNoteCountFromRecords() {
+  const records = loadRecords();
+  if (!records.length) return;
+  const nick = getNickname();
+  noteCount = nick
+    ? records.filter(r => r.nickname === nick).length
+    : Math.max(noteCount, records.length);
+  localStorage.setItem(COUNT_KEY, String(noteCount));
+}
+
 function scheduleNicknameSave() {
   clearTimeout(nicknameSaveTimer);
   nicknameSaveTimer = setTimeout(() => {
