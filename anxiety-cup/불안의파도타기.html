@@ -239,12 +239,26 @@ input[type="password"]:focus, input[type="text"]:focus { border-color: var(--acc
   align-items: center;
   padding: 10px 0 14px;
   gap: 10px;
+  position: relative;
 }
 .pour-cup-svg {
+  width: 220px;
+  height: 260px;
+  object-fit: contain;
   transform-origin: bottom center;
-  transition: transform 1.4s cubic-bezier(0.4,0,0.2,1);
+  transition: transform 1.15s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease;
 }
-.pour-cup-svg.tilt { transform: rotate(-115deg) translate(-28px, -10px); }
+.pour-cup-svg.tilt { transform: rotate(-112deg) translate(-20px, -12px); }
+.pour-cup-svg.hide { opacity: 0; }
+.pour-cup-floor {
+  display: none;
+  position: absolute;
+  bottom: 58px;
+  width: 150px;
+  opacity: 0.88;
+  filter: drop-shadow(0 2px 6px rgba(60, 80, 120, 0.18));
+}
+.pour-cup-floor.on { display: block; }
 
 .pour-notes-area {
   width: 100%;
@@ -256,8 +270,8 @@ input[type="password"]:focus, input[type="text"]:focus { border-color: var(--acc
   padding: 8px 4px;
 }
 .poured-note {
-  background: var(--paper);
-  border: 2px solid #e2c94a;
+  background: #fff9e6;
+  border: 1.5px solid #e2c94a;
   border-radius: 8px;
   padding: 12px 14px;
   font-size: 0.88rem;
@@ -268,6 +282,16 @@ input[type="password"]:focus, input[type="text"]:focus { border-color: var(--acc
   opacity: 0;
   transform: translateY(-24px) rotate(var(--r, 0deg));
   transition: opacity 0.45s ease, transform 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+.poured-note::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: center/cover no-repeat url("../emotion-hotel/paper.png");
+  opacity: 0.28;
+  pointer-events: none;
 }
 .poured-note.land {
   opacity: 1;
@@ -649,30 +673,8 @@ textarea:focus { border-color: var(--accent); background: #fff; }
       </div>
 
       <div class="cup-pour-scene">
-        <svg id="pourCup" class="pour-cup-svg"
-             width="220" height="260" viewBox="0 0 220 260"
-             xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <defs>
-            <linearGradient id="cupGradT" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#e8f4fd"/>
-              <stop offset="40%" stop-color="#ffffff"/>
-              <stop offset="100%" stop-color="#c8dff0"/>
-            </linearGradient>
-            <linearGradient id="rimGradT" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#d0e8f8"/>
-              <stop offset="100%" stop-color="#a8c8e8"/>
-            </linearGradient>
-            <filter id="cupShadowT" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(100,150,200,0.2)"/>
-            </filter>
-          </defs>
-          <path d="M45,38 L28,240 Q28,248 36,250 L184,250 Q192,250 192,242 L175,38 Z"
-                fill="url(#cupGradT)" stroke="#b0cfe8" stroke-width="1.5" filter="url(#cupShadowT)"/>
-          <path d="M58,50 L46,220 Q46,226 50,227 L60,228 L72,55 Z" fill="white" opacity="0.45"/>
-          <ellipse cx="110" cy="38" rx="65" ry="10" fill="url(#rimGradT)" stroke="#a0c0e0" stroke-width="1.2"/>
-          <ellipse cx="110" cy="247" rx="76" ry="8" fill="#c0d8ee" opacity="0.5"/>
-          <path d="M70,40 Q65,140 60,245" stroke="#a8c8e8" stroke-width="1" fill="none" opacity="0.4"/>
-        </svg>
+        <img id="pourCup" class="pour-cup-svg" src="../emotion-hotel/emptycup.png" alt="종이컵">
+        <img id="pourCupFloor" class="pour-cup-floor" src="../emotion-hotel/emptycup.png" alt="빈 종이컵">
 
         <div class="spinner" id="spinner1"></div>
         <div class="pour-notes-area" id="pourNotesArea"></div>
@@ -1042,6 +1044,9 @@ async function pourNotes() {
   statusEl.textContent = `쪽지 ${allNotes.length}장을 불러왔어요`;
 
   const cupSvg = document.getElementById("pourCup");
+  const floorCup = document.getElementById("pourCupFloor");
+  floorCup.classList.remove("on");
+  cupSvg.classList.remove("hide");
   cupSvg.classList.remove("tilt");
   void cupSvg.offsetWidth;
   cupSvg.classList.add("tilt");
@@ -1057,6 +1062,11 @@ async function pourNotes() {
       setTimeout(() => el.classList.add("land"), 30);
     }, 300 + i * 280);
   });
+
+  setTimeout(() => {
+    cupSvg.classList.add("hide");
+    floorCup.classList.add("on");
+  }, 900);
 
   setTimeout(() => {
     buildClassifyList();
