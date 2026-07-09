@@ -188,15 +188,15 @@ input[type="text"]:focus, textarea:focus {
 .fly-note {
   position: fixed;
   z-index: 9999;
-  background: var(--paper);
-  border: 2px solid #e8d06a;
+  background: linear-gradient(135deg, #fff9e6, #ffeebb);
+  border: 2px solid #f0c040;
   border-radius: 8px;
   padding: 14px 18px;
-  font-size: 0.95rem;
-  color: #7a6000;
+  font-size: 0.9rem;
+  color: #b07800;
   width: 165px;
   text-align: center;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 16px rgba(100, 150, 200, 0.25);
   pointer-events: none;
   animation: foldAndDrop 1.0s cubic-bezier(0.4,0,0.2,1) forwards;
 }
@@ -323,32 +323,27 @@ input[type="text"]:focus, textarea:focus {
 <div class="card" id="mainCard">
   <div class="cup-area">
     <div class="cup-wrap" id="cupWrap">
-      <!-- 12oz 종이컵 비율: 윗입 90mm / 바닥 65mm / 높이 110mm (약 72% taper) -->
-      <svg viewBox="0 0 200 260" width="230" height="299" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <svg width="220" height="260" viewBox="0 0 220 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
-          <linearGradient id="cupBody" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#ddd2be"/>
-            <stop offset="38%" stop-color="#fffef9"/>
-            <stop offset="100%" stop-color="#cfc4ae"/>
+          <linearGradient id="cupGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#e8f4fd"/>
+            <stop offset="40%" stop-color="#ffffff"/>
+            <stop offset="100%" stop-color="#c8dff0"/>
           </linearGradient>
-          <linearGradient id="cupInner" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#9a8b74"/>
-            <stop offset="100%" stop-color="#ddd4c4"/>
+          <linearGradient id="rimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#d0e8f8"/>
+            <stop offset="100%" stop-color="#a8c8e8"/>
           </linearGradient>
+          <filter id="cupShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="rgba(100,150,200,0.2)"/>
+          </filter>
         </defs>
-        <ellipse cx="100" cy="252" rx="54" ry="8" fill="rgba(45,38,28,0.11)"/>
-        <ellipse cx="100" cy="242" rx="42" ry="6.5" fill="#d2c7b2" stroke="#b8ad98" stroke-width="0.8"/>
-        <path d="M28 64 C28 46, 46 36, 100 36 C154 36, 172 46, 172 64 L148 238 Q144 248 100 248 Q56 248 52 238 Z"
-              fill="url(#cupBody)" stroke="#b5a88e" stroke-width="1.1" stroke-linejoin="round"/>
-        <path d="M28 64 L52 238 Q56 248 76 248 L60 64 Z" fill="#000" opacity="0.05"/>
-        <ellipse cx="100" cy="58" rx="64" ry="13" fill="url(#cupInner)"/>
-        <path d="M28 64 C28 48, 46 38, 100 38 C154 38, 172 48, 172 64" fill="none" stroke="#fffef9" stroke-width="3" stroke-linecap="round"/>
-        <path d="M30 62 C30 52, 48 46, 100 46 C152 46, 170 52, 170 62" fill="none" stroke="#c9bcaa" stroke-width="1" opacity="0.45"/>
-        <line x1="100" y1="72" x2="100" y2="232" stroke="#c8bba4" stroke-width="0.7" opacity="0.32"/>
-        <path d="M64 70 Q58 155 68 228" fill="none" stroke="#c8bba4" stroke-width="0.55" opacity="0.2"/>
-        <path d="M136 70 Q142 155 132 228" fill="none" stroke="#c8bba4" stroke-width="0.55" opacity="0.2"/>
-        <path d="M40 80 Q32 158 46 218" fill="none" stroke="#fff" stroke-width="3" opacity="0.36" stroke-linecap="round"/>
-        <text x="100" y="168" text-anchor="middle" font-size="10" fill="#a89878" opacity="0.5" font-family="sans-serif">불안 종이컵</text>
+        <path d="M45,38 L28,240 Q28,248 36,250 L184,250 Q192,250 192,242 L175,38 Z"
+              fill="url(#cupGrad)" stroke="#b0cfe8" stroke-width="1.5" filter="url(#cupShadow)"/>
+        <path d="M58,50 L46,220 Q46,226 50,227 L60,228 L72,55 Z" fill="white" opacity="0.45"/>
+        <ellipse cx="110" cy="38" rx="65" ry="10" fill="url(#rimGrad)" stroke="#a0c0e0" stroke-width="1.2"/>
+        <ellipse cx="110" cy="247" rx="76" ry="8" fill="#c0d8ee" opacity="0.5"/>
+        <path d="M70,40 Q65,140 60,245" stroke="#a8c8e8" stroke-width="1" fill="none" opacity="0.4"/>
       </svg>
       <div class="notes-in-cup" id="notesStack"></div>
     </div>
@@ -581,11 +576,21 @@ function renderCup() {
   }
 
   label.textContent = `쪽지 ${noteCount}장이 들어있어요`;
-  const show = Math.min(noteCount, 5);
+  const slots = [
+    { top: 68, rot: -3, text: "불안한 생각 ✏️" },
+    { top: 114, rot: 2, text: "걱정 쪽지 ✏️" },
+    { top: 160, rot: -2, text: noteCount > 3 ? `쪽지 ${noteCount}장 ✏️` : "마음 속 이야기 ✏️" }
+  ];
+  const show = Math.min(noteCount, 3);
   for (let i = 0; i < show; i++) {
     const n = document.createElement("div");
     n.className = "mini-note";
-    n.textContent = "✉";
+    n.style.top = slots[i].top + "px";
+    n.style.transform = `rotate(${slots[i].rot}deg)`;
+    n.innerHTML =
+      '<span class="mini-note-line"></span>' +
+      '<span class="mini-note-line"></span>' +
+      '<span class="mini-note-txt">' + slots[i].text + '</span>';
     stack.appendChild(n);
   }
 }
