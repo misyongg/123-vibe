@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌊 불안의 파도타기 — 상담교사용</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f0f4ff;
+  --accent: #6c7ef0;
+  --green: #38a169;
+  --red: #e53e3e;
+  --sea: #2b6cb0;
+  --sea2: #63b3ed;
+  --paper: #fffbe6;
+  --text: #2d3560;
+  --muted: #8b96c8;
+  --card: #fff;
+  --shadow: rgba(108,126,240,0.12);
+}
+body {
+  font-family: 'Noto Sans KR','Apple SD Gothic Neo',sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  color: var(--text);
+}
+
+#lockScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+.lock-card {
+  background: var(--card);
+  border-radius: 22px;
+  padding: 32px 26px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 8px 32px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+.lock-icon { font-size: 3rem; margin-bottom: 4px; }
+.lock-title { font-size: 1.25rem; font-weight: 800; color: var(--accent); }
+.lock-sub { font-size: 0.84rem; color: var(--muted); text-align: center; line-height: 1.6; }
+input[type="password"], input[type="text"] {
+  width: 100%;
+  border: 1.5px solid #dde3ff;
+  border-radius: 12px;
+  padding: 13px 15px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--text);
+  background: #f7f8ff;
+  outline: none;
+  transition: border 0.2s;
+}
+input[type="password"]:focus, input[type="text"]:focus { border-color: var(--accent); background: #fff; }
+.lock-err { font-size: 0.82rem; color: var(--red); display: none; }
+
+.btn-main {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.97rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  box-shadow: 0 4px 14px rgba(108,126,240,0.25);
+}
+.btn-main:hover { background: #5568e0; }
+.btn-main:active { transform: scale(0.98); }
+.btn-main:disabled { background: #c5cbe9; cursor: not-allowed; box-shadow: none; }
+.btn-outline {
+  padding: 11px 28px;
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-outline:hover { background: var(--accent); color: #fff; }
+
+#appScreen { display: none; }
+
+.app-header {
+  background: #fff;
+  padding: 14px 20px;
+  border-bottom: 1px solid #eef0ff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 10px rgba(108,126,240,0.07);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.app-header-title { font-size: 1.05rem; font-weight: 800; color: var(--accent); }
+.app-header-badge { font-size: 0.75rem; color: var(--muted); }
+
+.step-bar {
+  display: flex;
+  justify-content: center;
+  padding: 18px 16px 0;
+  gap: 0;
+  overflow-x: auto;
+}
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  position: relative;
+  min-width: 70px;
+}
+.step-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 17px;
+  left: 55%;
+  width: 100%;
+  height: 2px;
+  background: #e0e7ff;
+  z-index: 0;
+}
+.step-item.done:not(:last-child)::after { background: var(--green); }
+.step-circle {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.step-item.active .step-circle { background: var(--accent); color: #fff; }
+.step-item.done .step-circle { background: var(--green); color: #fff; }
+.step-lbl { font-size: 0.66rem; color: var(--muted); text-align: center; line-height: 1.3; }
+.step-item.active .step-lbl { color: var(--accent); font-weight: 700; }
+
+.section {
+  display: none;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 22px 16px 60px;
+}
+.section.on { display: block; }
+.sec-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 5px;
+}
+.sec-desc {
+  font-size: 0.83rem;
+  color: var(--muted);
+  line-height: 1.75;
+  margin-bottom: 20px;
+}
+.card {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 22px 18px;
+  box-shadow: 0 4px 20px var(--shadow);
+  margin-bottom: 14px;
+}
+
+.filter-block {
+  margin-bottom: 16px;
+}
+.filter-block label {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.filter-hint {
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.5;
+}
+
+.cup-pour-scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0 14px;
+  gap: 10px;
+}
+.pour-cup-svg {
+  transform-origin: bottom center;
+  transition: transform 1.4s cubic-bezier(0.4,0,0.2,1);
+}
+.pour-cup-svg.tilt { transform: rotate(-115deg) translate(-28px, -10px); }
+
+.pour-notes-area {
+  width: 100%;
+  min-height: 60px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  padding: 8px 4px;
+}
+.poured-note {
+  background: var(--paper);
+  border: 1.5px solid #e2c94a;
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: 0.78rem;
+  color: #5a4000;
+  max-width: 175px;
+  line-height: 1.55;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  opacity: 0;
+  transform: translateY(-24px) rotate(var(--r, 0deg));
+  transition: opacity 0.45s ease, transform 0.5s ease;
+}
+.poured-note.land {
+  opacity: 1;
+  transform: translateY(0) rotate(var(--r, 0deg));
+}
+.poured-note-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 3px;
+}
+.poured-note-meta {
+  font-size: 0.66rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.spinner {
+  width: 30px; height: 30px;
+  border: 3px solid #e0e7ff;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  display: none;
+  margin: 10px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.classify-list { display: flex; flex-direction: column; gap: 10px; }
+.classify-item {
+  background: var(--paper);
+  border: 1.5px solid #e2c94a;
+  border-radius: 12px;
+  padding: 13px 14px;
+  transition: opacity 0.3s;
+}
+.classify-item.classified { opacity: 0.85; }
+.classify-meta { font-size: 0.7rem; color: var(--muted); margin-bottom: 5px; }
+.classify-text { font-size: 0.83rem; color: #5a4000; line-height: 1.6; margin-bottom: 10px; }
+.classify-btns { display: flex; gap: 8px; }
+.btn-can {
+  flex: 1;
+  padding: 9px 0;
+  border: 1.5px solid #9ae6b4;
+  border-radius: 9px;
+  background: #f0fff4;
+  color: #276749;
+  font-size: 0.81rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-cant {
+  flex: 1;
+  padding: 9px 0;
+  border: 1.5px solid #fbb6ce;
+  border-radius: 9px;
+  background: #fff5f7;
+  color: #822659;
+  font-size: 0.81rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-can:hover    { background: #c6f6d5; }
+.btn-cant:hover   { background: #fed7e2; }
+.btn-can.sel  { background: var(--green); color: #fff; border-color: var(--green); }
+.btn-cant.sel { background: var(--red);   color: #fff; border-color: var(--red); }
+.classify-footer { text-align: center; margin-top: 14px; }
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 480px) { .two-col { grid-template-columns: 1fr; } }
+
+.counsel-box {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 18px 14px;
+  box-shadow: 0 4px 18px var(--shadow);
+  border-top: 4px solid var(--green);
+}
+.box-title { font-size: 0.9rem; font-weight: 800; color: var(--green); margin-bottom: 6px; }
+.box-desc { font-size: 0.74rem; color: var(--muted); line-height: 1.5; margin-bottom: 12px; }
+.box-items { display: flex; flex-direction: column; gap: 6px; }
+.box-item {
+  background: #f0fff4;
+  border: 1.5px solid #9ae6b4;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.77rem;
+  color: #276749;
+  line-height: 1.5;
+  animation: dropIn 0.45s ease;
+}
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.river-box {
+  background: linear-gradient(160deg, #ebf8ff 0%, #bee3f8 100%);
+  border-radius: 16px;
+  padding: 18px 14px;
+  box-shadow: 0 4px 18px rgba(49,130,206,0.12);
+  border-top: 4px solid var(--sea2);
+  overflow: hidden;
+  position: relative;
+  min-height: 240px;
+}
+.river-title { font-size: 0.9rem; font-weight: 800; color: var(--sea); margin-bottom: 6px; }
+.river-desc { font-size: 0.74rem; color: #3a7abf; line-height: 1.5; margin-bottom: 12px; }
+.boats-area { position: relative; min-height: 80px; }
+
+.boat-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 4px 6px;
+  animation: sailAway 7s linear forwards;
+}
+.boat-label {
+  font-size: 0.63rem;
+  color: var(--sea);
+  max-width: 68px;
+  text-align: center;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+@keyframes sailAway {
+  0%   { transform: translateX(0) translateY(0); opacity: 1; }
+  65%  { transform: translateX(80px) translateY(6px); opacity: 0.7; }
+  100% { transform: translateX(200px) translateY(10px); opacity: 0; }
+}
+
+.river-waves {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 50px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.wave-svg {
+  position: absolute;
+  bottom: 0;
+  width: 200%;
+  height: 50px;
+}
+.wave-svg:nth-child(1) { animation: waveL 3.2s linear infinite; }
+.wave-svg:nth-child(2) { animation: waveR 4.5s linear infinite; opacity: 0.5; }
+@keyframes waveL {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes waveR {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+
+.step3-next { text-align: center; margin-top: 16px; }
+
+.dbt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.dbt-card {
+  background: var(--card);
+  border: 2px solid #e0e7ff;
+  border-radius: 14px;
+  padding: 16px 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.dbt-card:hover { border-color: var(--accent); box-shadow: 0 4px 16px var(--shadow); }
+.dbt-card.sel   { border-color: var(--accent); background: #f0f3ff; }
+.dbt-icon  { font-size: 1.65rem; margin-bottom: 6px; }
+.dbt-name  { font-size: 0.88rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.dbt-desc  { font-size: 0.75rem; color: var(--muted); line-height: 1.5; }
+.dbt-badge {
+  position: absolute;
+  top: 9px; right: 9px;
+  font-size: 0.62rem;
+  background: #e0e7ff;
+  color: var(--accent);
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+.dbt-card.sel .dbt-badge { background: var(--accent); color: #fff; }
+
+.practice-panel {
+  display: none;
+  background: #f5f7ff;
+  border: 2px solid #c7d2fe;
+  border-radius: 16px;
+  padding: 20px 18px;
+  margin-top: 6px;
+  animation: fadeUp 0.3s ease;
+}
+.practice-panel.on { display: block; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.practice-title { font-size: 1rem; font-weight: 800; color: var(--accent); margin-bottom: 12px; }
+.practice-steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.p-step { display: flex; gap: 12px; align-items: flex-start; }
+.p-num {
+  min-width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.77rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.p-text { font-size: 0.84rem; color: var(--text); line-height: 1.65; padding-top: 3px; }
+
+.breath-wrap {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  margin: 12px 0;
+  gap: 10px;
+}
+.breath-wrap.on { display: flex; }
+.breath-circle {
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  background: #dbeafe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--sea);
+  transition: transform 0.6s ease, background 0.5s ease;
+}
+.breath-circle.expand { transform: scale(1.28); background: #bfdbfe; }
+.breath-circle.hold   { background: #a5b4fc; color: var(--accent); }
+.breath-circle.shrink { transform: scale(1); background: #dbeafe; }
+.breath-count { font-size: 0.8rem; color: var(--muted); }
+.btn-breath {
+  padding: 10px 26px;
+  border: 2px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-breath:hover { background: var(--accent); color: #fff; }
+.btn-breath:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.obs-label { font-size: 0.84rem; font-weight: 700; color: var(--text); margin-bottom: 6px; display: block; }
+textarea {
+  width: 100%;
+  border: 1.5px solid #dde3ff;
+  border-radius: 11px;
+  padding: 11px 13px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text);
+  background: #f7f8ff;
+  outline: none;
+  resize: none;
+  transition: border 0.2s;
+}
+textarea:focus { border-color: var(--accent); background: #fff; }
+
+.save-status {
+  font-size: 0.82rem;
+  text-align: center;
+  margin-top: 10px;
+  min-height: 18px;
+  color: var(--muted);
+}
+.save-status.err { color: var(--red); }
+.save-status.ok  { color: var(--green); }
+
+.finish-banner {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 10px 10px;
+}
+.finish-banner.on { display: flex; }
+.finish-icon { font-size: 3.2rem; margin-bottom: 12px; animation: pop 0.5s ease; }
+@keyframes pop {
+  0%,100% { transform: scale(1); }
+  50%      { transform: scale(1.2); }
+}
+.finish-title { font-size: 1.12rem; font-weight: 800; color: var(--green); margin-bottom: 8px; }
+.finish-msg   { font-size: 0.85rem; color: var(--muted); line-height: 1.8; }
+
+.empty-msg {
+  color: var(--muted);
+  font-size: 0.84rem;
+  text-align: center;
+  padding: 16px 0;
+}
+</style>
+</head>
+<body>
+
+<div id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-icon">🔐</div>
+    <div class="lock-title">상담교사 전용 페이지</div>
+    <p class="lock-sub">이 페이지는 상담 선생님만 접근할 수 있어요.<br>비밀번호를 입력해 주세요.</p>
+    <input type="password" id="pwInput"
+           placeholder="비밀번호 입력"
+           onkeydown="if(event.key==='Enter') unlockApp()">
+    <button class="btn-main" onclick="unlockApp()">🌊 입장하기</button>
+    <div class="lock-err" id="lockErr">비밀번호가 맞지 않아요.</div>
+  </div>
+</div>
+
+<div id="appScreen">
+
+  <div class="app-header">
+    <div class="app-header-title">🌊 불안의 파도타기</div>
+    <div class="app-header-badge">상담교사 전용</div>
+  </div>
+
+  <div class="step-bar">
+    <div class="step-item active" id="dot1">
+      <div class="step-circle" onclick="goStep(1)">1</div>
+      <div class="step-lbl">쪽지<br>꺼내기</div>
+    </div>
+    <div class="step-item" id="dot2">
+      <div class="step-circle" onclick="goStep(2)">2</div>
+      <div class="step-lbl">불안<br>분류</div>
+    </div>
+    <div class="step-item" id="dot3">
+      <div class="step-circle" onclick="goStep(3)">3</div>
+      <div class="step-lbl">담기 &<br>보내기</div>
+    </div>
+    <div class="step-item" id="dot4">
+      <div class="step-circle" onclick="goStep(4)">4</div>
+      <div class="step-lbl">파도타기<br>연습</div>
+    </div>
+  </div>
+
+  <div class="section on" id="step1">
+    <div style="height:18px;"></div>
+    <div class="sec-title">🫙 종이컵을 쏟아볼게요</div>
+    <p class="sec-desc">
+      학생이 넣어둔 불안 쪽지를 함께 꺼내봐요.<br>
+      버튼을 누르면 컵이 뒤집어지며 쪽지가 쏟아져요.
+    </p>
+
+    <div class="card">
+      <div class="filter-block">
+        <label for="filterNickname">👤 학생 별칭으로 필터 (선택)</label>
+        <input type="text" id="filterNickname" placeholder="예) 파란구름 — 비우면 전체 쪽지">
+        <p class="filter-hint">상담할 학생의 별칭을 입력하면 해당 학생 쪽지만 불러와요.</p>
+      </div>
+
+      <div class="cup-pour-scene">
+        <svg id="pourCup" class="pour-cup-svg"
+             viewBox="0 0 150 170" width="120" height="136"
+             xmlns="http://www.w3.org/2000/svg">
+          <path d="M22,34 L12,158 Q12,163 22,163 L128,163 Q138,163 138,158 L128,34 Z"
+                fill="#d4e0ff" stroke="#a0b4f8" stroke-width="2"/>
+          <rect x="20" y="26" width="110" height="16" rx="8"
+                fill="#b8ccff" stroke="#8aa6f5" stroke-width="1.5"/>
+          <line x1="45" y1="34" x2="39" y2="160" stroke="#a0b4f8" stroke-width="1" opacity="0.4"/>
+          <line x1="75" y1="32" x2="75" y2="160" stroke="#a0b4f8" stroke-width="1" opacity="0.4"/>
+          <line x1="105" y1="34" x2="111" y2="160" stroke="#a0b4f8" stroke-width="1" opacity="0.4"/>
+          <text x="75" y="108" text-anchor="middle" font-size="10"
+                fill="#8aa6f5" opacity="0.55" font-family="sans-serif">불안 종이컵</text>
+        </svg>
+
+        <div class="spinner" id="spinner1"></div>
+        <div class="pour-notes-area" id="pourNotesArea"></div>
+      </div>
+
+      <button class="btn-main" id="btnPour" onclick="pourNotes()">
+        🫙 종이컵 뒤집기
+      </button>
+    </div>
+  </div>
+
+  <div class="section" id="step2">
+    <div style="height:18px;"></div>
+    <div class="sec-title">📋 불안을 두 가지로 나눠볼게요</div>
+    <p class="sec-desc">
+      쪽지에 담긴 불안을 함께 살보며 분류해요.<br>
+      <strong style="color:var(--green);">✅ 다룰 수 있는 불안</strong> — 함께 이야기하고 연습할 수 있어요.<br>
+      <strong style="color:var(--red);">🌊 다룰 수 없는 불안</strong> — 지금 당장은 통제 밖이에요. 강물에 흘려보내요.
+    </p>
+    <div class="card">
+      <div class="classify-list" id="classifyList">
+        <p class="empty-msg">STEP 1에서 쪽지를 먼저 꺼내주세요.</p>
+      </div>
+      <div class="classify-footer">
+        <button class="btn-main" id="btnToStep3"
+                style="max-width:260px; margin:0 auto;"
+                onclick="goStep3()" disabled>
+          다음 단계로 →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="step3">
+    <div style="height:18px;"></div>
+    <div class="sec-title">💚 담기 & 🌊 보내기</div>
+    <p class="sec-desc">
+      분류된 불안을 각자의 방식으로 처리해요.<br>
+      다룰 수 있는 불안은 상담 상자에, 다룰 수 없는 불안은 종이배에 실어 보내요.
+    </p>
+    <div class="two-col">
+      <div class="counsel-box">
+        <div class="box-title">💚 상담 상자</div>
+        <p class="box-desc">다룰 수 있는 불안을 차곡차곡 담아요.<br>선생님과 함께 꺼내볼 거예요.</p>
+        <div class="box-items" id="boxItems">
+          <p class="empty-msg" style="font-size:0.76rem;">아직 담긴 쪽지가 없어요.</p>
+        </div>
+      </div>
+
+      <div class="river-box">
+        <div class="river-title">🌊 강물로 보내기</div>
+        <p class="river-desc">다룰 수 없는 불안은 종이배에 실어<br>강물에 떠내려 보내요.</p>
+        <div class="boats-area" id="boatsArea">
+          <p class="empty-msg" style="font-size:0.73rem;color:#4a90d9;">종이배가 아직 없어요.</p>
+        </div>
+        <div class="river-waves">
+          <svg class="wave-svg" viewBox="0 0 800 50" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,25 C100,50 200,0 400,25 C600,50 700,0 800,25 L800,50 L0,50 Z"
+                  fill="rgba(99,179,237,0.3)"/>
+            <path d="M0,25 C100,50 200,0 400,25 C600,50 700,0 800,25 L800,50 L0,50 Z"
+                  fill="rgba(99,179,237,0.3)" transform="translate(400,0)"/>
+          </svg>
+          <svg class="wave-svg" viewBox="0 0 800 50" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,30 C150,5 250,50 400,30 C550,5 650,50 800,30 L800,50 L0,50 Z"
+                  fill="rgba(99,179,237,0.2)"/>
+            <path d="M0,30 C150,5 250,50 400,30 C550,5 650,50 800,30 L800,50 L0,50 Z"
+                  fill="rgba(99,179,237,0.2)" transform="translate(400,0)"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="step3-next">
+      <button class="btn-main" style="max-width:260px; margin:0 auto;"
+              onclick="goStep(4)">
+        파도타기 연습으로 →
+      </button>
+    </div>
+  </div>
+
+  <div class="section" id="step4">
+    <div style="height:18px;"></div>
+    <div class="sec-title">🌊 불안의 파도타기</div>
+    <p class="sec-desc">
+      불안은 파도처럼 올라왔다가 반드시 내려가요.<br>
+      오늘 함께 연습할 DBT 기술을 하나 골라보세요.
+    </p>
+
+    <div class="dbt-grid" id="dbtGrid">
+      <div class="dbt-card" onclick="selectDbt(0)">
+        <div class="dbt-badge">호흡</div>
+        <div class="dbt-icon">🌬️</div>
+        <div class="dbt-name">4-7-8 호흡법</div>
+        <div class="dbt-desc">천천히 숨을 조절해 신체 각성을 낮춰요.</div>
+      </div>
+      <div class="dbt-card" onclick="selectDbt(1)">
+        <div class="dbt-badge">마음챙김</div>
+        <div class="dbt-icon">🧘</div>
+        <div class="dbt-name">관찰하기</div>
+        <div class="dbt-desc">불안을 판단 없이 그대로 바라봐요.</div>
+      </div>
+      <div class="dbt-card" onclick="selectDbt(2)">
+        <div class="dbt-badge">고통감내</div>
+        <div class="dbt-icon">🧊</div>
+        <div class="dbt-name">TIPP 기술</div>
+        <div class="dbt-desc">체온·운동·호흡으로 감정 위기를 가라앉혀요.</div>
+      </div>
+      <div class="dbt-card" onclick="selectDbt(3)">
+        <div class="dbt-badge">정서조절</div>
+        <div class="dbt-icon">🌈</div>
+        <div class="dbt-name">반대행동</div>
+        <div class="dbt-desc">불안이 시키는 것의 반대를 해봐요.</div>
+      </div>
+      <div class="dbt-card" onclick="selectDbt(4)">
+        <div class="dbt-badge">마음챙김</div>
+        <div class="dbt-icon">🖐️</div>
+        <div class="dbt-name">5-4-3-2-1 감각</div>
+        <div class="dbt-desc">지금 이 순간 감각에 닻을 내려요.</div>
+      </div>
+      <div class="dbt-card" onclick="selectDbt(5)">
+        <div class="dbt-badge">고통감내</div>
+        <div class="dbt-icon">🏄</div>
+        <div class="dbt-name">파도타기(Urge Surfing)</div>
+        <div class="dbt-desc">불안 충동을 파도처럼 올라탔다 내려가요.</div>
+      </div>
+    </div>
+
+    <div class="practice-panel" id="practicePanel">
+      <div class="practice-title" id="practiceTitle"></div>
+      <div class="practice-steps" id="practiceSteps"></div>
+
+      <div class="breath-wrap" id="breathWrap">
+        <div class="breath-circle" id="breathCircle">준비</div>
+        <div class="breath-count" id="breathCount">사이클: 0 / 4</div>
+        <button class="btn-breath" id="btnBreath" onclick="startBreath()">▶ 시작</button>
+      </div>
+
+      <div style="margin-top:14px;">
+        <label class="obs-label" for="obsMemo">📝 연습 후 소감 메모</label>
+        <textarea id="obsMemo" rows="3"
+                  placeholder="오늘 연습하면서 어땠나요? 느낀 점, 어려웠던 점…"></textarea>
+      </div>
+
+      <div style="text-align:center; margin-top:16px;">
+        <button class="btn-main" id="btnFinish" style="max-width:240px; margin:0 auto;"
+                onclick="finishSession()">
+          ✅ 오늘 상담 마무리
+        </button>
+        <div class="save-status" id="saveStatus"></div>
+      </div>
+    </div>
+
+    <div class="finish-banner" id="finishBanner">
+      <div class="finish-icon">🌊✨</div>
+      <div class="finish-title">오늘 파도를 잘 탔어요!</div>
+      <p class="finish-msg" id="finishMsg">
+        불안을 꺼내고, 나누고, 흘려보내고,<br>
+        그리고 파도를 함께 탔어요.<br><br>
+        다음에도 불안이 파도처럼 찾아오면<br>
+        오늘 연습한 기술을 꺼내봐요 🌿
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script src="config.js"></script>
+<script>
+const TEACHER_PW = (typeof ANXIETY_CUP_CONFIG !== "undefined" && ANXIETY_CUP_CONFIG.TEACHER_PASSWORD) || "";
+const SCRIPT_URL = (typeof ANXIETY_CUP_CONFIG !== "undefined" && ANXIETY_CUP_CONFIG.GOOGLE_SHEETS_URL) || "";
+
+let allNotes = [];
+let canList = [];
+let cantList = [];
+let selectedDbt = -1;
+let breathTimer = null;
+let breathCycle = 0;
+let filterNicknameUsed = "";
+
+function escapeHtml(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function unlockApp() {
+  const pw = document.getElementById("pwInput").value;
+  const err = document.getElementById("lockErr");
+  if (pw === TEACHER_PW) {
+    document.getElementById("lockScreen").style.display = "none";
+    document.getElementById("appScreen").style.display = "block";
+  } else {
+    err.style.display = "block";
+    document.getElementById("pwInput").value = "";
+    document.getElementById("pwInput").focus();
+  }
+}
+
+function goStep(n) {
+  [1, 2, 3, 4].forEach(i => {
+    document.getElementById("step" + i).classList.toggle("on", i === n);
+    const dot = document.getElementById("dot" + i);
+    dot.classList.remove("active", "done");
+    if (i === n) dot.classList.add("active");
+    else if (i < n) dot.classList.add("done");
+  });
+}
+
+function noteSummary(note) {
+  const parts = [];
+  if (note.emotion) parts.push("💜 " + note.emotion);
+  if (note.thought) parts.push("💭 " + note.thought);
+  if (note.situation) parts.push("📍 " + note.situation);
+  return parts.join(" · ");
+}
+
+function buildPouredNoteEl(note, rotation) {
+  const el = document.createElement("div");
+  el.className = "poured-note";
+  el.style.setProperty("--r", rotation + "deg");
+
+  if (note.emotion) {
+    const tag = document.createElement("span");
+    tag.className = "poured-note-tag";
+    tag.textContent = "💜 감정";
+    el.appendChild(tag);
+    el.appendChild(document.createTextNode(note.emotion));
+    el.appendChild(document.createElement("br"));
+  }
+  if (note.thought) {
+    const tag = document.createElement("span");
+    tag.className = "poured-note-tag";
+    tag.textContent = "💭 생각";
+    el.appendChild(tag);
+    el.appendChild(document.createTextNode(note.thought));
+    el.appendChild(document.createElement("br"));
+  }
+  if (note.situation) {
+    const tag = document.createElement("span");
+    tag.className = "poured-note-tag";
+    tag.textContent = "📍 상황";
+    el.appendChild(tag);
+    el.appendChild(document.createTextNode(note.situation));
+    el.appendChild(document.createElement("br"));
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "poured-note-meta";
+  meta.textContent = "— " + (note.nickname || "익명") + " · " + (note.timestamp || "");
+  el.appendChild(meta);
+
+  return el;
+}
+
+async function pourNotes() {
+  const btn = document.getElementById("btnPour");
+  const spin = document.getElementById("spinner1");
+  const card = document.querySelector("#step1 .card");
+  const oldNext = card.querySelector(".pour-next-btn");
+  if (oldNext) oldNext.remove();
+
+  canList = [];
+  cantList = [];
+  document.getElementById("btnToStep3").disabled = true;
+
+  btn.disabled = true;
+  btn.textContent = "불러오는 중…";
+  spin.style.display = "block";
+
+  filterNicknameUsed = document.getElementById("filterNickname").value.trim();
+
+  if (SCRIPT_URL) {
+    try {
+      let url = SCRIPT_URL + "?action=get";
+      if (filterNicknameUsed) {
+        url += "&nickname=" + encodeURIComponent(filterNicknameUsed);
+      }
+      const res = await fetch(url);
+      const json = await res.json();
+      allNotes = json.notes || [];
+    } catch (e) {
+      console.warn("데이터 로드 실패:", e);
+      allNotes = [];
+    }
+  } else {
+    allNotes = [
+      { nickname: "파란구름", emotion: "무섭고 떨려", thought: "또 발표 망칠 것 같아", situation: "내일 수업 발표", timestamp: "2025-06-01" },
+      { nickname: "파란구름", emotion: "답답하고 숨막혀", thought: "나만 이상한 것 같아", situation: "친구들이랑 점심 때", timestamp: "2025-06-03" },
+      { nickname: "파란구름", emotion: "무기력해", thought: "어차피 안 될 거야", situation: "시험 결과 받고 나서", timestamp: "2025-06-05" }
+    ];
+    if (filterNicknameUsed) {
+      allNotes = allNotes.filter(n => n.nickname === filterNicknameUsed);
+    }
+  }
+
+  spin.style.display = "none";
+
+  if (allNotes.length === 0) {
+    btn.disabled = false;
+    btn.textContent = filterNicknameUsed
+      ? `"${filterNicknameUsed}" 학생의 쪽지가 없어요`
+      : "저장된 쪽지가 없어요";
+    return;
+  }
+
+  const cupSvg = document.getElementById("pourCup");
+  cupSvg.classList.remove("tilt");
+  void cupSvg.offsetWidth;
+  cupSvg.classList.add("tilt");
+
+  const area = document.getElementById("pourNotesArea");
+  area.innerHTML = "";
+
+  const rotations = [-6, 4, -2, 8, -5, 3, -7, 5];
+  allNotes.forEach((note, i) => {
+    setTimeout(() => {
+      const el = buildPouredNoteEl(note, rotations[i % rotations.length]);
+      area.appendChild(el);
+      setTimeout(() => el.classList.add("land"), 30);
+    }, 300 + i * 280);
+  });
+
+  setTimeout(() => {
+    buildClassifyList();
+    btn.textContent = "✅ 꺼내기 완료";
+    btn.disabled = false;
+
+    const next = document.createElement("button");
+    next.className = "btn-main pour-next-btn";
+    next.style.marginTop = "16px";
+    next.textContent = "분류하러 가기 →";
+    next.onclick = () => goStep(2);
+    card.appendChild(next);
+  }, 300 + allNotes.length * 280 + 400);
+}
+
+function buildClassifyList() {
+  const list = document.getElementById("classifyList");
+  list.innerHTML = "";
+
+  allNotes.forEach((note, i) => {
+    const item = document.createElement("div");
+    item.className = "classify-item";
+    item.id = "ci_" + i;
+
+    const meta = document.createElement("div");
+    meta.className = "classify-meta";
+    meta.textContent = (note.nickname || "익명") + " · " + (note.timestamp || "");
+
+    const text = document.createElement("div");
+    text.className = "classify-text";
+    text.textContent = noteSummary(note);
+
+    const btns = document.createElement("div");
+    btns.className = "classify-btns";
+
+    const btnCan = document.createElement("button");
+    btnCan.className = "btn-can";
+    btnCan.id = "can_" + i;
+    btnCan.textContent = "✅ 다룰 수 있어요";
+    btnCan.onclick = () => classify(i, "can");
+
+    const btnCant = document.createElement("button");
+    btnCant.className = "btn-cant";
+    btnCant.id = "cant_" + i;
+    btnCant.textContent = "🌊 다룰 수 없어요";
+    btnCant.onclick = () => classify(i, "cant");
+
+    btns.appendChild(btnCan);
+    btns.appendChild(btnCant);
+    item.appendChild(meta);
+    item.appendChild(text);
+    item.appendChild(btns);
+    list.appendChild(item);
+  });
+}
+
+function classify(i, type) {
+  const note = allNotes[i];
+  const item = document.getElementById("ci_" + i);
+  const btnCan = document.getElementById("can_" + i);
+  const btnCant = document.getElementById("cant_" + i);
+
+  btnCan.classList.remove("sel");
+  btnCant.classList.remove("sel");
+  canList = canList.filter(n => n !== note);
+  cantList = cantList.filter(n => n !== note);
+
+  if (type === "can") {
+    btnCan.classList.add("sel");
+    canList.push(note);
+  } else {
+    btnCant.classList.add("sel");
+    cantList.push(note);
+  }
+
+  item.classList.add("classified");
+
+  if (canList.length + cantList.length === allNotes.length) {
+    document.getElementById("btnToStep3").disabled = false;
+  }
+}
+
+function goStep3() {
+  goStep(3);
+
+  const boxItems = document.getElementById("boxItems");
+  boxItems.innerHTML = "";
+  if (canList.length === 0) {
+    const p = document.createElement("p");
+    p.className = "empty-msg";
+    p.style.fontSize = "0.76rem";
+    p.textContent = "담긴 쪽지가 없어요.";
+    boxItems.appendChild(p);
+  } else {
+    canList.forEach((note, i) => {
+      const el = document.createElement("div");
+      el.className = "box-item";
+      el.textContent = noteSummary(note);
+      el.style.animationDelay = (i * 0.25) + "s";
+      el.style.opacity = "0";
+      setTimeout(() => { el.style.opacity = "1"; }, i * 250 + 100);
+      boxItems.appendChild(el);
+    });
+  }
+
+  const boatsArea = document.getElementById("boatsArea");
+  boatsArea.innerHTML = "";
+  if (cantList.length === 0) {
+    const p = document.createElement("p");
+    p.className = "empty-msg";
+    p.style.fontSize = "0.73rem";
+    p.style.color = "#4a90d9";
+    p.textContent = "보낼 종이배가 없어요.";
+    boatsArea.appendChild(p);
+  } else {
+    cantList.forEach((note, i) => {
+      setTimeout(() => {
+        const wrap = document.createElement("div");
+        wrap.className = "boat-wrap";
+        wrap.innerHTML = `
+          <svg viewBox="0 0 60 36" width="52" height="32" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4,22 Q30,34 56,22 L48,30 Q30,38 12,30 Z"
+                  fill="#bee3f8" stroke="#63b3ed" stroke-width="1.5"/>
+            <path d="M30,20 L30,4 L46,20 Z"
+                  fill="#ebf8ff" stroke="#63b3ed" stroke-width="1.2"/>
+            <line x1="30" y1="4" x2="30" y2="22"
+                  stroke="#3182ce" stroke-width="1.2"/>
+          </svg>`;
+        const label = document.createElement("div");
+        label.className = "boat-label";
+        label.textContent = note.emotion || note.thought || note.situation || "불안";
+        wrap.appendChild(label);
+        boatsArea.appendChild(wrap);
+      }, i * 600);
+    });
+  }
+}
+
+const DBT_DATA = [
+  {
+    name: "🌬️ 4-7-8 호흡법",
+    hasBreath: true,
+    steps: [
+      "코로 4초 동안 천천히 숨을 들이쉬어요.",
+      "7초 동안 숨을 참아요. 배에 공기가 가득 찬 느낌을 느껴봐요.",
+      "입으로 8초 동안 천천히 내쉬어요. '후~' 소리를 내도 좋아요.",
+      "이 과정을 4번 반복해요. 불안이 파도처럼 내려가는 걸 느껴봐요."
+    ]
+  },
+  {
+    name: "🧘 관찰하기 (Observe)",
+    hasBreath: false,
+    steps: [
+      "지금 이 순간, 불안이 몸 어디에서 느껴지나요? 가슴? 배? 손?",
+      "그 감각을 판단하지 말고 그냥 바라봐요. '나는 지금 불안을 느끼고 있구나.'",
+      "불안을 없애려 하지 않아도 돼요. 그냥 거기 있게 두세요.",
+      "불안은 파도처럼 올라왔다가 반드시 내려가요. 얼마나 변하는지 지켜봐요.",
+      "1분 후, 아까보다 조금이라도 달라졌나요? 그 변화를 느껴봐요."
+    ]
+  },
+  {
+    name: "🧊 TIPP 기술",
+    hasBreath: false,
+    steps: [
+      "T (Temperature): 차가운 물로 얼굴을 씻거나, 차가운 물컵을 손에 쥐어봐요.",
+      "I (Intense Exercise): 제자리에서 30초 동안 빠르게 걸어봐요.",
+      "P (Paced Breathing): 들이쉬기 4초 → 내쉬기 6초로 호흡해봐요.",
+      "P (Paired Muscle Relaxation): 주먹을 꽉 쥐었다가 천천히 펴요."
+    ]
+  },
+  {
+    name: "🌈 반대행동 (Opposite Action)",
+    hasBreath: false,
+    steps: [
+      "지금 불안이 나에게 뭘 하라고 시키나요?",
+      "그 반대를 해봐요. 불안이 '숨어'라고 하면 → 고개를 들고 앉아봐요.",
+      "불안이 '피해'라고 하면 → 딱 1분만 그 상황에 머물러봐요.",
+      "반대 행동을 하면 감정도 조금씩 따라서 바뀌기 시작해요.",
+      "처음엔 어색해도 괜찮아요. 작은 한 걸음이 큰 변화를 만들어요."
+    ]
+  },
+  {
+    name: "🖐️ 5-4-3-2-1 감각 기법",
+    hasBreath: false,
+    steps: [
+      "👀 지금 보이는 것 5가지를 말해봐요.",
+      "🤚 지금 만져지는 것 4가지를 느껴봐요.",
+      "👂 지금 들리는 소리 3가지에 귀를 기울여봐요.",
+      "👃 지금 맡을 수 있는 냄새 2가지를 찾아봐요.",
+      "👅 지금 입안에서 느껴지는 맛 1가지를 느껴봐요."
+    ]
+  },
+  {
+    name: "🏄 파도타기 (Urge Surfing)",
+    hasBreath: false,
+    steps: [
+      "불안을 파도라고 상상해봐요. 파도는 반드시 올라왔다가 내려가요.",
+      "지금 불안의 크기를 1~10점으로 점수 매겨봐요.",
+      "파도를 없애려 하지 말고, 그냥 타봐요.",
+      "30초마다 점수를 다시 매겨봐요.",
+      "불안은 영원하지 않아요. 내가 버티면 파도는 반드시 내려가요."
+    ]
+  }
+];
+
+function selectDbt(idx) {
+  document.querySelectorAll(".dbt-card").forEach((c, i) => {
+    c.classList.toggle("sel", i === idx);
+  });
+  selectedDbt = idx;
+
+  const data = DBT_DATA[idx];
+  const panel = document.getElementById("practicePanel");
+  const title = document.getElementById("practiceTitle");
+  const steps = document.getElementById("practiceSteps");
+  const breathWrap = document.getElementById("breathWrap");
+
+  title.textContent = data.name + " — 함께 연습해봐요";
+
+  steps.innerHTML = "";
+  data.steps.forEach((text, i) => {
+    const row = document.createElement("div");
+    row.className = "p-step";
+    const num = document.createElement("div");
+    num.className = "p-num";
+    num.textContent = String(i + 1);
+    const ptext = document.createElement("div");
+    ptext.className = "p-text";
+    ptext.textContent = text;
+    row.appendChild(num);
+    row.appendChild(ptext);
+    steps.appendChild(row);
+  });
+
+  if (data.hasBreath) {
+    breathWrap.classList.add("on");
+    resetBreath();
+  } else {
+    breathWrap.classList.remove("on");
+    if (breathTimer) { clearInterval(breathTimer); breathTimer = null; }
+  }
+
+  panel.classList.add("on");
+  panel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function resetBreath() {
+  if (breathTimer) { clearInterval(breathTimer); breathTimer = null; }
+  breathCycle = 0;
+  const circle = document.getElementById("breathCircle");
+  const count = document.getElementById("breathCount");
+  const btn = document.getElementById("btnBreath");
+  circle.className = "breath-circle";
+  circle.textContent = "준비";
+  count.textContent = "사이클: 0 / 4";
+  btn.disabled = false;
+  btn.textContent = "▶ 시작";
+  btn.onclick = startBreath;
+}
+
+function startBreath() {
+  const btn = document.getElementById("btnBreath");
+  btn.disabled = true;
+  btn.textContent = "진행 중…";
+  runBreathCycle();
+}
+
+function runBreathCycle() {
+  if (breathCycle >= 4) {
+    const circle = document.getElementById("breathCircle");
+    const btn = document.getElementById("btnBreath");
+    circle.className = "breath-circle";
+    circle.textContent = "완료 🌿";
+    btn.disabled = false;
+    btn.textContent = "↺ 다시 하기";
+    btn.onclick = () => { resetBreath(); startBreath(); };
+    return;
+  }
+
+  const circle = document.getElementById("breathCircle");
+  const count = document.getElementById("breathCount");
+
+  circle.className = "breath-circle expand";
+  circle.textContent = "들이쉬기 😤";
+
+  setTimeout(() => {
+    circle.className = "breath-circle hold";
+    circle.textContent = "참기 😶";
+  }, 4000);
+
+  setTimeout(() => {
+    circle.className = "breath-circle shrink";
+    circle.textContent = "내쉬기 😮‍💨";
+  }, 11000);
+
+  setTimeout(() => {
+    breathCycle++;
+    count.textContent = "사이클: " + breathCycle + " / 4";
+    runBreathCycle();
+  }, 19000);
+}
+
+function collectNicknames() {
+  const set = new Set();
+  allNotes.forEach(n => { if (n.nickname) set.add(n.nickname); });
+  return Array.from(set);
+}
+
+async function finishSession() {
+  if (selectedDbt < 0) {
+    setSaveStatus("DBT 기법을 먼저 선택해 주세요.", "err");
+    return;
+  }
+
+  const btn = document.getElementById("btnFinish");
+  const status = document.getElementById("saveStatus");
+  btn.disabled = true;
+  setSaveStatus("상담 기록 저장 중…", "");
+
+  const nicknames = collectNicknames();
+  const payload = {
+    recordType: "session",
+    timestamp: new Date().toLocaleString("ko-KR"),
+    nickname: filterNicknameUsed || (nicknames.length === 1 ? nicknames[0] : nicknames.join(", ")),
+    nicknames: nicknames,
+    noteCount: allNotes.length,
+    canNotes: canList,
+    cantNotes: cantList,
+    dbtTechnique: DBT_DATA[selectedDbt].name,
+    dbtIndex: selectedDbt,
+    observationMemo: document.getElementById("obsMemo").value.trim()
+  };
+
+  let saved = false;
+  if (SCRIPT_URL) {
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      saved = json.ok === true;
+      if (!saved) setSaveStatus("저장 실패: " + (json.error || "알 수 없는 오류"), "err");
+    } catch (e) {
+      setSaveStatus("저장 중 오류가 생겼어요. 네트워크를 확인해 주세요.", "err");
+    }
+  } else {
+    console.log("세션 기록 (로컬 테스트):", payload);
+    saved = true;
+  }
+
+  document.getElementById("practicePanel").classList.remove("on");
+  document.getElementById("dbtGrid").style.display = "none";
+
+  const banner = document.getElementById("finishBanner");
+  banner.classList.add("on");
+
+  const finishMsg = document.getElementById("finishMsg");
+  if (saved && SCRIPT_URL) {
+    finishMsg.innerHTML =
+      "불안을 꺼내고, 나누고, 흘려보내고,<br>" +
+      "그리고 파도를 함께 탔어요.<br><br>" +
+      "상담 기록이 시트에 저장됐어요 📋<br><br>" +
+      "다음에도 불안이 파도처럼 찾아오면<br>오늘 연습한 기술을 꺼내봐요 🌿";
+    setSaveStatus("시트에 저장 완료", "ok");
+  } else if (!SCRIPT_URL) {
+    finishMsg.innerHTML =
+      "불안을 꺼내고, 나누고, 흘려보내고,<br>" +
+      "그리고 파도를 함께 탔어요.<br><br>" +
+      "<small style='color:var(--muted)'>※ Apps Script URL 미설정 — 기록은 저장되지 않았어요.</small><br><br>" +
+      "다음에도 불안이 파도처럼 찾아오면<br>오늘 연습한 기술을 꺼내봐요 🌿";
+  }
+
+  banner.scrollIntoView({ behavior: "smooth", block: "start" });
+  btn.disabled = false;
+}
+
+function setSaveStatus(text, type) {
+  const el = document.getElementById("saveStatus");
+  el.textContent = text;
+  el.className = "save-status " + (type || "");
+}
+</script>
+</body>
+</html>
