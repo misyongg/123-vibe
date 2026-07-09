@@ -647,7 +647,7 @@ textarea:focus { border-color: var(--accent); background: #fff; }
         <input type="text" id="filterNickname" placeholder="예) 파란구름 — 비우면 전체 쪽지">
         <p class="filter-hint">상담할 학생의 별칭을 입력하면 해당 학생 쪽지만 불러와요.</p>
         <p class="filter-hint" id="sheetNotice" style="display:none; color:#e53e3e; margin-top:6px;">
-          ⚠️ Google 시트 URL이 설정되지 않았어요. config.js에 배포 URL을 넣어주세요.
+          ⚠️ Google 시트 URL이 설정되지 않았어요. 선생님에게 문의해 주세요.
         </p>
       </div>
 
@@ -991,7 +991,7 @@ async function pourNotes() {
   } else {
     allNotes = [];
     btn.disabled = false;
-    btn.textContent = "시트 URL 미설정 — config.js 확인";
+    btn.textContent = "시트 연동 오류 — 선생님에게 문의";
     return;
   }
 
