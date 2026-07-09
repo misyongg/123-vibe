@@ -384,7 +384,12 @@ input[type="text"]:focus, textarea:focus {
   </div>
 </div>
 
-<script src="config.js"></script>
+<script>
+const ANXIETY_CUP_CONFIG = {
+  GOOGLE_SHEETS_URL: "https://script.google.com/macros/s/AKfycbzZpQNu-ec11y6yaDEuKaU_hOFR0K7y62AO_sdykqfpevAzOMHS4YAtz3cjS7e6pZHFxQ/exec",
+  TEACHER_PASSWORD: "10042580"
+};
+</script>
 <script>
 const SCRIPT_URL = (typeof ANXIETY_CUP_CONFIG !== "undefined" && ANXIETY_CUP_CONFIG.GOOGLE_SHEETS_URL) || "";
 const NICKNAME_KEY = "anxietyCupNickname";
