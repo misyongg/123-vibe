@@ -258,12 +258,12 @@ input[type="password"]:focus, input[type="text"]:focus { border-color: var(--acc
 }
 .poured-note {
   background: var(--paper);
-  border: 1.5px solid #e2c94a;
-  border-radius: 6px;
-  padding: 9px 12px;
-  font-size: 0.78rem;
+  border: 2px solid #e2c94a;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.88rem;
   color: #5a4000;
-  max-width: 175px;
+  max-width: 220px;
   line-height: 1.55;
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   opacity: 0;
@@ -275,7 +275,7 @@ input[type="password"]:focus, input[type="text"]:focus { border-color: var(--acc
   transform: translateY(0) rotate(var(--r, 0deg));
 }
 .poured-note-tag {
-  font-size: 0.68rem;
+  font-size: 0.76rem;
   font-weight: 700;
   color: var(--accent);
   display: block;
@@ -653,7 +653,7 @@ textarea:focus { border-color: var(--accent); background: #fff; }
 
       <div class="cup-pour-scene">
         <svg id="pourCup" class="pour-cup-svg"
-             viewBox="0 0 160 200" width="120" height="150"
+             viewBox="0 0 160 220" width="175" height="210"
              xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <defs>
             <linearGradient id="paperGradT" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -666,17 +666,17 @@ textarea:focus { border-color: var(--accent); background: #fff; }
               <stop offset="100%" stop-color="#ebe4d6"/>
             </linearGradient>
           </defs>
-          <ellipse cx="80" cy="192" rx="50" ry="7" fill="rgba(60,50,30,0.1)"/>
-          <path d="M38 58 L26 178 Q26 186 36 186 H124 Q134 186 134 178 L122 58 Z"
+          <ellipse cx="80" cy="214" rx="36" ry="7" fill="rgba(60,50,30,0.1)"/>
+          <path d="M24 62 L52 206 Q56 214 80 214 Q104 214 108 206 L136 62 Z"
                 fill="url(#paperGradT)" stroke="#c4b89a" stroke-width="1.2" stroke-linejoin="round"/>
-          <ellipse cx="80" cy="56" rx="44" ry="10" fill="url(#insideGradT)" opacity="0.88"/>
-          <ellipse cx="80" cy="50" rx="47" ry="11" fill="none" stroke="#ddd4c0" stroke-width="5.5"/>
-          <ellipse cx="80" cy="49" rx="47" ry="10" fill="none" stroke="#faf6ee" stroke-width="2.5"/>
-          <path d="M52 64 Q48 120 44 176" fill="none" stroke="#cfc2a8" stroke-width="0.9" opacity="0.45"/>
-          <path d="M80 60 L80 176" fill="none" stroke="#cfc2a8" stroke-width="0.7" opacity="0.3"/>
-          <path d="M108 64 Q112 120 116 176" fill="none" stroke="#cfc2a8" stroke-width="0.9" opacity="0.45"/>
-          <path d="M42 72 Q36 120 30 168" fill="none" stroke="#fff" stroke-width="2" opacity="0.4" stroke-linecap="round"/>
-          <text x="80" y="132" text-anchor="middle" font-size="8.5" fill="#b0a088" opacity="0.55" font-family="sans-serif">불안 종이컵</text>
+          <ellipse cx="80" cy="64" rx="52" ry="11" fill="url(#insideGradT)" opacity="0.88"/>
+          <ellipse cx="80" cy="54" rx="55" ry="13" fill="none" stroke="#ddd4c0" stroke-width="5.5"/>
+          <ellipse cx="80" cy="53" rx="55" ry="12" fill="none" stroke="#faf6ee" stroke-width="2.5"/>
+          <path d="M40 72 Q34 138 54 202" fill="none" stroke="#cfc2a8" stroke-width="0.9" opacity="0.45"/>
+          <path d="M80 68 L80 202" fill="none" stroke="#cfc2a8" stroke-width="0.7" opacity="0.3"/>
+          <path d="M120 72 Q126 138 106 202" fill="none" stroke="#cfc2a8" stroke-width="0.9" opacity="0.45"/>
+          <path d="M36 80 Q28 140 48 196" fill="none" stroke="#fff" stroke-width="2.2" opacity="0.4" stroke-linecap="round"/>
+          <text x="80" y="148" text-anchor="middle" font-size="9" fill="#b0a088" opacity="0.55" font-family="sans-serif">불안 종이컵</text>
         </svg>
 
         <div class="spinner" id="spinner1"></div>
