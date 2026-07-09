@@ -243,7 +243,6 @@ input[type="password"]:focus, input[type="text"]:focus { border-color: var(--acc
 .pour-cup-svg {
   transform-origin: bottom center;
   transition: transform 1.4s cubic-bezier(0.4,0,0.2,1);
-  filter: drop-shadow(0 5px 12px rgba(80, 70, 50, 0.12));
 }
 .pour-cup-svg.tilt { transform: rotate(-115deg) translate(-28px, -10px); }
 
@@ -908,9 +907,6 @@ function unlockApp() {
 }
 
 function initTeacherApp() {
-  if (!SCRIPT_URL) {
-    document.getElementById("sheetNotice").style.display = "block";
-  }
   const savedFilter = localStorage.getItem(FILTER_NICK_KEY);
   if (savedFilter) {
     document.getElementById("filterNickname").value = savedFilter;
