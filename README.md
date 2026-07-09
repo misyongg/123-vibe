@@ -10,6 +10,7 @@
 | 오늘의 마음날씨 | [consultation-card/](consultation-card/) |
 | **불안 종이컵** (학생) | [anxiety-cup/](anxiety-cup/) |
 | **불안의 파도타기** (선생님) | [anxiety-cup/불안의파도타기.html](anxiety-cup/불안의파도타기.html) |
+| **감정호텔** | [emotion-hotel/emotion-hotel.html](emotion-hotel/emotion-hotel.html) |
 | 상담 타이머 v2 (로컬) | [consultation-timer-v2/](consultation-timer-v2/) |
 
 GitHub Pages 홈: [index.html](index.html)
