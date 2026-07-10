@@ -1009,7 +1009,7 @@
     .guest-table td input:focus { border-bottom-color: var(--lavender-dk); }
 
     /* ===========================
-       18b. 인쇄 워크시트 (print_paper.png)
+       18b. 인쇄 워크시트 (print_paper.png — 5056×3392 기준 % 좌표)
     =========================== */
     #print-worksheet {
       display: none;
@@ -1020,12 +1020,15 @@
       max-width: 1100px;
       margin: 0 auto;
       aspect-ratio: 5056 / 3392;
+      container-type: inline-size;
     }
     .print-worksheet-bg {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       display: block;
-      object-fit: contain;
+      object-fit: fill;
     }
     .print-overlay {
       position: absolute;
@@ -1040,38 +1043,78 @@
       overflow: hidden;
       word-break: keep-all;
       white-space: pre-wrap;
+      box-sizing: border-box;
     }
-    .pf-guests { left: 3.2%; top: 11%; width: 27%; height: 22%; font-size: 0.62rem; line-height: 1.45; }
-    .pf-today-guest { left: 3.2%; top: 34%; width: 27%; height: 6%; font-size: 0.72rem; }
-    .pf-today-reason { left: 3.2%; top: 40.5%; width: 27%; height: 7%; font-size: 0.68rem; }
-    .pf-hotel-name { left: 36%; top: 7.5%; width: 28%; font-size: 1.15rem; font-weight: 700; text-align: center; }
-    .pf-hotel-intro { left: 36%; top: 12.5%; width: 28%; height: 9%; font-size: 0.68rem; text-align: center; }
-    .pf-manager-intro { left: 36%; top: 22%; width: 28%; height: 5%; font-size: 0.68rem; text-align: center; }
-    .pf-ost-title { left: 71%; top: 9%; width: 26%; font-size: 0.78rem; }
-    .pf-ost-reason { left: 71%; top: 13.5%; width: 26%; height: 7%; font-size: 0.65rem; }
-    .pf-ost-lyrics { left: 71%; top: 21%; width: 26%; height: 22%; font-size: 0.62rem; line-height: 1.5; }
-    .pf-secret { left: 71%; top: 47%; width: 26%; height: 14%; font-size: 0.65rem; line-height: 1.45; }
-    .pf-rules { left: 3.2%; top: 58%; width: 22%; height: 24%; font-size: 0.72rem; line-height: 1.55; }
+    .pf-guests {
+      left: 4.51%; top: 15.48%; width: 24.96%; height: 17.69%;
+      font-size: 0.88cqw; line-height: 1.45; text-align: left; padding: 0 1%;
+    }
+    .pf-today-guest {
+      left: 4.51%; top: 35.79%; width: 24.96%; height: 3.36%;
+      font-size: 0.95cqw; text-align: left; padding: 0 1%;
+    }
+    .pf-today-reason {
+      left: 4.92%; top: 42.78%; width: 24.55%; height: 3.39%;
+      font-size: 0.92cqw; text-align: left; padding: 0 1%;
+    }
+    .pf-hotel-name {
+      left: 36.97%; top: 7.10%; width: 28.01%; height: 3.04%;
+      font-size: 1.35cqw; font-weight: 700; text-align: center;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pf-hotel-intro {
+      left: 35.05%; top: 11.08%; width: 29.92%; height: 3.07%;
+      font-size: 0.92cqw; text-align: center;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pf-manager-intro {
+      left: 35.25%; top: 14.80%; width: 29.73%; height: 3.36%;
+      font-size: 0.88cqw; text-align: center;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pf-ost-title {
+      left: 68.99%; top: 9.79%; width: 28.98%; height: 3.36%;
+      font-size: 0.95cqw; padding: 0 2%;
+    }
+    .pf-ost-reason {
+      left: 68.99%; top: 14.18%; width: 28.98%; height: 3.57%;
+      font-size: 0.88cqw; padding: 0 2%;
+    }
+    .pf-ost-lyrics {
+      left: 68.99%; top: 19.78%; width: 28.98%; height: 23.67%;
+      font-size: 0.85cqw; line-height: 1.5; padding: 1% 2%;
+    }
+    .pf-secret {
+      left: 70.00%; top: 45.49%; width: 26.98%; height: 15.98%;
+      font-size: 0.88cqw; line-height: 1.45; padding: 2% 3%;
+    }
+    .pf-rules {
+      left: 4.00%; top: 56.37%; width: 22.98%; height: 27.09%;
+      font-size: 0.95cqw; line-height: 1.55; padding: 2% 4%;
+    }
     .pf-room {
-      font-size: 0.55rem;
-      line-height: 1.2;
+      font-size: 0.82cqw;
+      line-height: 1.15;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 1px;
+      padding: 2%;
     }
-    .pf-room img { width: 1.1em; height: 1.1em; object-fit: contain; }
-    .pf-room-5  { left: 35%; top: 29%; width: 9%; height: 8%; }
-    .pf-room-6  { left: 45.5%; top: 29%; width: 9%; height: 8%; }
-    .pf-room-7  { left: 56%; top: 29%; width: 9%; height: 8%; }
-    .pf-room-3  { left: 35%; top: 41%; width: 9%; height: 8%; }
-    .pf-room-4  { left: 45.5%; top: 41%; width: 9%; height: 8%; }
-    .pf-room-8  { left: 56%; top: 41%; width: 9%; height: 8%; }
-    .pf-room-1  { left: 35%; top: 53%; width: 9%; height: 8%; }
-    .pf-room-2  { left: 45.5%; top: 53%; width: 9%; height: 8%; }
-    .pf-room-9  { left: 56%; top: 53%; width: 9%; height: 8%; }
-    .pf-room-0  { left: 40%; top: 64%; width: 20%; height: 6%; font-size: 0.62rem; }
+    .pf-room .pf-prop-img { width: 42%; height: auto; max-height: 55%; object-fit: contain; }
+    .pf-room .pf-prop-img + .pf-prop-img { width: 28%; max-height: 35%; }
+    .pf-room-5  { left: 32.3%; top: 24.9%; width: 9.0%; height: 8.5%; }
+    .pf-room-6  { left: 41.3%; top: 24.9%; width: 9.0%; height: 8.5%; }
+    .pf-room-7  { left: 50.3%; top: 24.9%; width: 9.0%; height: 8.5%; }
+    .pf-room-3  { left: 32.3%; top: 35.9%; width: 9.0%; height: 8.5%; }
+    .pf-room-4  { left: 41.3%; top: 35.9%; width: 9.0%; height: 8.5%; }
+    .pf-room-8  { left: 50.3%; top: 35.9%; width: 9.0%; height: 8.5%; }
+    .pf-room-1  { left: 32.3%; top: 46.9%; width: 9.0%; height: 8.5%; }
+    .pf-room-2  { left: 41.3%; top: 46.9%; width: 9.0%; height: 8.5%; }
+    .pf-room-9  { left: 50.3%; top: 46.9%; width: 9.0%; height: 8.5%; }
+    .pf-room-0  { left: 31.8%; top: 60.3%; width: 27.9%; height: 6.9%; font-size: 0.78cqw; }
 
     /* ===========================
        19. 인쇄용 스타일
@@ -1096,12 +1139,14 @@
       .print-worksheet-inner {
         max-width: none;
         width: 100%;
-        height: auto;
         aspect-ratio: 5056 / 3392;
       }
       .print-worksheet-bg {
+        position: absolute;
+        inset: 0;
         width: 100%;
-        height: auto;
+        height: 100%;
+        object-fit: fill;
       }
     }
 
@@ -3459,17 +3504,18 @@ function pfSetHtml(id, html) {
 
 function roomPrintHtml(roomId) {
   const r = appData.rooms[roomId];
-  if (!r || (!r.guest && !r.roomName && !(r.props && r.props.length))) return '';
+  if (!r || !isRoomDecorated(r)) return '';
   const guestEmoji = r.guest ? (defaultEmotionData[r.guest]?.emoji || '💭') : '';
   const props = normalizeProps(r.props || []);
-  const propImg = props.length
-    ? `<img src="${propImageSrc(props[0].id)}" alt=""/>`
-    : '';
-  let lines = [];
-  if (propImg) lines.push(propImg);
-  if (r.guest) lines.push(guestEmoji + ' ' + r.guest);
-  if (r.roomName) lines.push(r.roomName);
-  return lines.join('<br/>');
+  const hasName = !!(r.roomName && r.roomName.trim());
+  const hasGuest = !!r.guest;
+  const parts = [];
+  props.slice(0, 3).forEach(p => {
+    parts.push(`<img class="pf-prop-img" src="${propImageSrc(p.id)}" alt=""/>`);
+  });
+  if (hasGuest) parts.push(`<span>${guestEmoji} ${r.guest}</span>`);
+  if (hasName) parts.push(`<span>${r.roomName.trim()}</span>`);
+  return parts.join('');
 }
 
 function preparePrintWorksheet() {
