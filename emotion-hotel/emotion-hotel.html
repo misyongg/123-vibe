@@ -993,34 +993,99 @@
     .guest-table td input:focus { border-bottom-color: var(--lavender-dk); }
 
     /* ===========================
+       18b. 인쇄 워크시트 (print_paper.png)
+    =========================== */
+    #print-worksheet {
+      display: none;
+    }
+    .print-worksheet-inner {
+      position: relative;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      aspect-ratio: 5056 / 3392;
+    }
+    .print-worksheet-bg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+    .print-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .pf {
+      position: absolute;
+      font-family: 'Nanum Pen Script', 'Noto Sans KR', sans-serif;
+      color: #3a3340;
+      line-height: 1.35;
+      overflow: hidden;
+      word-break: keep-all;
+      white-space: pre-wrap;
+    }
+    .pf-guests { left: 3.2%; top: 11%; width: 27%; height: 22%; font-size: 0.62rem; line-height: 1.45; }
+    .pf-today-guest { left: 3.2%; top: 34%; width: 27%; height: 6%; font-size: 0.72rem; }
+    .pf-today-reason { left: 3.2%; top: 40.5%; width: 27%; height: 7%; font-size: 0.68rem; }
+    .pf-hotel-name { left: 36%; top: 7.5%; width: 28%; font-size: 1.15rem; font-weight: 700; text-align: center; }
+    .pf-hotel-intro { left: 36%; top: 12.5%; width: 28%; height: 9%; font-size: 0.68rem; text-align: center; }
+    .pf-manager-intro { left: 36%; top: 22%; width: 28%; height: 5%; font-size: 0.68rem; text-align: center; }
+    .pf-ost-title { left: 71%; top: 9%; width: 26%; font-size: 0.78rem; }
+    .pf-ost-reason { left: 71%; top: 13.5%; width: 26%; height: 7%; font-size: 0.65rem; }
+    .pf-ost-lyrics { left: 71%; top: 21%; width: 26%; height: 22%; font-size: 0.62rem; line-height: 1.5; }
+    .pf-secret { left: 71%; top: 47%; width: 26%; height: 14%; font-size: 0.65rem; line-height: 1.45; }
+    .pf-rules { left: 3.2%; top: 58%; width: 22%; height: 24%; font-size: 0.72rem; line-height: 1.55; }
+    .pf-room {
+      font-size: 0.55rem;
+      line-height: 1.2;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .pf-room img { width: 1.1em; height: 1.1em; object-fit: contain; }
+    .pf-room-5  { left: 35%; top: 29%; width: 9%; height: 8%; }
+    .pf-room-6  { left: 45.5%; top: 29%; width: 9%; height: 8%; }
+    .pf-room-7  { left: 56%; top: 29%; width: 9%; height: 8%; }
+    .pf-room-3  { left: 35%; top: 41%; width: 9%; height: 8%; }
+    .pf-room-4  { left: 45.5%; top: 41%; width: 9%; height: 8%; }
+    .pf-room-8  { left: 56%; top: 41%; width: 9%; height: 8%; }
+    .pf-room-1  { left: 35%; top: 53%; width: 9%; height: 8%; }
+    .pf-room-2  { left: 45.5%; top: 53%; width: 9%; height: 8%; }
+    .pf-room-9  { left: 56%; top: 53%; width: 9%; height: 8%; }
+    .pf-room-0  { left: 40%; top: 64%; width: 20%; height: 6%; font-size: 0.62rem; }
+
+    /* ===========================
        19. 인쇄용 스타일
     =========================== */
     @media print {
-      #app-header, #step-bar, #bottom-nav, #room-modal { display: none !important; }
-      .section-page { display: block !important; page-break-after: always; padding-bottom: 36px; }
-      body { background: white; }
-      body::after {
-        content: "© 제작 · 전문상담교사 김미선(misyongg)";
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        text-align: center;
-        font-size: 8.5pt;
-        color: #666;
-        padding: 8px 12px;
-        border-top: 1px solid #ccc;
+      @page { size: A4 landscape; margin: 4mm; }
+      html, body {
+        margin: 0; padding: 0;
+        width: 100%; height: 100%;
         background: white;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
-      .card { box-shadow: none; border: 1px solid #eee; }
-      .page-credit {
+      #app-header, #step-bar, #bottom-nav, #room-modal, #main-content { display: none !important; }
+      #print-worksheet {
         display: block !important;
-        color: #666 !important;
-        font-size: 8.5pt;
-        margin-top: 20px;
-        padding-top: 10px;
-        border-top: 1px solid #ddd;
+        width: 100%;
+        height: auto;
+        page-break-after: avoid;
         page-break-inside: avoid;
+      }
+      .print-worksheet-inner {
+        max-width: none;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 5056 / 3392;
+      }
+      .print-worksheet-bg {
+        width: 100%;
+        height: auto;
       }
     }
 
@@ -1139,7 +1204,7 @@
   <header id="app-header">
     <span class="hotel-title" id="header-hotel-name">🏨 감정호텔</span>
     <span class="manager-badge" id="header-manager-name">지배인</span>
-    <button id="print-btn" onclick="window.print()">🖨️ 인쇄</button>
+    <button id="print-btn" onclick="printWorksheet()">🖨️ 인쇄</button>
   </header>
 
   <!-- ======= 스텝 진행바 ======= -->
@@ -1814,7 +1879,7 @@
           <em>"날마다 감정들이 머물다 가는 곳, 감정호텔에 오신 것을 환영합니다."</em>
         </p>
         <button class="btn btn-primary" style="margin:0 auto; display:flex;"
-                onclick="window.print()">🖨️ 내 감정호텔 인쇄하기</button>
+                onclick="printWorksheet()">🖨️ 내 감정호텔 인쇄하기</button>
       </div>
       <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
     </section>
@@ -1826,6 +1891,36 @@
     <span id="save-indicator">💾 저장됨</span>
     <button class="btn btn-primary" id="next-btn" onclick="nextStep()">다음 ▶</button>
   </nav>
+
+  <!-- ======= 인쇄용 워크시트 (화면에서는 숨김) ======= -->
+  <div id="print-worksheet" aria-hidden="true">
+    <div class="print-worksheet-inner">
+      <img class="print-worksheet-bg" src="print_paper.png" alt="감정호텔 워크시트"/>
+      <div class="print-overlay">
+        <div class="pf pf-guests" id="pf-guests"></div>
+        <div class="pf pf-today-guest" id="pf-today-guest"></div>
+        <div class="pf pf-today-reason" id="pf-today-reason"></div>
+        <div class="pf pf-hotel-name" id="pf-hotel-name"></div>
+        <div class="pf pf-hotel-intro" id="pf-hotel-intro"></div>
+        <div class="pf pf-manager-intro" id="pf-manager-intro"></div>
+        <div class="pf pf-ost-title" id="pf-ost-title"></div>
+        <div class="pf pf-ost-reason" id="pf-ost-reason"></div>
+        <div class="pf pf-ost-lyrics" id="pf-ost-lyrics"></div>
+        <div class="pf pf-secret" id="pf-secret"></div>
+        <div class="pf pf-rules" id="pf-rules"></div>
+        <div class="pf pf-room pf-room-1" id="pf-room-1"></div>
+        <div class="pf pf-room pf-room-2" id="pf-room-2"></div>
+        <div class="pf pf-room pf-room-3" id="pf-room-3"></div>
+        <div class="pf pf-room pf-room-4" id="pf-room-4"></div>
+        <div class="pf pf-room pf-room-5" id="pf-room-5"></div>
+        <div class="pf pf-room pf-room-6" id="pf-room-6"></div>
+        <div class="pf pf-room pf-room-7" id="pf-room-7"></div>
+        <div class="pf pf-room pf-room-8" id="pf-room-8"></div>
+        <div class="pf pf-room pf-room-9" id="pf-room-9"></div>
+        <div class="pf pf-room pf-room-0" id="pf-room-0"></div>
+      </div>
+    </div>
+  </div>
 
 <script>
 /* ============================================================
@@ -3302,24 +3397,86 @@ function resetAll() {
 
 
 /* ───────────────────────────────────────────
-   13. 인쇄 최적화
+   13. 인쇄 워크시트 (print_paper.png)
 ─────────────────────────────────────────── */
-window.addEventListener('beforeprint', () => {
-  // 인쇄 시 모든 섹션 펼치기
-  document.querySelectorAll('.section-page').forEach(el => {
-    el.style.display = 'block';
-  });
-});
+const PRINT_BG_URL = (() => {
+  try { return new URL('print_paper.png', window.location.href).href; }
+  catch (e) { return 'print_paper.png'; }
+})();
 
-window.addEventListener('afterprint', () => {
-  // 인쇄 후 현재 스텝만 다시 표시
-  document.querySelectorAll('.section-page').forEach(el => {
-    el.style.display = 'none';
-  });
-  const cur = document.getElementById('page-' + currentStep);
-  if (cur) cur.style.display = 'block';
-});
+function pfSet(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text || '';
+}
 
+function pfSetHtml(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html || '';
+}
+
+function roomPrintHtml(roomId) {
+  const r = appData.rooms[roomId];
+  if (!r || (!r.guest && !r.roomName && !(r.props && r.props.length))) return '';
+  const guestEmoji = r.guest ? (defaultEmotionData[r.guest]?.emoji || '💭') : '';
+  const props = normalizeProps(r.props || []);
+  const propImg = props.length
+    ? `<img src="${propImageSrc(props[0].id)}" alt=""/>`
+    : '';
+  let lines = [];
+  if (propImg) lines.push(propImg);
+  if (r.guest) lines.push(guestEmoji + ' ' + r.guest);
+  if (r.roomName) lines.push(r.roomName);
+  return lines.join('<br/>');
+}
+
+function preparePrintWorksheet() {
+  collectCurrentStep(currentStep);
+
+  const hotel = appData.hotelName || '감정호텔';
+  const manager = appData.managerName || '';
+
+  pfSet('pf-hotel-name', hotel);
+  pfSet('pf-hotel-intro', appData.hotelIntro || '');
+  pfSet('pf-manager-intro',
+    (manager ? '👤 ' + manager : '') +
+    (appData.managerIntro ? (manager ? '  |  ' : '') + appData.managerIntro : ''));
+
+  // 손님 체크인 (최대 4명)
+  const guestLines = appData.guests.slice(0, 4).map(g =>
+    [g.emoji + ' ' + g.name, g.trait, g.visitTime, g.wants]
+      .filter(Boolean).join('  ·  ')
+  );
+  pfSet('pf-guests', guestLines.join('\n'));
+
+  const todayG = appData.guests.find(g => g.isToday);
+  pfSet('pf-today-guest', todayG ? '⭐ ' + todayG.emoji + ' ' + todayG.name : '');
+  pfSet('pf-today-reason', appData.todayReason || '');
+
+  // 규칙 (최대 8개)
+  const rules = appData.rules.filter(r => r && r.trim()).slice(0, 8);
+  pfSet('pf-rules', rules.map((r, i) => (i + 1) + '. ' + r).join('\n'));
+
+  // OST
+  pfSet('pf-ost-title', appData.ost.title ? '🎼 ' + appData.ost.title : '');
+  pfSet('pf-ost-reason', appData.ost.reason || '');
+  pfSet('pf-ost-lyrics', appData.ost.lyrics || '');
+
+  // 비밀 무기 상자
+  pfSet('pf-secret', appData.secretWeapons || '');
+
+  // 방 1~9, 로비
+  for (let id = 0; id <= 9; id++) {
+    pfSetHtml('pf-room-' + id, roomPrintHtml(id));
+  }
+
+  const bg = document.querySelector('#print-worksheet .print-worksheet-bg');
+  if (bg && !bg.src.includes('print_paper')) bg.src = PRINT_BG_URL;
+}
+
+function printWorksheet() {
+  preparePrintWorksheet();
+  window.print();
+}
 
 /* ───────────────────────────────────────────
    14. 앱 초기화 (DOMContentLoaded)
@@ -3358,7 +3515,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Alt + ← : 이전 스텝
     if (e.altKey && e.key === 'ArrowLeft')  { e.preventDefault(); prevStep(); }
     // Alt + P : 인쇄
-    if (e.altKey && e.key === 'p')          { e.preventDefault(); window.print(); }
+    if (e.altKey && e.key === 'p')          { e.preventDefault(); printWorksheet(); }
   });
 
   // 7) 저장 상태 초기 표시
