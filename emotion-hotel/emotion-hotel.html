@@ -517,6 +517,9 @@
       flex-wrap: wrap;
       gap: 8px;
       margin: 10px 0;
+      max-height: 220px;
+      overflow-y: auto;
+      padding: 4px;
     }
     .prop-item {
       width: 52px; height: 52px;
@@ -1615,39 +1618,33 @@ let currentBookPage = 0;
 let currentRoomId = null;
 let sunoTags = { genre: '', mood: [], tempo: '', vocal: '' };
 
-// 방 소품 목록 (이미지: props/{id}.png)
-const ROOM_PROPS = [
-  { id: 'sofa',     label: '소파' },
-  { id: 'bed',      label: '침대' },
-  { id: 'pillow',   label: '베개' },
-  { id: 'blanket',  label: '담요' },
-  { id: 'teddy',    label: '인형' },
-  { id: 'plant',    label: '화분' },
-  { id: 'flower',   label: '꽃' },
-  { id: 'candle',   label: '양초' },
-  { id: 'lamp',     label: '스탠드등' },
-  { id: 'window',   label: '창문' },
-  { id: 'curtain',  label: '커튼' },
-  { id: 'mirror',   label: '거울' },
-  { id: 'book',     label: '책' },
-  { id: 'diary',    label: '일기장' },
-  { id: 'music',    label: '음악' },
-  { id: 'paint',    label: '그림도구' },
-  { id: 'balloon',  label: '풍선' },
-  { id: 'kite',     label: '연' },
-  { id: 'star',     label: '별' },
-  { id: 'moon',     label: '달' },
-  { id: 'sun',      label: '해' },
-  { id: 'cloud',    label: '구름' },
-  { id: 'rain',     label: '비/우산' },
-  { id: 'wave',     label: '파도' },
-  { id: 'bathtub',  label: '욕조' },
-  { id: 'tea',      label: '차' },
-  { id: 'heart',    label: '하트' },
-  { id: 'key',      label: '열쇠' },
-  { id: 'door',     label: '문' },
-  { id: 'puzzle',   label: '퍼즐' }
+// 방 소품 목록 (이미지: 256px/{id}.png, 45종)
+const PROP_BASE_LABELS = {
+  sofa: '소파', bed: '침대', pillow: '베개', blanket: '담요', teddy: '인형',
+  plant: '화분', flower: '꽃', candle: '양초', lamp: '스탠드등', window: '창문',
+  curtain: '커튼', mirror: '거울', book: '책', diary: '일기장', music: '음악',
+  paint: '그림도구', balloon: '풍선', kite: '연', star: '별', moon: '달',
+  sun: '해', cloud: '구름', rain: '비/우산', wave: '파도', bathtub: '욕조',
+  tea: '차', heart: '하트', key: '열쇠', door: '문', puzzle: '퍼즐'
+};
+
+function propIdToLabel(id) {
+  const num = id.match(/(\d+)$/);
+  const base = num ? id.slice(0, -num[0].length) : id;
+  const name = PROP_BASE_LABELS[base] || base;
+  return num ? name + ' ' + num[1] : name;
+}
+
+const ROOM_PROP_IDS = [
+  'sofa', 'sofa2', 'bed', 'bed2', 'pillow', 'blanket', 'teddy', 'teddy2',
+  'plant', 'plant2', 'plant3', 'flower', 'candle', 'lamp', 'lamp2',
+  'window', 'window2', 'curtain', 'mirror', 'book', 'book2', 'diary', 'diary2',
+  'music', 'paint', 'balloon', 'kite', 'star', 'moon', 'sun', 'cloud',
+  'rain', 'rain2', 'wave', 'wave2', 'bathtub', 'bathtub2', 'tea', 'heart',
+  'key', 'key2', 'door', 'door2', 'puzzle', 'puzzle2'
 ];
+
+const ROOM_PROPS = ROOM_PROP_IDS.map(id => ({ id, label: propIdToLabel(id) }));
 
 // 구 이모지 소품 → 새 id 매핑 (저장 데이터 호환)
 const LEGACY_PROP_MAP = {
@@ -1657,16 +1654,11 @@ const LEGACY_PROP_MAP = {
   '🌸': 'flower', '🎪': 'balloon', '🌙': 'moon', '☀️': 'sun', '🧩': 'puzzle'
 };
 
-function propImageSrc(id, ext) {
-  return 'props/' + id + '.' + (ext || 'png');
+function propImageSrc(id) {
+  return '256px/' + id + '.png';
 }
 
 function propImgOnError(el) {
-  if (!el.dataset.triedSvg) {
-    el.dataset.triedSvg = '1';
-    el.src = propImageSrc(el.dataset.propId || el.alt, 'svg');
-    return;
-  }
   el.dataset.failed = '1';
 }
 

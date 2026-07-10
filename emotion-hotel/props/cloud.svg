@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
-  <rect width="128" height="128" rx="24" fill="#FFF8F0"/>
-  <circle cx="64" cy="58" r="32" fill="#E8F0FF" opacity="0.85"/>
-  <circle cx="52" cy="48" r="8" fill="white" opacity="0.45"/>
-  <text x="64" y="108" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="700" fill="#7A6E80">구름</text>
-</svg>
