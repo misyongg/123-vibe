@@ -1,5 +1,7 @@
 # Apps Script 자동 배포 (clasp)
 
+**제작**: 전문상담교사 김미선 (misyongg)
+
 Google 계정 로그인이 **한 번** 필요합니다. 이후 터미널에서 `clasp push`로 코드를 올릴 수 있습니다.
 
 ## 1. 스크립트 ID 찾기

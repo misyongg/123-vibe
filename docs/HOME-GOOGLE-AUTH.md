@@ -1,5 +1,7 @@
 # 프로젝트 홈 Google 로그인 설정
 
+**제작**: 전문상담교사 김미선 (misyongg)
+
 프로젝트 홈(`index.html`)은 Google 계정으로 로그인한 **허용된 이메일**만 볼 수 있습니다.
 
 ## 1. Google Cloud OAuth 클라이언트 만들기

@@ -1,4 +1,5 @@
 /**
+ * 제작 · 전문상담교사 김미선(misyongg)
  * 불안 종이컵 — Google 시트 연동
  * - 학생 쪽지 저장 (doPost, recordType: note)
  * - 상담 연동 기록 저장 (doPost, recordType: session) + 쪽지 처리완료 표시

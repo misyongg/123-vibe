@@ -1,3 +1,4 @@
+// 제작 · 전문상담교사 김미선(misyongg)
 const MW_STORE_KEY = "moodWeatherRecords";
 const MW_NICKNAME_KEY = "moodWeatherNickname";
 const MW_ENERGY_LABELS = { 4: "풀충", 3: "충전", 2: "보통", 1: "살짝방전", 0: "방전" };
