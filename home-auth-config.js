@@ -5,6 +5,6 @@
 //    - http://localhost (로컬 테스트 시)
 // 3. CLIENT_ID와 ALLOWED_EMAILS에 본인 Gmail 입력
 const HOME_AUTH_CONFIG = {
-  GOOGLE_CLIENT_ID: "",
-  ALLOWED_EMAILS: []
+  GOOGLE_CLIENT_ID: "1045727865732-pjfsl19l0l6h0o9814oqjgq986sgk2bg.apps.googleusercontent.com",
+  ALLOWED_EMAILS: ["misyongg@gmail.com"]
 };
