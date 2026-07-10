@@ -470,7 +470,7 @@
 
     .hotel-room {
       border-radius: 12px;
-      padding: 14px 10px;
+      padding: 0;
       text-align: center;
       cursor: pointer;
       transition: var(--transition);
@@ -478,34 +478,138 @@
       min-height: 90px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
+      align-items: stretch;
+      justify-content: flex-end;
       box-shadow: 0 2px 8px var(--shadow);
       position: relative;
+      overflow: hidden;
     }
     .hotel-room:hover {
       transform: scale(1.05);
       box-shadow: 0 6px 18px var(--shadow);
     }
-    .hotel-room .room-emoji { font-size: 1.5rem; }
-    .hotel-room .room-name  { font-size: 0.72rem; font-weight: 600; color: var(--text); }
-    .hotel-room .room-guest { font-size: 0.7rem; color: var(--text-soft); }
+    .hotel-room .room-props-layer {
+      position: absolute;
+      inset: 0;
+      bottom: 30px;
+      pointer-events: none;
+    }
+    .hotel-room .room-info {
+      position: relative;
+      z-index: 2;
+      padding: 4px 6px 6px;
+      background: rgba(255,255,255,0.42);
+      border-radius: 0 0 9px 9px;
+      line-height: 1.2;
+    }
+    .hotel-room .room-placeholder {
+      display: none;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+    .hotel-room:not(.has-props) .room-placeholder { display: block; margin-bottom: 2px; }
+    .hotel-room .room-name  { font-size: 0.72rem; font-weight: 600; color: var(--text); display: block; }
+    .hotel-room .room-guest { font-size: 0.7rem; color: var(--text-soft); display: block; }
     .hotel-room .edit-icon  {
       position: absolute; top: 5px; right: 7px;
-      font-size: 0.75rem; opacity: 0.5;
+      font-size: 0.75rem; opacity: 0.5; z-index: 3;
+    }
+
+    .placed-prop {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      touch-action: none;
+      user-select: none;
+    }
+    .placed-prop img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      display: block;
+    }
+    .hotel-room .placed-prop { width: 38%; height: 38%; }
+    .hotel-lobby .placed-prop { width: 14%; height: 70%; }
+
+    .room-edit-canvas {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      border-radius: var(--radius-sm);
+      border: 2.5px dashed var(--lavender-dk);
+      margin: 8px 0 12px;
+      overflow: hidden;
+      touch-action: none;
+      background: var(--cream);
+    }
+    .room-edit-canvas .placed-prop {
+      width: 22%;
+      height: 22%;
+      cursor: grab;
+      z-index: 1;
+    }
+    .room-edit-canvas .placed-prop.dragging {
+      cursor: grabbing;
+      z-index: 20;
+      opacity: 0.92;
+    }
+    .room-edit-canvas .placed-prop .prop-remove {
+      position: absolute;
+      top: -6px; right: -6px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: none;
+      background: var(--rose-dk);
+      color: white;
+      font-size: 0.65rem;
+      line-height: 1;
+      cursor: pointer;
+      display: none;
+      padding: 0;
+    }
+    .room-edit-canvas .placed-prop:hover .prop-remove,
+    .room-edit-canvas .placed-prop.selected .prop-remove { display: block; }
+    .room-edit-canvas-empty {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-soft);
+      font-size: 0.82rem;
+      pointer-events: none;
+      text-align: center;
+      padding: 12px;
+      line-height: 1.6;
     }
 
     .hotel-lobby {
       background: linear-gradient(135deg, var(--peach) 0%, var(--yellow) 100%);
       border-radius: 12px;
-      padding: 14px 20px;
+      padding: 0;
       text-align: center;
       margin-top: 10px;
       border: 3px solid var(--white);
       box-shadow: 0 2px 8px var(--shadow);
       cursor: pointer;
       transition: var(--transition);
+      position: relative;
+      min-height: 56px;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+    }
+    .hotel-lobby .lobby-props-layer {
+      position: absolute;
+      inset: 0;
+      bottom: 0;
+      pointer-events: none;
+    }
+    .hotel-lobby .lobby-info {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.25);
     }
     .hotel-lobby:hover { transform: scale(1.02); }
 
@@ -554,23 +658,7 @@
     .prop-item img[data-failed="1"] { display: none; }
     .prop-item img[data-failed="1"] + .prop-fallback { display: block; }
 
-    .room-prop-img {
-      width: 1.5rem; height: 1.5rem;
-      object-fit: contain;
-      display: inline-block;
-      vertical-align: middle;
-    }
-    .room-prop-icons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 2px;
-      justify-content: center;
-      max-width: 100%;
-    }
-    .room-prop-icons img {
-      width: 1.1rem; height: 1.1rem;
-      object-fit: contain;
-    }
+    /* (구 room-prop-icons — placed-prop 로 대체) */
 
     /* ===========================
        13. 규칙 리스트
@@ -913,10 +1001,10 @@
         gap: 2px;
         border-width: 2px;
       }
-      .hotel-room .room-emoji,
-      .hotel-room .room-prop-img { width: 1.2rem; height: 1.2rem; font-size: 1.1rem; }
       .hotel-room .room-name  { font-size: 0.58rem; line-height: 1.2; word-break: keep-all; }
       .hotel-room .room-guest { font-size: 0.55rem; line-height: 1.2; }
+      .hotel-room .placed-prop { width: 42%; height: 42%; }
+      .room-edit-canvas { height: 170px; }
       .hotel-room .edit-icon  { font-size: 0.6rem; top: 3px; right: 4px; }
       .hotel-sign { font-size: 1.2rem; padding: 3px 12px; }
       .prop-item { width: 46px; height: 46px; }
@@ -1231,23 +1319,32 @@
           <div class="hotel-floor" id="floor-3">
             <div class="hotel-room" id="room-5" onclick="openRoomModal(5)"
                  style="background:#f0e8ff;">
-              <span class="room-emoji">🪟</span>
-              <span class="room-name">빈 방</span>
-              <span class="room-guest">클릭해서 꾸미기</span>
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
               <span class="edit-icon">✏️</span>
             </div>
             <div class="hotel-room" id="room-6" onclick="openRoomModal(6)"
                  style="background:#e8f4ff;">
-              <span class="room-emoji">🪟</span>
-              <span class="room-name">빈 방</span>
-              <span class="room-guest">클릭해서 꾸미기</span>
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
               <span class="edit-icon">✏️</span>
             </div>
             <div class="hotel-room" id="room-7" onclick="openRoomModal(7)"
                  style="background:#fff8e8;">
-              <span class="room-emoji">🪟</span>
-              <span class="room-name">빈 방</span>
-              <span class="room-guest">클릭해서 꾸미기</span>
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
               <span class="edit-icon">✏️</span>
             </div>
           </div>
@@ -1257,23 +1354,32 @@
           <div class="hotel-floor" id="floor-2">
             <div class="hotel-room" id="room-3" onclick="openRoomModal(3)"
                  style="background:#ffe8f0;">
-              <span class="room-emoji">🪟</span>
-              <span class="room-name">빈 방</span>
-              <span class="room-guest">클릭해서 꾸미기</span>
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
               <span class="edit-icon">✏️</span>
             </div>
             <div class="hotel-room" id="room-4" onclick="openRoomModal(4)"
                  style="background:#e8fff0;">
-              <span class="room-emoji">🪟</span>
-              <span class="room-name">빈 방</span>
-              <span class="room-guest">클릭해서 꾸미기</span>
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
               <span class="edit-icon">✏️</span>
             </div>
             <div class="hotel-room" id="room-8" onclick="openRoomModal(8)"
                  style="background:#fff0e8;">
-              <span class="room-emoji">🪟</span>
-              <span class="room-name">빈 방</span>
-              <span class="room-guest">클릭해서 꾸미기</span>
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
               <span class="edit-icon">✏️</span>
             </div>
           </div>
@@ -1283,31 +1389,42 @@
           <div class="hotel-floor" id="floor-1">
             <div class="hotel-room" id="room-1" onclick="openRoomModal(1)"
                  style="background:#f8e8d0;">
-              <span class="room-emoji">🪟</span>
-              <span class="room-name">빈 방</span>
-              <span class="room-guest">클릭해서 꾸미기</span>
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
               <span class="edit-icon">✏️</span>
             </div>
             <div class="hotel-room" id="room-2" onclick="openRoomModal(2)"
                  style="background:#e8e8ff;">
-              <span class="room-emoji">🪟</span>
-              <span class="room-name">빈 방</span>
-              <span class="room-guest">클릭해서 꾸미기</span>
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
               <span class="edit-icon">✏️</span>
             </div>
             <div class="hotel-room" id="room-9" onclick="openRoomModal(9)"
                  style="background:#f0ffe8;">
-              <span class="room-emoji">🪟</span>
-              <span class="room-name">빈 방</span>
-              <span class="room-guest">클릭해서 꾸미기</span>
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
               <span class="edit-icon">✏️</span>
             </div>
           </div>
 
           <!-- 로비 -->
           <div class="hotel-lobby" onclick="openRoomModal(0)">
-            <span style="font-size:1.3rem;">🛎️</span>
-            <strong style="margin-left:8px;" id="lobby-label">로비 (클릭해서 꾸미기)</strong>
+            <div class="lobby-props-layer"></div>
+            <div class="lobby-info">
+              <strong id="lobby-label">🛎️ 로비 (클릭해서 꾸미기)</strong>
+            </div>
           </div>
         </div>
       </div>
@@ -1356,6 +1473,17 @@
           <input type="color" id="modal-room-color" value="#f0e8ff"
                  style="width:42px; height:42px; border-radius:8px; padding:2px; cursor:pointer;"
                  oninput="syncColorSwatch(this.value)"/>
+        </div>
+
+        <!-- 방 안 꾸미기 캔버스 -->
+        <label class="field-label">🏠 방 안 꾸미기</label>
+        <p class="text-soft" style="font-size:0.8rem; margin:-4px 0 6px;">
+          소품을 탭해서 넣고, 드래그해서 원하는 위치에 놓아보세요 ✨
+        </p>
+        <div class="room-edit-canvas" id="room-edit-canvas">
+          <div class="room-edit-canvas-empty" id="room-canvas-hint">
+            소품을 아래에서 골라주세요
+          </div>
         </div>
 
         <!-- 소품 선택 -->
@@ -1717,11 +1845,68 @@ function propLabel(id) {
   return p ? p.label : id;
 }
 
-function normalizePropIds(props) {
+// 소품 기본 배치 좌표 (%)
+const DEFAULT_PROP_POSITIONS = [
+  { x: 50, y: 42 }, { x: 28, y: 58 }, { x: 72, y: 55 },
+  { x: 38, y: 32 }, { x: 62, y: 68 }, { x: 50, y: 62 },
+  { x: 22, y: 40 }, { x: 78, y: 38 }, { x: 45, y: 48 }
+];
+
+let modalRoomProps = []; // 모달 편집 중인 배치 소품 [{id,x,y,scale}]
+
+function normalizeProps(props) {
   if (!props || !props.length) return [];
-  return props.map(p => LEGACY_PROP_MAP[p] || p).filter((id, i, arr) =>
-    ROOM_PROPS.some(x => x.id === id) && arr.indexOf(id) === i
-  );
+  const out = [];
+  props.forEach((p, i) => {
+    let id, x, y, scale;
+    if (typeof p === 'string') {
+      id = LEGACY_PROP_MAP[p] || p;
+      const pos = DEFAULT_PROP_POSITIONS[out.length % DEFAULT_PROP_POSITIONS.length];
+      x = pos.x; y = pos.y; scale = 1;
+    } else if (p && typeof p === 'object') {
+      id = LEGACY_PROP_MAP[p.id] || p.id;
+      x = typeof p.x === 'number' ? p.x : 50;
+      y = typeof p.y === 'number' ? p.y : 50;
+      scale = p.scale || 1;
+    } else return;
+    if (!ROOM_PROPS.some(x => x.id === id)) return;
+    if (out.some(o => o.id === id)) return;
+    out.push({ id, x, y, scale });
+  });
+  return out;
+}
+
+function normalizePropIds(props) {
+  return normalizeProps(props).map(p => p.id);
+}
+
+function nextPropPosition(count) {
+  return DEFAULT_PROP_POSITIONS[count % DEFAULT_PROP_POSITIONS.length];
+}
+
+function renderPlacedPropsHtml(props, mode) {
+  const list = normalizeProps(props);
+  if (!list.length) return '';
+  const isEdit = mode === 'edit';
+  return list.map((p, i) => {
+    const sc = p.scale || 1;
+    const style = `left:${p.x}%;top:${p.y}%;transform:translate(-50%,-50%) scale(${sc})`;
+    const removeBtn = isEdit
+      ? `<button type="button" class="prop-remove" onclick="removeCanvasProp(${i}); event.stopPropagation();" aria-label="삭제">✕</button>`
+      : '';
+    return `<div class="placed-prop" data-index="${i}" style="${style}"${isEdit ? ' onpointerdown="startPropDrag(event,' + i + ')"' : ''}>
+      <img src="${propImageSrc(p.id)}" alt="${propLabel(p.id)}" data-prop-id="${p.id}" onerror="propImgOnError(this)"/>
+      ${removeBtn}
+    </div>`;
+  }).join('');
+}
+
+function renderPropLayer(el, props) {
+  if (!el) return;
+  const list = normalizeProps(props);
+  el.innerHTML = renderPlacedPropsHtml(list, 'view');
+  const room = el.closest('.hotel-room');
+  if (room) room.classList.toggle('has-props', list.length > 0);
 }
 
 function renderPropGrid(selectedIds) {
@@ -1739,14 +1924,88 @@ function renderPropGrid(selectedIds) {
     </div>`).join('');
 }
 
-function renderPropIconsHtml(propIds, size) {
-  const ids = normalizePropIds(propIds);
-  if (!ids.length) return '';
-  const cls = size === 'small' ? '' : ' class="room-prop-img"';
-  return '<span class="room-prop-icons">' + ids.map(id =>
-    `<img src="${propImageSrc(id)}" alt="${propLabel(id)}" data-prop-id="${id}"${cls}
-          onerror="propImgOnError(this)"/>`
-  ).join('') + '</span>';
+function renderModalCanvas() {
+  const canvas = document.getElementById('room-edit-canvas');
+  const hint = document.getElementById('room-canvas-hint');
+  if (!canvas) return;
+  const color = document.getElementById('modal-room-color')?.value || '#f0e8ff';
+  canvas.style.background = color;
+  const existing = canvas.querySelectorAll('.placed-prop');
+  existing.forEach(el => el.remove());
+  modalRoomProps.forEach((p, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'placed-prop';
+    wrap.dataset.index = i;
+    const sc = p.scale || 1;
+    wrap.style.cssText = `left:${p.x}%;top:${p.y}%;transform:translate(-50%,-50%) scale(${sc})`;
+    wrap.innerHTML = `<img src="${propImageSrc(p.id)}" alt="${propLabel(p.id)}" data-prop-id="${p.id}" onerror="propImgOnError(this)"/>
+      <button type="button" class="prop-remove" aria-label="삭제">✕</button>`;
+    wrap.querySelector('.prop-remove').onclick = (e) => { e.stopPropagation(); removeCanvasProp(i); };
+    wrap.addEventListener('pointerdown', (e) => startPropDrag(e, i));
+    canvas.appendChild(wrap);
+  });
+  if (hint) hint.style.display = modalRoomProps.length ? 'none' : 'flex';
+}
+
+function startPropDrag(e, index) {
+  if (e.target.closest('.prop-remove')) return;
+  const canvas = document.getElementById('room-edit-canvas');
+  if (!canvas || index < 0 || index >= modalRoomProps.length) return;
+  e.preventDefault();
+  const el = canvas.querySelector(`.placed-prop[data-index="${index}"]`);
+  if (!el) return;
+  el.classList.add('dragging');
+  el.setPointerCapture(e.pointerId);
+
+  const prop = modalRoomProps[index];
+  const rect = canvas.getBoundingClientRect();
+
+  function moveTo(clientX, clientY) {
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    prop.x = Math.max(8, Math.min(92, x));
+    prop.y = Math.max(8, Math.min(92, y));
+    const sc = prop.scale || 1;
+    el.style.left = prop.x + '%';
+    el.style.top = prop.y + '%';
+    el.style.transform = `translate(-50%, -50%) scale(${sc})`;
+  }
+
+  function onMove(ev) {
+    if (ev.pointerId !== e.pointerId) return;
+    moveTo(ev.clientX, ev.clientY);
+  }
+  function onUp(ev) {
+    if (ev.pointerId !== e.pointerId) return;
+    el.classList.remove('dragging');
+    try { el.releasePointerCapture(e.pointerId); } catch (_) {}
+    el.removeEventListener('pointermove', onMove);
+    el.removeEventListener('pointerup', onUp);
+    el.removeEventListener('pointercancel', onUp);
+  }
+  el.addEventListener('pointermove', onMove);
+  el.addEventListener('pointerup', onUp);
+  el.addEventListener('pointercancel', onUp);
+}
+
+function removeCanvasProp(index) {
+  if (index < 0 || index >= modalRoomProps.length) return;
+  modalRoomProps.splice(index, 1);
+  renderPropGrid(modalRoomProps.map(p => p.id));
+  renderModalCanvas();
+}
+
+function toggleProp(el) {
+  const id = el.dataset.prop;
+  const idx = modalRoomProps.findIndex(p => p.id === id);
+  if (idx >= 0) {
+    modalRoomProps.splice(idx, 1);
+  } else {
+    const pos = nextPropPosition(modalRoomProps.length);
+    modalRoomProps.push({ id, x: pos.x, y: pos.y, scale: 1 });
+  }
+  renderPropGrid(modalRoomProps.map(p => p.id));
+  renderModalCanvas();
 }
 
 // 책 내용 슬라이드 데이터
@@ -1879,7 +2138,7 @@ function loadData() {
       appData = Object.assign(appData, parsed);
       // 구 이모지 소품 → 이미지 id로 마이그레이션
       Object.values(appData.rooms || {}).forEach(room => {
-        if (room.props) room.props = normalizePropIds(room.props);
+        if (room.props) room.props = normalizeProps(room.props);
       });
     }
   } catch(e) { /* 무시 */ }
@@ -2216,34 +2475,25 @@ function renderBuilding() {
 }
 
 function applyRoomToBuilding(id, room) {
-  const props = normalizePropIds(room.props);
-  const propsHtml = renderPropIconsHtml(props);
+  const props = room.props || [];
   const guestEmoji = room.guest ? (defaultEmotionData[room.guest]?.emoji || '💭') : '';
 
   if (id === 0) {
     const lobby = document.querySelector('.hotel-lobby');
     if (lobby) {
       lobby.style.background = `linear-gradient(135deg, ${room.color}, ${room.color}cc)`;
+      const layer = lobby.querySelector('.lobby-props-layer');
+      renderPropLayer(layer, props);
       const label = document.getElementById('lobby-label');
-      if (label) {
-        label.innerHTML = `🛎️ ${room.roomName || '로비'}${propsHtml ? ' ' + propsHtml : ''}`;
-      }
+      if (label) label.textContent = `🛎️ ${room.roomName || '로비 (클릭해서 꾸미기)'}`;
     }
     return;
   }
   const el = document.getElementById('room-' + id);
   if (!el) return;
   el.style.background = room.color || '#f0e8ff';
-  const emojiEl = el.querySelector('.room-emoji');
-  if (emojiEl) {
-    if (props.length) {
-      emojiEl.innerHTML = renderPropIconsHtml(props);
-      emojiEl.style.fontSize = '0';
-    } else {
-      emojiEl.textContent = '🪟';
-      emojiEl.style.fontSize = '';
-    }
-  }
+  const layer = el.querySelector('.room-props-layer');
+  renderPropLayer(layer, props);
   el.querySelector('.room-name').textContent  = room.roomName || '빈 방';
   el.querySelector('.room-guest').textContent =
     room.guest ? guestEmoji + ' ' + room.guest : '클릭해서 꾸미기';
@@ -2258,9 +2508,11 @@ function renderRoomSummary() {
     return;
   }
   wrap.innerHTML = filled.map(([id, r]) => {
-    const props = normalizePropIds(r.props);
+    const props = normalizeProps(r.props);
     const propHtml = props.length
-      ? renderPropIconsHtml(props, 'small')
+      ? `<span style="display:inline-flex;gap:2px;vertical-align:middle;">${props.slice(0,3).map(p =>
+          `<img src="${propImageSrc(p.id)}" alt="" style="width:1rem;height:1rem;object-fit:contain;" onerror="propImgOnError(this)"/>`
+        ).join('')}</span>`
       : '<span>🪟</span>';
     return `
     <span class="emotion-badge eb-lavender" style="border:1.5px solid var(--lavender-dk); display:inline-flex; align-items:center; gap:4px;">
@@ -2292,8 +2544,9 @@ function openRoomModal(id) {
   document.getElementById('modal-room-color').value = color;
   syncColorSwatch(color);
 
-  // 소품 복원
-  renderPropGrid(normalizePropIds(room.props));
+  modalRoomProps = normalizeProps(room.props).map(p => ({ ...p }));
+  renderPropGrid(modalRoomProps.map(p => p.id));
+  renderModalCanvas();
 
   document.getElementById('room-modal').classList.add('open');
 }
@@ -2301,18 +2554,17 @@ function openRoomModal(id) {
 function closeRoomModal() {
   document.getElementById('room-modal').classList.remove('open');
   currentRoomId = null;
+  modalRoomProps = [];
 }
 
 function saveRoom() {
   if (currentRoomId === null) return;
-  const props = [];
-  document.querySelectorAll('#prop-grid .prop-item.selected').forEach(el => props.push(el.dataset.prop));
 
   appData.rooms[currentRoomId] = {
     guest:    document.getElementById('modal-guest-select').value,
     roomName: val('modal-room-name'),
     color:    document.getElementById('modal-room-color').value,
-    props:    normalizePropIds(props),
+    props:    modalRoomProps.map(p => ({ id: p.id, x: p.x, y: p.y, scale: p.scale || 1 })),
     memo:     val('modal-room-memo')
   };
 
@@ -2337,6 +2589,8 @@ function syncGuestSelectInModal() {
 function selectColor(hex) {
   document.getElementById('modal-room-color').value = hex;
   syncColorSwatch(hex);
+  const canvas = document.getElementById('room-edit-canvas');
+  if (canvas) canvas.style.background = hex;
 }
 function syncColorSwatch(hex) {
   document.querySelectorAll('#color-swatches .color-swatch').forEach(sw => {
@@ -2344,6 +2598,10 @@ function syncColorSwatch(hex) {
       sw.style.background.toLowerCase() === hex.toLowerCase() ||
       rgbToHex(sw.style.background) === hex.toLowerCase());
   });
+  const canvas = document.getElementById('room-edit-canvas');
+  if (canvas && document.getElementById('room-modal')?.classList.contains('open')) {
+    canvas.style.background = hex;
+  }
 }
 
 // rgb(r,g,b) → #rrggbb 변환 유틸
@@ -2353,8 +2611,7 @@ function rgbToHex(rgb) {
   return '#' + [m[1],m[2],m[3]].map(x => parseInt(x).toString(16).padStart(2,'0')).join('');
 }
 
-// 소품 선택 토글
-function toggleProp(el) { el.classList.toggle('selected'); }
+// 소품 선택 — toggleProp() 위에 정의됨
 
 // 모달 외부 클릭 시 닫기
 document.getElementById('room-modal').addEventListener('click', function(e) {
