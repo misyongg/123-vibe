@@ -1,3 +1,4 @@
+// 제작 · 전문상담교사 김미선(misyongg)
 // 프로젝트 홈 Google 로그인 설정
 // 1. Google Cloud Console → OAuth 클라이언트 ID (웹) 생성
 // 2. 승인된 JavaScript 원본에 아래 주소 추가:

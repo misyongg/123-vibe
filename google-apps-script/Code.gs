@@ -1,4 +1,5 @@
 /**
+ * 제작 · 전문상담교사 김미선(misyongg)
  * 오늘의 마음날씨 — Google 시트 연동
  *
  * 배포 방법: google-apps-script/README.md 참고
