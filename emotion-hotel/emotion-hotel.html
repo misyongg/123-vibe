@@ -517,22 +517,59 @@
       flex-wrap: wrap;
       gap: 8px;
       margin: 10px 0;
+      max-height: 220px;
+      overflow-y: auto;
+      padding: 4px;
     }
     .prop-item {
-      font-size: 1.4rem;
-      width: 44px; height: 44px;
+      width: 52px; height: 52px;
       display: flex; align-items: center; justify-content: center;
       border-radius: 10px;
       border: 2px solid transparent;
       cursor: pointer;
       background: var(--cream);
       transition: var(--transition);
+      padding: 4px;
+      position: relative;
     }
-    .prop-item:hover { background: var(--lavender); transform: scale(1.15); }
+    .prop-item img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+    .prop-item:hover { background: var(--lavender); transform: scale(1.12); }
     .prop-item.selected {
       border-color: var(--lavender-dk);
       background: var(--lavender);
       box-shadow: 0 2px 8px var(--shadow);
+    }
+    .prop-item .prop-fallback {
+      font-size: 0.55rem;
+      font-weight: 700;
+      color: var(--text-soft);
+      text-align: center;
+      line-height: 1.1;
+      display: none;
+    }
+    .prop-item img[data-failed="1"] { display: none; }
+    .prop-item img[data-failed="1"] + .prop-fallback { display: block; }
+
+    .room-prop-img {
+      width: 1.5rem; height: 1.5rem;
+      object-fit: contain;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .room-prop-icons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      justify-content: center;
+      max-width: 100%;
+    }
+    .room-prop-icons img {
+      width: 1.1rem; height: 1.1rem;
+      object-fit: contain;
     }
 
     /* ===========================
@@ -861,9 +898,77 @@
     @media (max-width: 600px) {
       #main-content { padding: 18px 10px 100px; }
       .card { padding: 18px 14px; }
-      .hotel-floor { grid-template-columns: 1fr 1fr; }
       .cover-title { font-size: 2.1rem; }
       #app-header .hotel-title { font-size: 1.2rem; }
+
+      /* 호텔 방: 층당 3개 유지 */
+      .hotel-building { padding: 12px 8px; }
+      .hotel-floor {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+      .hotel-room {
+        min-height: 68px;
+        padding: 8px 4px;
+        gap: 2px;
+        border-width: 2px;
+      }
+      .hotel-room .room-emoji,
+      .hotel-room .room-prop-img { width: 1.2rem; height: 1.2rem; font-size: 1.1rem; }
+      .hotel-room .room-name  { font-size: 0.58rem; line-height: 1.2; word-break: keep-all; }
+      .hotel-room .room-guest { font-size: 0.55rem; line-height: 1.2; }
+      .hotel-room .edit-icon  { font-size: 0.6rem; top: 3px; right: 4px; }
+      .hotel-sign { font-size: 1.2rem; padding: 3px 12px; }
+      .prop-item { width: 46px; height: 46px; }
+
+      /* 체크인 테이블 → 카드형 */
+      .guest-table thead { display: none; }
+      .guest-table,
+      .guest-table tbody,
+      .guest-table tr,
+      .guest-table td { display: block; width: 100%; }
+      .guest-table tr {
+        background: var(--cream);
+        border-radius: var(--radius-sm);
+        border: 1.5px solid #eee;
+        margin-bottom: 12px;
+        padding: 12px;
+      }
+      .guest-table td {
+        background: transparent;
+        border: none;
+        padding: 0 0 10px;
+      }
+      .guest-table td:last-child {
+        padding: 0;
+        text-align: right;
+      }
+      .guest-table td:first-child {
+        border-left: none;
+        border-radius: 0;
+        padding-bottom: 12px;
+        margin-bottom: 8px;
+        border-bottom: 1.5px dashed #e0d8f0;
+      }
+      .guest-table td:not(:first-child):not(:last-child)::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--text-soft);
+        margin-bottom: 4px;
+      }
+      .guest-table td input {
+        font-size: 0.9rem;
+        padding: 8px 6px;
+        border-bottom-style: solid;
+        background: var(--white);
+        border-radius: 6px;
+      }
+
+      /* 매뉴얼 카드 */
+      .manual-card { padding: 14px; }
+      .signal-chip { font-size: 0.75rem; padding: 4px 10px; }
     }
 
     /* ===========================
@@ -1255,28 +1360,7 @@
 
         <!-- 소품 선택 -->
         <label class="field-label">🛋️ 방 소품 선택 (여러 개 가능)</label>
-        <div class="prop-grid" id="prop-grid">
-          <div class="prop-item" data-prop="🛋️" onclick="toggleProp(this)">🛋️</div>
-          <div class="prop-item" data-prop="🪴" onclick="toggleProp(this)">🪴</div>
-          <div class="prop-item" data-prop="🕯️" onclick="toggleProp(this)">🕯️</div>
-          <div class="prop-item" data-prop="🎵" onclick="toggleProp(this)">🎵</div>
-          <div class="prop-item" data-prop="📚" onclick="toggleProp(this)">📚</div>
-          <div class="prop-item" data-prop="🧸" onclick="toggleProp(this)">🧸</div>
-          <div class="prop-item" data-prop="🪞" onclick="toggleProp(this)">🪞</div>
-          <div class="prop-item" data-prop="🛁" onclick="toggleProp(this)">🛁</div>
-          <div class="prop-item" data-prop="🌊" onclick="toggleProp(this)">🌊</div>
-          <div class="prop-item" data-prop="⚡" onclick="toggleProp(this)">⚡</div>
-          <div class="prop-item" data-prop="🥊" onclick="toggleProp(this)">🥊</div>
-          <div class="prop-item" data-prop="🌿" onclick="toggleProp(this)">🌿</div>
-          <div class="prop-item" data-prop="🎨" onclick="toggleProp(this)">🎨</div>
-          <div class="prop-item" data-prop="🪁" onclick="toggleProp(this)">🪁</div>
-          <div class="prop-item" data-prop="☁️" onclick="toggleProp(this)">☁️</div>
-          <div class="prop-item" data-prop="🌸" onclick="toggleProp(this)">🌸</div>
-          <div class="prop-item" data-prop="🎪" onclick="toggleProp(this)">🎪</div>
-          <div class="prop-item" data-prop="🌙" onclick="toggleProp(this)">🌙</div>
-          <div class="prop-item" data-prop="☀️" onclick="toggleProp(this)">☀️</div>
-          <div class="prop-item" data-prop="🧩" onclick="toggleProp(this)">🧩</div>
-        </div>
+        <div class="prop-grid" id="prop-grid"></div>
 
         <!-- 방 메모 -->
         <label class="field-label">📝 이 방에 대한 한 마디</label>
@@ -1565,12 +1649,6 @@
     <button class="btn btn-primary" id="next-btn" onclick="nextStep()">다음 ▶</button>
   </nav>
 
-  <!-- ======= 방 꾸미기 모달 (파트 2에서 채워짐) ======= -->
-  <div class="modal-overlay" id="room-modal">
-    <div class="modal-box" id="room-modal-box">
-      <!-- 파트 2에서 채워집니다 -->
-    </div>
-  </div>
 <script>
 /* ============================================================
    감정호텔 JavaScript - 전체 로직
@@ -1583,6 +1661,87 @@ let currentStep = 0;
 let currentBookPage = 0;
 let currentRoomId = null;
 let sunoTags = { genre: '', mood: [], tempo: '', vocal: '' };
+
+// 방 소품 목록 (이미지: 256px/{id}.png, 45종)
+const PROP_BASE_LABELS = {
+  sofa: '소파', bed: '침대', pillow: '베개', blanket: '담요', teddy: '인형',
+  plant: '화분', flower: '꽃', candle: '양초', lamp: '스탠드등', window: '창문',
+  curtain: '커튼', mirror: '거울', book: '책', diary: '일기장', music: '음악',
+  paint: '그림도구', balloon: '풍선', kite: '연', star: '별', moon: '달',
+  sun: '해', cloud: '구름', rain: '비/우산', wave: '파도', bathtub: '욕조',
+  tea: '차', heart: '하트', key: '열쇠', door: '문', puzzle: '퍼즐'
+};
+
+function propIdToLabel(id) {
+  const num = id.match(/(\d+)$/);
+  const base = num ? id.slice(0, -num[0].length) : id;
+  const name = PROP_BASE_LABELS[base] || base;
+  return num ? name + ' ' + num[1] : name;
+}
+
+const ROOM_PROP_IDS = [
+  'sofa', 'sofa2', 'bed', 'bed2', 'pillow', 'blanket', 'teddy', 'teddy2',
+  'plant', 'plant2', 'plant3', 'flower', 'candle', 'lamp', 'lamp2',
+  'window', 'window2', 'curtain', 'mirror', 'book', 'book2', 'diary', 'diary2',
+  'music', 'paint', 'balloon', 'kite', 'star', 'moon', 'sun', 'cloud',
+  'rain', 'rain2', 'wave', 'wave2', 'bathtub', 'bathtub2', 'tea', 'heart',
+  'key', 'key2', 'door', 'door2', 'puzzle', 'puzzle2'
+];
+
+const ROOM_PROPS = ROOM_PROP_IDS.map(id => ({ id, label: propIdToLabel(id) }));
+
+// 구 이모지 소품 → 새 id 매핑 (저장 데이터 호환)
+const LEGACY_PROP_MAP = {
+  '🛋️': 'sofa', '🪴': 'plant', '🕯️': 'candle', '🎵': 'music', '📚': 'book',
+  '🧸': 'teddy', '🪞': 'mirror', '🛁': 'bathtub', '🌊': 'wave', '⚡': 'star',
+  '🥊': 'star', '🌿': 'plant', '🎨': 'paint', '🪁': 'kite', '☁️': 'cloud',
+  '🌸': 'flower', '🎪': 'balloon', '🌙': 'moon', '☀️': 'sun', '🧩': 'puzzle'
+};
+
+function propImageSrc(id) {
+  return '256px/' + id + '.png';
+}
+
+function propImgOnError(el) {
+  el.dataset.failed = '1';
+}
+
+function propLabel(id) {
+  const p = ROOM_PROPS.find(x => x.id === id);
+  return p ? p.label : id;
+}
+
+function normalizePropIds(props) {
+  if (!props || !props.length) return [];
+  return props.map(p => LEGACY_PROP_MAP[p] || p).filter((id, i, arr) =>
+    ROOM_PROPS.some(x => x.id === id) && arr.indexOf(id) === i
+  );
+}
+
+function renderPropGrid(selectedIds) {
+  const grid = document.getElementById('prop-grid');
+  if (!grid) return;
+  const selected = new Set(selectedIds || []);
+  grid.innerHTML = ROOM_PROPS.map(p => `
+    <div class="prop-item ${selected.has(p.id) ? 'selected' : ''}"
+         data-prop="${p.id}" title="${p.label}"
+         onclick="toggleProp(this)" role="button" tabindex="0"
+         aria-label="${p.label}">
+      <img src="${propImageSrc(p.id)}" alt="${p.label}" data-prop-id="${p.id}"
+           onerror="propImgOnError(this)"/>
+      <span class="prop-fallback">${p.label}</span>
+    </div>`).join('');
+}
+
+function renderPropIconsHtml(propIds, size) {
+  const ids = normalizePropIds(propIds);
+  if (!ids.length) return '';
+  const cls = size === 'small' ? '' : ' class="room-prop-img"';
+  return '<span class="room-prop-icons">' + ids.map(id =>
+    `<img src="${propImageSrc(id)}" alt="${propLabel(id)}" data-prop-id="${id}"${cls}
+          onerror="propImgOnError(this)"/>`
+  ).join('') + '</span>';
+}
 
 // 책 내용 슬라이드 데이터
 const bookPages = [
@@ -1712,6 +1871,10 @@ function loadData() {
     if (saved) {
       const parsed = JSON.parse(saved);
       appData = Object.assign(appData, parsed);
+      // 구 이모지 소품 → 이미지 id로 마이그레이션
+      Object.values(appData.rooms || {}).forEach(room => {
+        if (room.props) room.props = normalizePropIds(room.props);
+      });
     }
   } catch(e) { /* 무시 */ }
 }
@@ -1974,20 +2137,20 @@ function renderGuestTable() {
 
   tbody.innerHTML = appData.guests.map((g, i) => `
     <tr>
-      <td>
+      <td data-label="">
         <span style="font-size:1.2rem;">${g.emoji}</span>
         <strong style="margin-left:4px;">${g.name}</strong>
       </td>
-      <td><input type="text" value="${g.trait}"
+      <td data-label="특징"><input type="text" value="${escHtml(g.trait)}"
            placeholder="특징..."
            oninput="updateGuest(${i},'trait',this.value)"/></td>
-      <td><input type="text" value="${g.visitTime}"
+      <td data-label="자주 오는 때"><input type="text" value="${escHtml(g.visitTime)}"
            placeholder="언제 오나요?"
            oninput="updateGuest(${i},'visitTime',this.value)"/></td>
-      <td><input type="text" value="${g.wants}"
+      <td data-label="원하는 것"><input type="text" value="${escHtml(g.wants)}"
            placeholder="원하는 것..."
            oninput="updateGuest(${i},'wants',this.value)"/></td>
-      <td>
+      <td data-label="">
         <button class="btn-danger" onclick="removeGuest(${i})" title="삭제">✕</button>
       </td>
     </tr>`).join('');
@@ -2046,24 +2209,37 @@ function renderBuilding() {
 }
 
 function applyRoomToBuilding(id, room) {
+  const props = normalizePropIds(room.props);
+  const propsHtml = renderPropIconsHtml(props);
+  const guestEmoji = room.guest ? (defaultEmotionData[room.guest]?.emoji || '💭') : '';
+
   if (id === 0) {
-    // 로비
     const lobby = document.querySelector('.hotel-lobby');
     if (lobby) {
       lobby.style.background = `linear-gradient(135deg, ${room.color}, ${room.color}cc)`;
       const label = document.getElementById('lobby-label');
-      if (label) label.innerHTML =
-        `🛎️ ${room.roomName || '로비'} ${room.props ? room.props.join('') : ''}`;
+      if (label) {
+        label.innerHTML = `🛎️ ${room.roomName || '로비'}${propsHtml ? ' ' + propsHtml : ''}`;
+      }
     }
     return;
   }
   const el = document.getElementById('room-' + id);
   if (!el) return;
   el.style.background = room.color || '#f0e8ff';
-  el.querySelector('.room-emoji').textContent = room.props && room.props[0] ? room.props[0] : '🪟';
+  const emojiEl = el.querySelector('.room-emoji');
+  if (emojiEl) {
+    if (props.length) {
+      emojiEl.innerHTML = renderPropIconsHtml(props);
+      emojiEl.style.fontSize = '0';
+    } else {
+      emojiEl.textContent = '🪟';
+      emojiEl.style.fontSize = '';
+    }
+  }
   el.querySelector('.room-name').textContent  = room.roomName || '빈 방';
   el.querySelector('.room-guest').textContent =
-    room.guest ? (defaultEmotionData[room.guest]?.emoji || '💭') + ' ' + room.guest : '클릭해서 꾸미기';
+    room.guest ? guestEmoji + ' ' + room.guest : '클릭해서 꾸미기';
 }
 
 function renderRoomSummary() {
@@ -2074,12 +2250,18 @@ function renderRoomSummary() {
     wrap.innerHTML = '<span class="text-soft">방을 클릭해서 손님을 배정해보세요!</span>';
     return;
   }
-  wrap.innerHTML = filled.map(([id, r]) => `
-    <span class="emotion-badge eb-lavender" style="border:1.5px solid var(--lavender-dk);">
-      ${r.props && r.props[0] ? r.props[0] : '🪟'}
+  wrap.innerHTML = filled.map(([id, r]) => {
+    const props = normalizePropIds(r.props);
+    const propHtml = props.length
+      ? renderPropIconsHtml(props, 'small')
+      : '<span>🪟</span>';
+    return `
+    <span class="emotion-badge eb-lavender" style="border:1.5px solid var(--lavender-dk); display:inline-flex; align-items:center; gap:4px;">
+      ${propHtml}
       ${r.roomName || (id === '0' ? '로비' : id + '호')}
       ${r.guest ? '← ' + r.guest : ''}
-    </span>`).join('');
+    </span>`;
+  }).join('');
 }
 
 // 모달 열기
@@ -2104,9 +2286,7 @@ function openRoomModal(id) {
   syncColorSwatch(color);
 
   // 소품 복원
-  document.querySelectorAll('#prop-grid .prop-item').forEach(el => {
-    el.classList.toggle('selected', (room.props || []).includes(el.dataset.prop));
-  });
+  renderPropGrid(normalizePropIds(room.props));
 
   document.getElementById('room-modal').classList.add('open');
 }
@@ -2125,7 +2305,7 @@ function saveRoom() {
     guest:    document.getElementById('modal-guest-select').value,
     roomName: val('modal-room-name'),
     color:    document.getElementById('modal-room-color').value,
-    props:    props,
+    props:    normalizePropIds(props),
     memo:     val('modal-room-memo')
   };
 
@@ -2758,6 +2938,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 7) 저장 상태 초기 표시
   showSaveIndicator('💾 저장됨');
 
+  // 8) 소품 그리드 초기 렌더
+  renderPropGrid();
+
   console.log('🏨 감정호텔 앱이 시작됐어요!');
 });
 
@@ -2765,7 +2948,5 @@ document.addEventListener('DOMContentLoaded', () => {
    끝
 ─────────────────────────────────────────── */
 </script>
-</body>
-</html>
 </body>
 </html>
