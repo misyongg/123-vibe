@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>불안 종이컵 — 배포 매뉴얼</title>
+<style>
+  :root{
+    --bg:#FBF8F3;
+    --card:#FFFFFF;
+    --ink:#2E2B26;
+    --sub:#6B6459;
+    --line:#E6DFD3;
+    --accent:#7FA88F;
+    --accent-dark:#4F7A64;
+    --warn-bg:#FBEFE4;
+    --warn-line:#E8C79A;
+    --warn-ink:#8A5A2A;
+    --code-bg:#F1EEE6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    line-height:1.7;
+  }
+  .layout{
+    display:flex;
+    max-width:1100px;
+    margin:0 auto;
+    align-items:flex-start;
+  }
+  nav.toc{
+    width:220px;
+    flex-shrink:0;
+    position:sticky;
+    top:0;
+    height:100vh;
+    overflow-y:auto;
+    padding:40px 20px;
+    border-right:1px solid var(--line);
+  }
+  nav.toc .toc-title{
+    font-size:12px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--sub);
+    margin-bottom:14px;
+  }
+  nav.toc a{
+    display:block;
+    font-size:14px;
+    color:var(--sub);
+    text-decoration:none;
+    padding:6px 0;
+    border-left:2px solid transparent;
+    padding-left:10px;
+    margin-left:-11px;
+  }
+  nav.toc a:hover{color:var(--accent-dark); border-left-color:var(--accent);}
+  main{
+    flex:1;
+    min-width:0;
+    padding:48px 56px 100px;
+  }
+  header.hero{
+    margin-bottom:40px;
+    padding-bottom:28px;
+    border-bottom:1px solid var(--line);
+  }
+  header.hero .eyebrow{
+    font-size:13px;
+    color:var(--accent-dark);
+    letter-spacing:.04em;
+    margin-bottom:8px;
+  }
+  h1{
+    font-size:30px;
+    font-weight:600;
+    margin:0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  .hero-sub{
+    color:var(--sub);
+    font-size:15px;
+  }
+  h2{
+    font-size:20px;
+    font-weight:600;
+    margin:44px 0 16px;
+    padding-top:12px;
+    scroll-margin-top:24px;
+  }
+  h2 .num{
+    display:inline-block;
+    color:var(--accent-dark);
+    font-size:13px;
+    font-weight:600;
+    background:#EAF1EC;
+    border-radius:6px;
+    padding:2px 8px;
+    margin-right:10px;
+    vertical-align:middle;
+  }
+  h3{
+    font-size:16px;
+    font-weight:600;
+    margin:26px 0 10px;
+    color:var(--ink);
+  }
+  p{margin:0 0 14px; color:var(--ink);}
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:22px 24px;
+    margin:16px 0;
+  }
+  .flow{
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    margin:20px 0;
+  }
+  .flow-step{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .flow-step:last-child{border-bottom:none;}
+  .flow-num{
+    flex-shrink:0;
+    width:26px; height:26px;
+    border-radius:50%;
+    background:var(--accent);
+    color:#fff;
+    font-size:13px;
+    font-weight:600;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .flow-text{font-size:15px; padding-top:3px;}
+  pre{
+    background:var(--code-bg);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:16px 18px;
+    overflow-x:auto;
+    font-size:13.5px;
+    line-height:1.6;
+    margin:14px 0;
+  }
+  code{
+    font-family:"SF Mono",Consolas,"D2Coding",monospace;
+  }
+  p code, li code, td code{
+    background:var(--code-bg);
+    padding:1px 6px;
+    border-radius:4px;
+    font-size:13px;
+  }
+  .warn{
+    background:var(--warn-bg);
+    border:1px solid var(--warn-line);
+    border-left:3px solid var(--warn-line);
+    border-radius:0 8px 8px 0;
+    padding:14px 18px;
+    margin:16px 0;
+    font-size:14px;
+    color:var(--warn-ink);
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:16px 0;
+    font-size:14px;
+  }
+  th,td{
+    text-align:left;
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+  }
+  th{
+    color:var(--sub);
+    font-weight:600;
+    font-size:13px;
+  }
+  ul, ol{padding-left:22px; margin:10px 0 16px;}
+  li{margin-bottom:6px;}
+  .checklist{list-style:none; padding-left:0;}
+  .checklist li{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:6px 0;
+    font-size:14.5px;
+  }
+  .checklist li::before{
+    content:"";
+    width:16px;height:16px;
+    flex-shrink:0;
+    margin-top:2px;
+    border:1.5px solid var(--accent);
+    border-radius:4px;
+  }
+  .badge{
+    display:inline-block;
+    font-size:12px;
+    font-weight:600;
+    padding:2px 9px;
+    border-radius:999px;
+    background:#EAF1EC;
+    color:var(--accent-dark);
+  }
+  .divider{
+    border:none;
+    border-top:1px solid var(--line);
+    margin:36px 0;
+  }
+  footer{
+    margin-top:50px;
+    padding-top:20px;
+    border-top:1px solid var(--line);
+    color:var(--sub);
+    font-size:13px;
+  }
+  a.linklike{color:var(--accent-dark);}
+  @media (max-width:800px){
+    .layout{display:block;}
+    nav.toc{position:static; width:auto; height:auto; border-right:none; border-bottom:1px solid var(--line);}
+    main{padding:32px 20px 80px;}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="toc">
+  <div class="toc-title">목차</div>
+  <a href="#folder">폴더 구성</a>
+  <a href="#flow">전체 흐름</a>
+  <a href="#step1">STEP 1 · 시트 만들기</a>
+  <a href="#step2">STEP 2 · Apps Script</a>
+  <a href="#step3">STEP 3 · URL·비밀번호</a>
+  <a href="#step4">STEP 4 · 배포하기</a>
+  <a href="#step5">STEP 5 · 사용 방법</a>
+  <a href="#step6">STEP 6 · 테스트</a>
+  <a href="#sheet">시트 탭 설명</a>
+  <a href="#faq">자주 하는 실수</a>
+  <a href="#security">보안 안내</a>
+</nav>
+
+<main>
+  <header class="hero">
+    <div class="eyebrow">배포 매뉴얼 · v1.0</div>
+    <h1>🫙 불안 종이컵</h1>
+    <p class="hero-sub">다른 상담교사에게 배포할 때 이 문서 순서대로 따라 하세요. 예상 소요 시간: 처음 설정 30~40분</p>
+  </header>
+
+  <h2 id="folder"><span class="num">01</span>폴더 구성</h2>
+  <p>배포할 때 아래가 <strong>함께</strong> 있어야 합니다.</p>
+  <pre><code>anxiety-cup/              ← 이 폴더만 배포해도 됩니다
+├── index.html            ← 학생용 앱
+├── 불안의파도타기.html    ← 선생님용 앱
+├── emptycup.png          ← 종이컵 이미지 (필수)
+├── paper.png             ← 쪽지 이미지 (필수)
+├── config.js             ← 참고용 (실제 설정은 HTML 안)
+└── 배포매뉴얼.md          ← 이 문서
+
+google-apps-script/       ← 시트 연동 (별도 폴더)
+├── anxiety-cup-Code.gs
+└── anxiety-cup-README.md</code></pre>
+  <div class="warn">⚠️ <code>emptycup.png</code>, <code>paper.png</code>가 <code>anxiety-cup</code> 폴더 안에 있어야 컵·쪽지가 보입니다.</div>
+
+  <h2 id="flow"><span class="num">02</span>전체 흐름 (한눈에)</h2>
+  <div class="flow">
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-text">Google 시트 만들기</div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-text">Apps Script 붙이고 웹앱 배포 → URL 복사</div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-text">HTML 두 파일에 URL + 선생님 비밀번호 넣기</div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-text">GitHub Pages에 올리기 (또는 정적 호스팅)</div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-text">학생용 / 선생님용 링크 나눠서 공유</div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-text">테스트</div></div>
+  </div>
+
+  <h2 id="step1"><span class="num">03</span>STEP 1 · Google 스프레드시트 만들기</h2>
+  <ol>
+    <li><a class="linklike" href="https://sheets.google.com">Google 스프레드시트</a> 접속</li>
+    <li><strong>빈 스프레드시트</strong> 새로 만들기</li>
+    <li>이름 예: <code>불안 종이컵 기록</code></li>
+  </ol>
+  <p>이 시트에 학생 쪽지와 상담 기록이 쌓입니다. <strong>본인 Google 계정</strong>으로 만드세요.</p>
+
+  <h2 id="step2"><span class="num">04</span>STEP 2 · Apps Script 연결</h2>
+  <ol>
+    <li>시트에서 <strong>확장 프로그램 → Apps Script</strong> 클릭</li>
+    <li>기본 <code>Code.gs</code> 내용 <strong>전부 삭제</strong></li>
+    <li><code>google-apps-script/anxiety-cup-Code.gs</code> 내용 <strong>전부 복사해서 붙여넣기</strong></li>
+    <li><strong>저장</strong> (프로젝트 이름: <code>불안종이컵</code> 등)</li>
+    <li><strong>배포 → 새 배포</strong> 클릭</li>
+    <li>종류: <strong>웹 앱</strong> 선택</li>
+    <li>설정:
+      <ul>
+        <li><strong>다음 사용자 인증 정보로 실행</strong>: <strong>나</strong></li>
+        <li><strong>액세스 권한이 있는 사용자</strong>: <strong>모든 사용자</strong></li>
+      </ul>
+    </li>
+    <li><strong>배포</strong> → <strong>웹 앱 URL</strong> 복사<br>형식: <code>https://script.google.com/macros/s/...../exec</code></li>
+  </ol>
+  <h3>확인</h3>
+  <p>브라우저에 URL 붙여넣기 → 아래처럼 보이면 성공:</p>
+  <pre><code>{"ok":true,"service":"anxiety-cup"}</code></pre>
+
+  <h2 id="step3"><span class="num">05</span>STEP 3 · 앱에 URL·비밀번호 넣기</h2>
+  <p><strong>아래 두 파일</strong>을 메모장·VS Code 등으로 엽니다.</p>
+  <ul>
+    <li><code>anxiety-cup/index.html</code></li>
+    <li><code>anxiety-cup/불안의파도타기.html</code></li>
+  </ul>
+  <p>각 파일 <strong>아래쪽</strong>에 있는 <code>ANXIETY_CUP_CONFIG</code>를 수정합니다.</p>
+  <pre><code>const ANXIETY_CUP_CONFIG = {
+  GOOGLE_SHEETS_URL: "STEP2에서_복사한_URL",
+  TEACHER_PASSWORD: "원하는_비밀번호"   // 예: abc12345 (학생에게 알리지 마세요)
+};</code></pre>
+  <table>
+    <tr><th>항목</th><th>설명</th></tr>
+    <tr><td><code>GOOGLE_SHEETS_URL</code></td><td>STEP 2에서 복사한 Apps Script URL</td></tr>
+    <tr><td><code>TEACHER_PASSWORD</code></td><td>선생님용 앱 입장 비밀번호 (본인만 알기)</td></tr>
+  </table>
+  <div class="warn">⚠️ <code>config.js</code>만 수정해도 <strong>적용 안 됩니다.</strong> 반드시 <strong>HTML 두 파일</strong>을 수정하세요.</div>
+
+  <h2 id="step4"><span class="num">06</span>STEP 4 · 인터넷에 올리기 (GitHub Pages 권장)</h2>
+  <p>학생이 폰으로 쓰려면 <strong>웹 주소</strong>가 필요합니다.</p>
+
+  <h3>4-1. GitHub 계정 준비</h3>
+  <p><a class="linklike" href="https://github.com">GitHub</a> 가입 (없으면)</p>
+
+  <h3>4-2. 새 저장소 만들기</h3>
+  <ol>
+    <li><strong>New repository</strong> → 이름 예: <code>anxiety-cup-school</code></li>
+    <li>Public 선택 → Create</li>
+  </ol>
+
+  <h3>4-3. 폴더 업로드</h3>
+  <ol>
+    <li>저장소에서 <strong>Add file → Upload files</strong></li>
+    <li>아래 구조가 되도록 업로드:
+      <pre><code>anxiety-cup/          (폴더 통째로 — 이미지 포함)</code></pre>
+      또는 저장소 루트에 <code>anxiety-cup</code> 폴더만 올려도 됩니다.
+    </li>
+    <li><strong>Commit</strong></li>
+  </ol>
+
+  <h3>4-4. GitHub Pages 켜기</h3>
+  <ol>
+    <li>저장소 <strong>Settings → Pages</strong></li>
+    <li>Source: <strong>Deploy from a branch</strong></li>
+    <li>Branch: <strong>main</strong> / <strong>/ (root)</strong> → Save</li>
+    <li>1~2분 후 주소 확인: <code>https://본인아이디.github.io/anxiety-cup-school/</code></li>
+  </ol>
+
+  <h3>4-5. 최종 URL</h3>
+  <table>
+    <tr><th>용도</th><th>주소</th></tr>
+    <tr><td>학생용</td><td><code>https://본인아이디.github.io/anxiety-cup-school/anxiety-cup/</code></td></tr>
+    <tr><td>선생님용</td><td><code>https://본인아이디.github.io/anxiety-cup-school/anxiety-cup/불안의파도타기.html</code></td></tr>
+  </table>
+  <p>학생에게는 <strong>학생용만</strong> QR·링크로 공유하세요.</p>
+
+  <h2 id="step5"><span class="num">07</span>STEP 5 · 사용 방법 (운영)</h2>
+  <h3>학생</h3>
+  <ol>
+    <li>학생용 링크 접속</li>
+    <li><strong>별칭</strong> 입력 (예: 파란구름) — 실명 불필요</li>
+    <li>감정·생각·상황 적고 <strong>쪽지 넣기</strong></li>
+    <li>같은 기기에서 별칭·쪽지 개수 기억됨</li>
+  </ol>
+  <h3>선생님</h3>
+  <ol>
+    <li>선생님용 링크 접속 → <strong>비밀번호</strong> 입력</li>
+    <li><strong>STEP 1</strong> 학생 <strong>별칭</strong> 입력 → <strong>종이컵 뒤집기</strong></li>
+    <li><strong>STEP 2</strong> 불안 분류 (다룰 수 있음 / 없음)</li>
+    <li><strong>STEP 3</strong> 상담 상자·강물로 보내기</li>
+    <li><strong>STEP 4</strong> DBT 연습 선택 → <strong>오늘 상담 마무리</strong></li>
+    <li>상담 마무리 후 학생 앱 <strong>새로고침</strong> → 컵 비워짐</li>
+  </ol>
+  <p>쪽지는 <strong>상담 마무리</strong>까지 하면 시트에서 처리완료되고, 다음 상담에는 <strong>새 쪽지만</strong> 불러옵니다.</p>
+
+  <h2 id="step6"><span class="num">08</span>STEP 6 · 테스트 체크리스트</h2>
+  <ul class="checklist">
+    <li>Apps Script URL 열면 <code>{"ok":true,"service":"anxiety-cup"}</code> 표시</li>
+    <li>학생용에서 쪽지 1장 제출 → 시트 <code>불안종이컵기록</code> 탭에 행 추가</li>
+    <li>선생님용 비밀번호로 입장 가능</li>
+    <li>별칭 필터 후 쪽지 쏟기 가능</li>
+    <li>상담 마무리 → <code>상담연동기록</code> 탭에 저장</li>
+    <li>학생 앱 새로고침 후 컵 비움</li>
+  </ul>
+
+  <h2 id="sheet"><span class="num">09</span>시트 탭 설명</h2>
+  <h3>불안종이컵기록</h3>
+  <p>학생이 넣은 쪽지 (저장시각, 별칭, 감정, 생각, 상황, 처리완료, noteId)</p>
+  <ul>
+    <li><strong>처리완료</strong>: 상담 마무리 시 <code>Y</code> — 다음 상담에는 안 불러옴</li>
+  </ul>
+  <h3>상담연동기록</h3>
+  <p>상담 마무리 시 분류·DBT·소감 메모</p>
+
+  <h2 id="faq"><span class="num">10</span>자주 하는 실수</h2>
+  <table>
+    <tr><th>증상</th><th>해결</th></tr>
+    <tr><td>컵·쪽지 이미지 안 보임</td><td><code>anxiety-cup/emptycup.png</code>, <code>paper.png</code>가 같은 폴더에 있는지 확인</td></tr>
+    <tr><td>쪽지가 시트에 안 쌓임</td><td><code>GOOGLE_SHEETS_URL</code> HTML에 넣었는지, Apps Script <strong>새 배포</strong> 했는지</td></tr>
+    <tr><td>선생님 앱에서 쪽지 0장</td><td>학생 <strong>별칭</strong>이 시트와 똑같은지 (띄어쓰기 포함)</td></tr>
+    <tr><td>상담 후에도 학생 컵 그대로</td><td>학생 앱 <strong>새로고침</strong>; Apps Script 최신 코드 <strong>새 배포</strong></td></tr>
+    <tr><td>비밀번호 안 맞음</td><td><code>불안의파도타기.html</code> 안 <code>TEACHER_PASSWORD</code> 확인</td></tr>
+  </table>
+
+  <div class="card">
+    <strong>Apps Script 코드 수정 후</strong>
+    <p style="margin-top:8px;">코드를 바꿨다면 반드시:</p>
+    <p><span class="badge">배포 → 배포 관리 → 연필 아이콘 → 새 버전 → 배포</span></p>
+    <p style="margin-top:8px; color:var(--sub);">「저장」만 하면 웹앱에 반영되지 않습니다.</p>
+  </div>
+
+  <h2 id="security"><span class="num">11</span>보안 안내</h2>
+  <ul>
+    <li><strong>학생용 URL</strong>: 학생에게 공유 OK</li>
+    <li><strong>선생님용 URL + 비밀번호</strong>: 상담교사만 보관</li>
+    <li><strong>시트</strong>: 본인 Google 계정 — 공유하지 않으면 본인만 열람</li>
+    <li>다른 교사와 <strong>시트·URL·비밀번호를 같이 쓰지 마세요</strong> (데이터 섞임)</li>
+  </ul>
+
+  <hr class="divider">
+
+  <footer>
+    <p><strong>제작</strong>: 전문상담교사 김미선 (misyongg)</p>
+    <p>다른 상담교사에게 배포할 때 제작자 표기를 유지해 주세요.</p>
+    <p style="margin-top:16px;">버전: 불안 종이컵 배포 매뉴얼 v1.0</p>
+  </footer>
+</main>
+</div>
+</body>
+</html>
