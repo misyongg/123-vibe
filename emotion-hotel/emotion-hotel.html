@@ -475,7 +475,7 @@
       cursor: pointer;
       transition: var(--transition);
       border: 3px solid rgba(255,255,255,0.7);
-      min-height: 90px;
+      min-height: 124px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
@@ -491,8 +491,14 @@
     .hotel-room .room-props-layer {
       position: absolute;
       inset: 0;
-      bottom: 30px;
+      bottom: 24px;
       pointer-events: none;
+    }
+    .hotel-room.is-decorated .room-props-layer {
+      bottom: 0;
+    }
+    .hotel-room.is-decorated.has-label .room-props-layer {
+      bottom: 24px;
     }
     .hotel-room .room-info {
       position: relative;
@@ -501,6 +507,10 @@
       background: rgba(255,255,255,0.42);
       border-radius: 0 0 9px 9px;
       line-height: 1.2;
+      min-height: 1.4em;
+    }
+    .hotel-room.is-decorated:not(.has-label) .room-info {
+      display: none;
     }
     .hotel-room .room-placeholder {
       display: none;
@@ -637,7 +647,7 @@
       cursor: pointer;
       transition: var(--transition);
       position: relative;
-      min-height: 56px;
+      min-height: 88px;
       overflow: hidden;
       display: flex;
       align-items: flex-end;
@@ -648,12 +658,18 @@
       bottom: 0;
       pointer-events: none;
     }
+    .hotel-lobby.has-label .lobby-props-layer {
+      bottom: 28px;
+    }
     .hotel-lobby .lobby-info {
       position: relative;
       z-index: 2;
       width: 100%;
-      padding: 10px 14px;
+      padding: 8px 14px;
       background: rgba(255,255,255,0.25);
+    }
+    .hotel-lobby.is-decorated:not(.has-label) .lobby-info {
+      display: none;
     }
     .hotel-lobby:hover { transform: scale(1.02); }
 
@@ -1105,11 +1121,10 @@
         gap: 6px;
       }
       .hotel-room {
-        min-height: 68px;
-        padding: 8px 4px;
-        gap: 2px;
+        min-height: 108px;
         border-width: 2px;
       }
+      .hotel-lobby { min-height: 96px; }
       .hotel-room .room-name  { font-size: 0.58rem; line-height: 1.2; word-break: keep-all; }
       .hotel-room .room-guest { font-size: 0.55rem; line-height: 1.2; }
       .hotel-room .placed-prop { width: 52%; height: 52%; }
@@ -2719,29 +2734,57 @@ function renderBuilding() {
   renderRoomSummary();
 }
 
+function isRoomDecorated(room) {
+  if (!room) return false;
+  return !!(
+    (room.roomName && room.roomName.trim()) ||
+    room.guest ||
+    (room.props && normalizeProps(room.props).length) ||
+    (room.memo && room.memo.trim())
+  );
+}
+
 function applyRoomToBuilding(id, room) {
   const props = room.props || [];
   const guestEmoji = room.guest ? (defaultEmotionData[room.guest]?.emoji || '💭') : '';
+  const decorated = isRoomDecorated(room);
+  const hasName = !!(room.roomName && room.roomName.trim());
+  const hasGuest = !!room.guest;
+  const hasLabel = hasName || hasGuest;
 
   if (id === 0) {
     const lobby = document.querySelector('.hotel-lobby');
     if (lobby) {
-      lobby.style.background = `linear-gradient(135deg, ${room.color}, ${room.color}cc)`;
+      lobby.style.background = `linear-gradient(135deg, ${room.color || '#FFD9B7'}, ${(room.color || '#FFD9B7')}cc)`;
+      lobby.classList.toggle('is-decorated', decorated);
+      lobby.classList.toggle('has-label', hasLabel);
       const layer = lobby.querySelector('.lobby-props-layer');
       renderPropLayer(layer, props);
       const label = document.getElementById('lobby-label');
-      if (label) label.textContent = `🛎️ ${room.roomName || '로비 (클릭해서 꾸미기)'}`;
+      if (label) {
+        if (!decorated) {
+          label.textContent = '🛎️ 로비 (클릭해서 꾸미기)';
+        } else if (hasName) {
+          label.textContent = '🛎️ ' + room.roomName.trim();
+        } else if (hasGuest) {
+          label.textContent = '🛎️ ' + guestEmoji + ' ' + room.guest;
+        } else {
+          label.textContent = '';
+        }
+      }
     }
     return;
   }
   const el = document.getElementById('room-' + id);
   if (!el) return;
   el.style.background = room.color || '#f0e8ff';
+  el.classList.toggle('is-decorated', decorated);
+  el.classList.toggle('has-label', hasLabel);
   const layer = el.querySelector('.room-props-layer');
   renderPropLayer(layer, props);
-  el.querySelector('.room-name').textContent  = room.roomName || '빈 방';
+  el.querySelector('.room-name').textContent  = hasName ? room.roomName.trim() : (decorated ? '' : '빈 방');
   el.querySelector('.room-guest').textContent =
-    room.guest ? guestEmoji + ' ' + room.guest : '클릭해서 꾸미기';
+    hasGuest ? guestEmoji + ' ' + room.guest : (decorated ? '' : '클릭해서 꾸미기');
 }
 
 function renderRoomSummary() {
