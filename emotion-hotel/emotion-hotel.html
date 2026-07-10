@@ -1009,7 +1009,7 @@
     .guest-table td input:focus { border-bottom-color: var(--lavender-dk); }
 
     /* ===========================
-       18b. 인쇄 워크시트 (print_paper.png — 5056×3392 기준 % 좌표)
+       18b. 인쇄 워크시트 (print_paper.png — 5056×3392 픽셀 기준 %)
     =========================== */
     #print-worksheet {
       display: none;
@@ -1019,16 +1019,12 @@
       width: 100%;
       max-width: 1100px;
       margin: 0 auto;
-      aspect-ratio: 5056 / 3392;
+      height: 0;
+      padding-bottom: 67.09%; /* 3392 / 5056 */
+      background: url('print_paper.png') no-repeat center / 100% 100%;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
       container-type: inline-size;
-    }
-    .print-worksheet-bg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: fill;
     }
     .print-overlay {
       position: absolute;
@@ -1039,88 +1035,102 @@
       position: absolute;
       font-family: 'Nanum Pen Script', 'Noto Sans KR', sans-serif;
       color: #3a3340;
-      line-height: 1.35;
+      line-height: 1.3;
       overflow: hidden;
       word-break: keep-all;
       white-space: pre-wrap;
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
+    /* 왼쪽 손님 표 (4행) */
     .pf-guests {
-      left: 4.51%; top: 15.48%; width: 24.96%; height: 17.69%;
-      font-size: 0.88cqw; line-height: 1.45; text-align: left; padding: 0 1%;
+      left: 4.67%; top: 15.36%; width: 26.31%; height: 16.07%;
+      font-size: 0.82cqw; line-height: 4.05cqw;
+      text-align: left; padding: 0.2% 1.5% 0;
     }
+    /* 오늘의 손님 답변칸 (질문 아래 흰 칸) */
     .pf-today-guest {
-      left: 4.51%; top: 35.79%; width: 24.96%; height: 3.36%;
-      font-size: 0.95cqw; text-align: left; padding: 0 1%;
+      left: 4.51%; top: 35.97%; width: 25.45%; height: 7.19%;
+      font-size: 0.90cqw; line-height: 1.2;
+      text-align: left; padding: 4.8% 2.5% 0;
     }
     .pf-today-reason {
-      left: 4.92%; top: 42.78%; width: 24.55%; height: 3.39%;
-      font-size: 0.92cqw; text-align: left; padding: 0 1%;
+      left: 4.53%; top: 47.29%; width: 25.44%; height: 3.18%;
+      font-size: 0.88cqw; line-height: 1.2;
+      text-align: left; padding: 0 2.5%;
+      display: flex; align-items: center;
     }
+    /* 간판 3줄 */
     .pf-hotel-name {
-      left: 36.97%; top: 7.10%; width: 28.01%; height: 3.04%;
-      font-size: 1.35cqw; font-weight: 700; text-align: center;
+      left: 36.97%; top: 7.16%; width: 28.64%; height: 3.51%;
+      font-size: 1.25cqw; font-weight: 700; text-align: center;
       display: flex; align-items: center; justify-content: center;
     }
     .pf-hotel-intro {
-      left: 35.05%; top: 11.08%; width: 29.92%; height: 3.07%;
-      font-size: 0.92cqw; text-align: center;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .pf-manager-intro {
-      left: 35.25%; top: 14.80%; width: 29.73%; height: 3.36%;
+      left: 35.25%; top: 11.38%; width: 30.36%; height: 3.51%;
       font-size: 0.88cqw; text-align: center;
       display: flex; align-items: center; justify-content: center;
     }
+    .pf-manager-intro {
+      left: 35.25%; top: 15.60%; width: 30.36%; height: 3.51%;
+      font-size: 0.85cqw; text-align: center;
+      display: flex; align-items: center; justify-content: center;
+    }
+    /* OST */
     .pf-ost-title {
-      left: 68.99%; top: 9.79%; width: 28.98%; height: 3.36%;
-      font-size: 0.95cqw; padding: 0 2%;
+      left: 68.00%; top: 11.65%; width: 30.97%; height: 3.54%;
+      font-size: 0.92cqw; padding: 0 3%;
+      display: flex; align-items: center;
     }
     .pf-ost-reason {
-      left: 68.99%; top: 14.18%; width: 28.98%; height: 3.57%;
-      font-size: 0.88cqw; padding: 0 2%;
+      left: 68.00%; top: 15.98%; width: 30.97%; height: 7.58%;
+      font-size: 0.82cqw; padding: 1% 3%;
     }
     .pf-ost-lyrics {
-      left: 68.99%; top: 19.78%; width: 28.98%; height: 23.67%;
-      font-size: 0.85cqw; line-height: 1.5; padding: 1% 2%;
+      left: 68.00%; top: 24.32%; width: 30.97%; height: 20.43%;
+      font-size: 0.80cqw; line-height: 1.45; padding: 1.5% 3%;
     }
+    /* 비밀 무기 상자 (보라 내부 흰 칸) */
     .pf-secret {
-      left: 70.00%; top: 45.49%; width: 26.98%; height: 15.98%;
-      font-size: 0.88cqw; line-height: 1.45; padding: 2% 3%;
+      left: 68.00%; top: 47.00%; width: 30.97%; height: 16.95%;
+      font-size: 0.85cqw; line-height: 1.4; padding: 3% 4%;
     }
+    /* 규칙 클립보드 */
     .pf-rules {
-      left: 4.00%; top: 56.37%; width: 22.98%; height: 27.09%;
-      font-size: 0.95cqw; line-height: 1.55; padding: 2% 4%;
+      left: 3.00%; top: 58.00%; width: 24.00%; height: 24.97%;
+      font-size: 0.92cqw; line-height: 2.95cqw; padding: 2% 6%;
     }
+    /* 건물 방 */
     .pf-room {
-      font-size: 0.82cqw;
-      line-height: 1.15;
+      font-size: 0.75cqw;
+      line-height: 1.1;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       gap: 1px;
-      padding: 2%;
+      padding: 3% 2%;
     }
-    .pf-room .pf-prop-img { width: 42%; height: auto; max-height: 55%; object-fit: contain; }
-    .pf-room .pf-prop-img + .pf-prop-img { width: 28%; max-height: 35%; }
-    .pf-room-5  { left: 32.3%; top: 24.9%; width: 9.0%; height: 8.5%; }
-    .pf-room-6  { left: 41.3%; top: 24.9%; width: 9.0%; height: 8.5%; }
-    .pf-room-7  { left: 50.3%; top: 24.9%; width: 9.0%; height: 8.5%; }
-    .pf-room-3  { left: 32.3%; top: 35.9%; width: 9.0%; height: 8.5%; }
-    .pf-room-4  { left: 41.3%; top: 35.9%; width: 9.0%; height: 8.5%; }
-    .pf-room-8  { left: 50.3%; top: 35.9%; width: 9.0%; height: 8.5%; }
-    .pf-room-1  { left: 32.3%; top: 46.9%; width: 9.0%; height: 8.5%; }
-    .pf-room-2  { left: 41.3%; top: 46.9%; width: 9.0%; height: 8.5%; }
-    .pf-room-9  { left: 50.3%; top: 46.9%; width: 9.0%; height: 8.5%; }
-    .pf-room-0  { left: 31.8%; top: 60.3%; width: 27.9%; height: 6.9%; font-size: 0.78cqw; }
+    .pf-room .pf-prop-img { width: 46%; height: auto; max-height: 58%; object-fit: contain; }
+    .pf-room .pf-prop-img + .pf-prop-img { width: 30%; max-height: 32%; }
+    .pf-room-5  { left: 32.83%; top: 25.85%; width: 7.93%; height: 7.16%; }
+    .pf-room-6  { left: 41.83%; top: 25.85%; width: 7.93%; height: 7.16%; }
+    .pf-room-7  { left: 50.83%; top: 25.85%; width: 7.93%; height: 7.16%; }
+    .pf-room-3  { left: 32.83%; top: 36.85%; width: 7.93%; height: 7.16%; }
+    .pf-room-4  { left: 41.83%; top: 36.85%; width: 7.93%; height: 7.16%; }
+    .pf-room-8  { left: 50.83%; top: 36.85%; width: 7.93%; height: 7.16%; }
+    .pf-room-1  { left: 32.83%; top: 47.88%; width: 7.93%; height: 7.13%; }
+    .pf-room-2  { left: 41.83%; top: 47.88%; width: 7.93%; height: 7.13%; }
+    .pf-room-9  { left: 50.83%; top: 47.88%; width: 7.93%; height: 7.13%; }
+    .pf-room-0  { left: 33.45%; top: 61.03%; width: 24.68%; height: 5.93%; font-size: 0.72cqw; }
 
     /* ===========================
        19. 인쇄용 스타일
     =========================== */
     @media print {
-      @page { size: A4 landscape; margin: 4mm; }
+      @page { size: A4 landscape; margin: 0; }
       html, body {
         margin: 0; padding: 0;
         width: 100%; height: 100%;
@@ -1132,21 +1142,15 @@
       #print-worksheet {
         display: block !important;
         width: 100%;
-        height: auto;
+        margin: 0;
+        padding: 0;
         page-break-after: avoid;
         page-break-inside: avoid;
       }
       .print-worksheet-inner {
         max-width: none;
         width: 100%;
-        aspect-ratio: 5056 / 3392;
-      }
-      .print-worksheet-bg {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: fill;
+        padding-bottom: 67.09%;
       }
     }
 
@@ -1955,7 +1959,6 @@
   <!-- ======= 인쇄용 워크시트 (화면에서는 숨김) ======= -->
   <div id="print-worksheet" aria-hidden="true">
     <div class="print-worksheet-inner">
-      <img class="print-worksheet-bg" src="print_paper.png" alt="감정호텔 워크시트"/>
       <div class="print-overlay">
         <div class="pf pf-guests" id="pf-guests"></div>
         <div class="pf pf-today-guest" id="pf-today-guest"></div>
@@ -3487,11 +3490,6 @@ function resetAll() {
 /* ───────────────────────────────────────────
    13. 인쇄 워크시트 (print_paper.png)
 ─────────────────────────────────────────── */
-const PRINT_BG_URL = (() => {
-  try { return new URL('print_paper.png', window.location.href).href; }
-  catch (e) { return 'print_paper.png'; }
-})();
-
 function pfSet(id, text) {
   const el = document.getElementById(id);
   if (el) el.textContent = text || '';
@@ -3526,9 +3524,9 @@ function preparePrintWorksheet() {
 
   pfSet('pf-hotel-name', hotel);
   pfSet('pf-hotel-intro', appData.hotelIntro || '');
-  pfSet('pf-manager-intro',
-    (manager ? '👤 ' + manager : '') +
-    (appData.managerIntro ? (manager ? '  |  ' : '') + appData.managerIntro : ''));
+  const mgrIntro = appData.managerIntro || '';
+  const mgrName = manager ? manager : '';
+  pfSet('pf-manager-intro', mgrIntro || mgrName);
 
   // 손님 체크인 (최대 4명)
   const guestLines = appData.guests.slice(0, 4).map(g =>
@@ -3557,9 +3555,6 @@ function preparePrintWorksheet() {
   for (let id = 0; id <= 9; id++) {
     pfSetHtml('pf-room-' + id, roomPrintHtml(id));
   }
-
-  const bg = document.querySelector('#print-worksheet .print-worksheet-bg');
-  if (bg && !bg.src.includes('print_paper')) bg.src = PRINT_BG_URL;
 }
 
 function printWorksheet() {
