@@ -709,10 +709,17 @@
       line-height: 1.7;
     }
 
-    .app-credit {
+    .page-credit {
       font-size: 0.72rem;
       color: #b0a8c0;
-      margin-bottom: 28px;
+      margin-top: 28px;
+      padding: 10px 0 4px;
+      text-align: center;
+    }
+
+    .app-credit { /* 하위 호환 */
+      font-size: 0.72rem;
+      color: #b0a8c0;
       text-align: center;
     }
 
@@ -820,10 +827,32 @@
        19. 인쇄용 스타일
     =========================== */
     @media print {
-      #app-header, #step-bar, #bottom-nav { display: none !important; }
-      .section-page { display: block !important; page-break-after: always; }
+      #app-header, #step-bar, #bottom-nav, #room-modal { display: none !important; }
+      .section-page { display: block !important; page-break-after: always; padding-bottom: 36px; }
       body { background: white; }
+      body::after {
+        content: "© 제작 · 전문상담교사 김미선(misyongg)";
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 8.5pt;
+        color: #666;
+        padding: 8px 12px;
+        border-top: 1px solid #ccc;
+        background: white;
+      }
       .card { box-shadow: none; border: 1px solid #eee; }
+      .page-credit {
+        display: block !important;
+        color: #666 !important;
+        font-size: 8.5pt;
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #ddd;
+        page-break-inside: avoid;
+      }
     }
 
     /* ===========================
@@ -959,7 +988,6 @@
           내 마음 속 다양한 감정들이 찾아오는 곳<br/>
           <strong>나는 이 호텔의 지배인이에요</strong>
         </p>
-        <p class="app-credit">제작 · 전문상담교사 김미선(misyongg)</p>
 
         <!-- 입력 폼 -->
         <div class="cover-form">
@@ -979,6 +1007,7 @@
           <p class="text-soft text-center mt-8">입력한 내용은 이 기기에만 저장돼요 🔒</p>
         </div>
       </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
     </section>
 
     <!-- ===================== STEP 1: 책 읽기 ===================== -->
@@ -1008,6 +1037,7 @@
         <div class="card-title">💬 내가 공감한 장면들</div>
         <div id="empathy-log" class="text-soft">아직 공감한 장면이 없어요. 책을 읽으며 ❤️ 버튼을 눌러보세요!</div>
       </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
     </section>
 
     <!-- ===================== STEP 2: 손님 ===================== -->
@@ -1071,6 +1101,7 @@
         <textarea id="today-reason" rows="2" placeholder="예) 친구랑 다퉈서 분노가 많이 찾아왔어요..."
                   oninput="autoSave()"></textarea>
       </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
     </section>
 
     <!-- ===================== STEP 3: 방 꾸미기 ===================== -->
@@ -1183,6 +1214,7 @@
           <span class="text-soft">방을 클릭해서 손님을 배정해보세요!</span>
         </div>
       </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
     </section>
 
     <!-- 방 꾸미기 모달 -->
@@ -1309,6 +1341,7 @@
           규칙을 추가하면 여기에 표시돼요!
         </div>
       </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
     </section>
 
     <!-- ===================== STEP 5: 이름/소개글 ===================== -->
@@ -1379,6 +1412,7 @@
           ">지배인</div>
         </div>
       </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
     </section>
 
     <!-- ===================== STEP 6: 손님 대응 매뉴얼 ===================== -->
@@ -1410,6 +1444,7 @@
                   placeholder="예) 🎵 좋아하는 노래 듣기 / 🧸 인형 꼭 안기 / 🚿 따뜻한 물로 씻기 / 📔 일기 쓰기..."
                   oninput="autoSave()"></textarea>
       </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
     </section>
 
     <!-- ===================== STEP 7: OST ===================== -->
@@ -1519,6 +1554,7 @@
         <button class="btn btn-primary" style="margin:0 auto; display:flex;"
                 onclick="window.print()">🖨️ 내 감정호텔 인쇄하기</button>
       </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
     </section>
   </main>
 
