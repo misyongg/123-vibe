@@ -1698,8 +1698,14 @@ const LEGACY_PROP_MAP = {
   '🌸': 'flower', '🎪': 'balloon', '🌙': 'moon', '☀️': 'sun', '🧩': 'puzzle'
 };
 
+const PROP_IMG_BASE = (() => {
+  try { return new URL('256px/', window.location.href).href; }
+  catch (e) { return '256px/'; }
+})();
+
 function propImageSrc(id) {
-  return '256px/' + id + '.png';
+  try { return new URL(id + '.png', PROP_IMG_BASE).href; }
+  catch (e) { return '256px/' + id + '.png'; }
 }
 
 function propImgOnError(el) {
@@ -2200,6 +2206,7 @@ function setTodayGuest(name) {
 ─────────────────────────────────────────── */
 function renderBuilding() {
   updateHeaderInfo();
+  renderPropGrid();
   // 저장된 방 데이터로 UI 복원
   for (let id = 0; id <= 9; id++) {
     const room = appData.rooms[id];
