@@ -1168,10 +1168,21 @@ async function pourNotes() {
     cupPreviewCount = 0;
   }, 900);
 
-  setTimeout(() => {
+  setTimeout(async () => {
     buildClassifyList();
     btn.textContent = "✅ 꺼내기 완료";
     btn.disabled = false;
+
+    try {
+      await postToSheet({
+        recordType: "markProcessed",
+        processedNoteIds: allNotes.map(function (n) { return n.id; })
+      });
+      statusEl.textContent = `쪽지 ${allNotes.length}장을 꺼냈어요 · 학생 컵도 비워져요`;
+    } catch (e) {
+      statusEl.textContent = `쪽지 ${allNotes.length}장을 꺼냈어요 · 처리 표시 전송 실패(Apps Script 재배포 확인)`;
+      statusEl.style.color = "#e53e3e";
+    }
 
     const next = document.createElement("button");
     next.className = "btn-main pour-next-btn";

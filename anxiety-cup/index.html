@@ -420,7 +420,7 @@ function syncNoteCountFromRecords() {
 
 async function syncNoteCountFromServer() {
   const nick = getNickname();
-  if (!nick || !SCRIPT_URL) return;
+  if (!nick || !SCRIPT_URL) return false;
   try {
     const res = await fetch(
       SCRIPT_URL + "?action=get&nickname=" + encodeURIComponent(nick)
@@ -430,10 +430,12 @@ async function syncNoteCountFromServer() {
       noteCount = json.notes.length;
       localStorage.setItem(COUNT_KEY, String(noteCount));
       renderCup();
+      return true;
     }
   } catch (e) {
     /* keep local count if server sync fails */
   }
+  return false;
 }
 
 function scheduleNicknameSave() {
@@ -444,11 +446,19 @@ function scheduleNicknameSave() {
   }, 400);
 }
 
-(function init() {
+(async function init() {
   updateNicknameUI(getNickname());
-  syncNoteCountFromRecords();
-  renderCup();
-  syncNoteCountFromServer();
+
+  const synced = await syncNoteCountFromServer();
+  if (!synced) {
+    syncNoteCountFromRecords();
+    renderCup();
+  }
+
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") syncNoteCountFromServer();
+  });
+  window.addEventListener("focus", function () { syncNoteCountFromServer(); });
 
   const nickInput = document.getElementById("nickname");
   nickInput.addEventListener("input", scheduleNicknameSave);

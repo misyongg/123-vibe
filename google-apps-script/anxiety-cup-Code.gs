@@ -84,6 +84,10 @@ function doPost(e) {
     if (type === "session") {
       return saveSession_(data);
     }
+    if (type === "markProcessed") {
+      var markedCount = markNotesProcessed_(data.processedNoteIds || []);
+      return jsonOut_({ ok: true, saved: "markProcessed", markedProcessed: markedCount });
+    }
     return saveNote_(data);
   } catch (err) {
     return jsonOut_({ ok: false, error: String(err) });
