@@ -1009,148 +1009,220 @@
     .guest-table td input:focus { border-bottom-color: var(--lavender-dk); }
 
     /* ===========================
-       18b. 인쇄 워크시트 (print_paper.png — 5056×3392 픽셀 기준 %)
+       18b. Step 8 요약본 (A4 인쇄)
     =========================== */
-    #print-worksheet {
-      display: none;
+    .summary-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 14px 18px;
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 10px var(--shadow);
     }
-    .print-worksheet-inner {
-      position: relative;
+    .summary-toolbar-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--lavender-dk);
+      margin: 0;
+    }
+    .summary-sheet {
       width: 100%;
-      max-width: 1100px;
+      max-width: 1120px;
       margin: 0 auto;
-      height: 0;
-      padding-bottom: 67.09%; /* 3392 / 5056 */
-      background: url('print_paper.png') no-repeat center / 100% 100%;
+      aspect-ratio: 297 / 210;
+      background: url('256px/summary-bg-a4.png') no-repeat center / 100% 100%;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px var(--shadow);
+      padding: 2.2% 2%;
+      box-sizing: border-box;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
-      container-type: inline-size;
     }
-    .print-overlay {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-    }
-    .pf {
-      position: absolute;
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 27% 46% 27%;
+      grid-template-rows: 34% 38% 24%;
+      gap: 1.2% 1.5%;
+      height: 100%;
       font-family: 'Nanum Pen Script', 'Noto Sans KR', sans-serif;
       color: #3a3340;
-      line-height: 1.3;
+    }
+    .summary-cell {
+      position: relative;
+      min-height: 0;
+      min-width: 0;
+    }
+    .summary-cell:not(.summary-cell-building) .summary-frame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .summary-frame {
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      display: block;
+      border-radius: 6px;
+      pointer-events: none;
+    }
+    .summary-cell-building .summary-frame { display: none; }
+    .summary-fill {
+      position: absolute;
       overflow: hidden;
       word-break: keep-all;
-      white-space: pre-wrap;
+      line-height: 1.35;
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+      z-index: 1;
     }
-    /* 왼쪽 손님 표 (4행) */
-    .pf-guests {
-      left: 4.67%; top: 15.36%; width: 26.31%; height: 16.07%;
-      font-size: 0.82cqw; line-height: 4.05cqw;
-      text-align: left; padding: 0.2% 1.5% 0;
-    }
-    /* 오늘의 손님 답변칸 (질문 아래 흰 칸) */
-    .pf-today-guest {
-      left: 4.51%; top: 35.97%; width: 25.45%; height: 7.19%;
-      font-size: 0.90cqw; line-height: 1.2;
-      text-align: left; padding: 4.8% 2.5% 0;
-    }
-    .pf-today-reason {
-      left: 4.53%; top: 47.29%; width: 25.44%; height: 3.18%;
-      font-size: 0.88cqw; line-height: 1.2;
-      text-align: left; padding: 0 2.5%;
-      display: flex; align-items: center;
-    }
-    /* 간판 3줄 */
-    .pf-hotel-name {
-      left: 36.97%; top: 7.16%; width: 28.64%; height: 3.51%;
-      font-size: 1.25cqw; font-weight: 700; text-align: center;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .pf-hotel-intro {
-      left: 35.25%; top: 11.38%; width: 30.36%; height: 3.51%;
-      font-size: 0.88cqw; text-align: center;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .pf-manager-intro {
-      left: 35.25%; top: 15.60%; width: 30.36%; height: 3.51%;
-      font-size: 0.85cqw; text-align: center;
-      display: flex; align-items: center; justify-content: center;
-    }
-    /* OST */
-    .pf-ost-title {
-      left: 68.00%; top: 11.65%; width: 30.97%; height: 3.54%;
-      font-size: 0.92cqw; padding: 0 3%;
-      display: flex; align-items: center;
-    }
-    .pf-ost-reason {
-      left: 68.00%; top: 15.98%; width: 30.97%; height: 7.58%;
-      font-size: 0.82cqw; padding: 1% 3%;
-    }
-    .pf-ost-lyrics {
-      left: 68.00%; top: 24.32%; width: 30.97%; height: 20.43%;
-      font-size: 0.80cqw; line-height: 1.45; padding: 1.5% 3%;
-    }
-    /* 비밀 무기 상자 (보라 내부 흰 칸) */
-    .pf-secret {
-      left: 68.00%; top: 47.00%; width: 30.97%; height: 16.95%;
-      font-size: 0.85cqw; line-height: 1.4; padding: 3% 4%;
-    }
-    /* 규칙 클립보드 */
-    .pf-rules {
-      left: 3.00%; top: 58.00%; width: 24.00%; height: 24.97%;
-      font-size: 0.92cqw; line-height: 2.95cqw; padding: 2% 6%;
-    }
-    /* 건물 방 */
-    .pf-room {
-      font-size: 0.75cqw;
-      line-height: 1.1;
-      text-align: center;
+    .summary-fill-guests {
+      left: 7%; right: 6%; top: 19%; bottom: 6%;
+      font-size: 0.52rem;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 1px;
-      padding: 3% 2%;
     }
-    .pf-room .pf-prop-img { width: 46%; height: auto; max-height: 58%; object-fit: contain; }
-    .pf-room .pf-prop-img + .pf-prop-img { width: 30%; max-height: 32%; }
-    .pf-room-5  { left: 32.83%; top: 25.85%; width: 7.93%; height: 7.16%; }
-    .pf-room-6  { left: 41.83%; top: 25.85%; width: 7.93%; height: 7.16%; }
-    .pf-room-7  { left: 50.83%; top: 25.85%; width: 7.93%; height: 7.16%; }
-    .pf-room-3  { left: 32.83%; top: 36.85%; width: 7.93%; height: 7.16%; }
-    .pf-room-4  { left: 41.83%; top: 36.85%; width: 7.93%; height: 7.16%; }
-    .pf-room-8  { left: 50.83%; top: 36.85%; width: 7.93%; height: 7.16%; }
-    .pf-room-1  { left: 32.83%; top: 47.88%; width: 7.93%; height: 7.13%; }
-    .pf-room-2  { left: 41.83%; top: 47.88%; width: 7.93%; height: 7.13%; }
-    .pf-room-9  { left: 50.83%; top: 47.88%; width: 7.93%; height: 7.13%; }
-    .pf-room-0  { left: 33.45%; top: 61.03%; width: 24.68%; height: 5.93%; font-size: 0.72cqw; }
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      flex: 1;
+      font-size: inherit;
+    }
+    .summary-table td {
+      padding: 2px 3px;
+      vertical-align: top;
+      border-bottom: 1px dashed rgba(120,100,130,0.25);
+      line-height: 1.25;
+    }
+    .summary-table td:first-child { width: 28%; }
+    .summary-today-block { margin-top: 4px; flex-shrink: 0; }
+    .summary-today-line {
+      min-height: 1.1em;
+      font-size: 0.55rem;
+      padding: 1px 0;
+    }
+    .summary-fill-sign {
+      left: 8%; right: 8%; top: 22%; bottom: 8%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      text-align: center;
+    }
+    .summary-sign-line { font-size: 0.58rem; line-height: 1.2; }
+    .summary-sign-name { font-size: 0.72rem; font-weight: 700; }
+    .summary-fill-ost {
+      left: 8%; right: 7%; top: 18%; bottom: 5%;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .summary-ost-title { font-size: 0.58rem; min-height: 1.2em; flex-shrink: 0; }
+    .summary-ost-reason { font-size: 0.52rem; min-height: 2.2em; flex-shrink: 0; }
+    .summary-ost-lyrics {
+      flex: 1;
+      font-size: 0.5rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      overflow: hidden;
+    }
+    .summary-fill-rules {
+      left: 10%; right: 8%; top: 20%; bottom: 6%;
+      font-size: 0.55rem;
+      line-height: 1.55;
+    }
+    .summary-rule-line { margin-bottom: 1px; }
+    .summary-fill-secret {
+      left: 9%; right: 8%; top: 22%; bottom: 28%;
+      font-size: 0.52rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+    .summary-complete-img {
+      position: absolute;
+      left: 5%; right: 5%; bottom: 2%;
+      width: 90%;
+      height: auto;
+      max-height: 26%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+    .summary-fill-footer {
+      left: 6%; right: 6%; top: 38%; bottom: 12%;
+      font-size: 0.58rem;
+      text-align: center;
+    }
+    .summary-cell-guests { grid-column: 1; grid-row: 1; }
+    .summary-cell-rules   { grid-column: 1; grid-row: 2 / 4; }
+    .summary-cell-sign    { grid-column: 2; grid-row: 1; }
+    .summary-cell-building { grid-column: 2; grid-row: 2; }
+    .summary-cell-footer  { grid-column: 2; grid-row: 3; }
+    .summary-cell-ost     { grid-column: 3; grid-row: 1; }
+    .summary-cell-secret  { grid-column: 3; grid-row: 2 / 4; }
+
+    /* 요약본 건물 (Step 3 축소) */
+    .summary-hotel-building {
+      height: 100%;
+      padding: 4px 6px !important;
+      background: rgba(255,255,255,0.35);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+    .summary-hotel-building .hotel-floor { gap: 4px; margin-bottom: 4px; }
+    .summary-hotel-building .hotel-room {
+      min-height: 0 !important;
+      height: 100%;
+      border-width: 2px;
+      cursor: default;
+    }
+    .summary-hotel-building .hotel-room:hover { transform: none; }
+    .summary-hotel-building .hotel-room .room-name  { font-size: 0.42rem; }
+    .summary-hotel-building .hotel-room .room-guest { font-size: 0.38rem; }
+    .summary-hotel-building .hotel-room .placed-prop { width: 48%; height: 48%; }
+    .summary-hotel-building .hotel-lobby {
+      min-height: 0 !important;
+      flex: 1;
+      margin-top: 2px;
+      cursor: default;
+    }
+    .summary-hotel-building .hotel-lobby:hover { transform: none; }
+    .summary-hotel-building .hotel-lobby .placed-prop { width: 14%; height: 70%; }
+    .summary-hotel-building .edit-icon { display: none !important; }
+    .summary-hotel-building .room-placeholder { display: none !important; }
 
     /* ===========================
-       19. 인쇄용 스타일
+       19. 인쇄용 스타일 (요약본)
     =========================== */
     @media print {
-      @page { size: A4 landscape; margin: 0; }
+      @page { size: A4 landscape; margin: 5mm; }
       html, body {
         margin: 0; padding: 0;
-        width: 100%; height: 100%;
         background: white;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
-      #app-header, #step-bar, #bottom-nav, #room-modal, #main-content { display: none !important; }
-      #print-worksheet {
-        display: block !important;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-        page-break-after: avoid;
-        page-break-inside: avoid;
-      }
-      .print-worksheet-inner {
+      .no-print,
+      #app-header, #step-bar, #bottom-nav, #room-modal { display: none !important; }
+      #main-content { padding: 0 !important; margin: 0 !important; }
+      .section-page { display: none !important; }
+      #page-8 { display: block !important; }
+      #page-8 .summary-sheet {
         max-width: none;
         width: 100%;
-        padding-bottom: 67.09%;
+        aspect-ratio: auto;
+        height: auto;
+        min-height: 0;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0;
+        page-break-inside: avoid;
+      }
+      #page-8 .summary-grid {
+        height: 190mm;
+        max-height: 190mm;
       }
     }
 
@@ -1181,6 +1253,18 @@
       .hotel-room .edit-icon  { font-size: 0.6rem; top: 3px; right: 4px; }
       .hotel-sign { font-size: 1.2rem; padding: 3px 12px; }
       .prop-item { width: 46px; height: 46px; }
+
+      #step-bar .step-label { font-size: 0.52rem; }
+      #step-bar .step-dot { width: 28px; height: 28px; font-size: 0.85rem; }
+      .summary-sheet {
+        aspect-ratio: auto;
+        min-height: 520px;
+        overflow-x: auto;
+      }
+      .summary-grid {
+        min-width: 680px;
+        height: 520px;
+      }
 
       /* 체크인 테이블 → 카드형 */
       .guest-table thead { display: none; }
@@ -1268,7 +1352,7 @@
   <header id="app-header">
     <span class="hotel-title" id="header-hotel-name">🏨 감정호텔</span>
     <span class="manager-badge" id="header-manager-name">지배인</span>
-    <button id="print-btn" onclick="printWorksheet()">🖨️ 인쇄</button>
+    <button id="print-btn" onclick="goStep(8)">🖨️ 요약본</button>
   </header>
 
   <!-- ======= 스텝 진행바 ======= -->
@@ -1304,6 +1388,10 @@
     <div class="step-item" data-step="7" onclick="goStep(7)">
       <div class="step-dot">🎵</div>
       <div class="step-label">OST</div>
+    </div>
+    <div class="step-item" data-step="8" onclick="goStep(8)">
+      <div class="step-dot">📄</div>
+      <div class="step-label">요약본</div>
     </div>
   </nav>
 
@@ -1596,7 +1684,7 @@
           <div class="hotel-lobby" onclick="openRoomModal(0)">
             <div class="lobby-props-layer"></div>
             <div class="lobby-info">
-              <strong id="lobby-label">🛎️ 로비 (클릭해서 꾸미기)</strong>
+              <strong class="lobby-label">🛎️ 로비 (클릭해서 꾸미기)</strong>
             </div>
           </div>
         </div>
@@ -1943,9 +2031,103 @@
           <em>"날마다 감정들이 머물다 가는 곳, 감정호텔에 오신 것을 환영합니다."</em>
         </p>
         <button class="btn btn-primary" style="margin:0 auto; display:flex;"
-                onclick="printWorksheet()">🖨️ 내 감정호텔 인쇄하기</button>
+                onclick="goStep(8)">📄 요약본 보기 & 인쇄</button>
       </div>
       <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
+    </section>
+
+    <!-- ===================== STEP 8: 요약본 (A4 인쇄) ===================== -->
+    <section class="section-page" id="page-8">
+      <div class="summary-toolbar no-print">
+        <div>
+          <h2 class="summary-toolbar-title">📄 나의 감정호텔 요약본</h2>
+          <p class="text-soft" style="font-size:0.88rem; margin:4px 0 0;">1~7단계에서 입력한 내용이 모여요. 아래 미리보기 후 인쇄하세요.</p>
+        </div>
+        <button class="btn btn-primary" onclick="printSummary()">🖨️ A4 인쇄하기</button>
+      </div>
+
+      <div class="summary-sheet" id="summary-sheet">
+        <div class="summary-grid">
+          <!-- 왼쪽: 손님 -->
+          <div class="summary-cell summary-cell-guests">
+            <img class="summary-frame" src="256px/summary-guest-table-frame.png" alt=""/>
+            <div class="summary-fill summary-fill-guests">
+              <table class="summary-table" id="sum-guest-table">
+                <tbody id="sum-guest-tbody"></tbody>
+              </table>
+              <div class="summary-today-block">
+                <div class="summary-today-line" id="sum-today-guest"></div>
+                <div class="summary-today-line" id="sum-today-reason"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 가운데 위: 간판 -->
+          <div class="summary-cell summary-cell-sign">
+            <img class="summary-frame" src="256px/summary-sign-frame.png" alt=""/>
+            <div class="summary-fill summary-fill-sign">
+              <div class="summary-sign-line summary-sign-name" id="sum-hotel-name"></div>
+              <div class="summary-sign-line" id="sum-hotel-intro"></div>
+              <div class="summary-sign-line" id="sum-manager-intro"></div>
+            </div>
+          </div>
+
+          <!-- 오른쪽: OST -->
+          <div class="summary-cell summary-cell-ost">
+            <img class="summary-frame" src="256px/summary-ost-frame.png" alt=""/>
+            <div class="summary-fill summary-fill-ost">
+              <div class="summary-ost-title" id="sum-ost-title"></div>
+              <div class="summary-ost-reason" id="sum-ost-reason"></div>
+              <div class="summary-ost-lyrics" id="sum-ost-lyrics"></div>
+            </div>
+          </div>
+
+          <!-- 가운데: 건물 -->
+          <div class="summary-cell summary-cell-building">
+            <div class="hotel-building summary-hotel-building" id="summary-building">
+              <div class="hotel-floor">
+                <div class="hotel-room" data-summary-room="5"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="6"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="7"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+              </div>
+              <div class="hotel-floor">
+                <div class="hotel-room" data-summary-room="3"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="4"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="8"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+              </div>
+              <div class="hotel-floor">
+                <div class="hotel-room" data-summary-room="1"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="2"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="9"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+              </div>
+              <div class="hotel-lobby">
+                <div class="lobby-props-layer"></div>
+                <div class="lobby-info"><strong class="lobby-label"></strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 왼쪽 아래: 규칙 -->
+          <div class="summary-cell summary-cell-rules">
+            <img class="summary-frame" src="256px/summary-rules-clipboard.png" alt=""/>
+            <div class="summary-fill summary-fill-rules" id="sum-rules"></div>
+          </div>
+
+          <!-- 오른쪽 아래: 비밀상자 + 완성 배지 -->
+          <div class="summary-cell summary-cell-secret">
+            <img class="summary-frame" src="256px/summary-secret-box.png" alt=""/>
+            <div class="summary-fill summary-fill-secret" id="sum-secret"></div>
+            <img class="summary-complete-img" src="256px/summary-complete-badge.png" alt="완성"/>
+          </div>
+
+          <!-- 하단: 한마디 -->
+          <div class="summary-cell summary-cell-footer">
+            <img class="summary-frame" src="256px/summary-footer-bubble.png" alt=""/>
+            <div class="summary-fill summary-fill-footer" id="sum-footer-msg"></div>
+          </div>
+        </div>
+      </div>
+      <p class="page-credit no-print">© 제작 · 전문상담교사 김미선(misyongg)</p>
     </section>
   </main>
 
@@ -1955,35 +2137,6 @@
     <span id="save-indicator">💾 저장됨</span>
     <button class="btn btn-primary" id="next-btn" onclick="nextStep()">다음 ▶</button>
   </nav>
-
-  <!-- ======= 인쇄용 워크시트 (화면에서는 숨김) ======= -->
-  <div id="print-worksheet" aria-hidden="true">
-    <div class="print-worksheet-inner">
-      <div class="print-overlay">
-        <div class="pf pf-guests" id="pf-guests"></div>
-        <div class="pf pf-today-guest" id="pf-today-guest"></div>
-        <div class="pf pf-today-reason" id="pf-today-reason"></div>
-        <div class="pf pf-hotel-name" id="pf-hotel-name"></div>
-        <div class="pf pf-hotel-intro" id="pf-hotel-intro"></div>
-        <div class="pf pf-manager-intro" id="pf-manager-intro"></div>
-        <div class="pf pf-ost-title" id="pf-ost-title"></div>
-        <div class="pf pf-ost-reason" id="pf-ost-reason"></div>
-        <div class="pf pf-ost-lyrics" id="pf-ost-lyrics"></div>
-        <div class="pf pf-secret" id="pf-secret"></div>
-        <div class="pf pf-rules" id="pf-rules"></div>
-        <div class="pf pf-room pf-room-1" id="pf-room-1"></div>
-        <div class="pf pf-room pf-room-2" id="pf-room-2"></div>
-        <div class="pf pf-room pf-room-3" id="pf-room-3"></div>
-        <div class="pf pf-room pf-room-4" id="pf-room-4"></div>
-        <div class="pf pf-room pf-room-5" id="pf-room-5"></div>
-        <div class="pf pf-room pf-room-6" id="pf-room-6"></div>
-        <div class="pf pf-room pf-room-7" id="pf-room-7"></div>
-        <div class="pf pf-room pf-room-8" id="pf-room-8"></div>
-        <div class="pf pf-room pf-room-9" id="pf-room-9"></div>
-        <div class="pf pf-room pf-room-0" id="pf-room-0"></div>
-      </div>
-    </div>
-  </div>
 
 <script>
 /* ============================================================
@@ -2484,14 +2637,21 @@ function goStep(n) {
 
   // 이전/다음 버튼 제어
   document.getElementById('prev-btn').style.visibility = n === 0 ? 'hidden' : 'visible';
-  document.getElementById('next-btn').textContent = n === 7 ? '✅ 완성!' : '다음 ▶';
+  const nextBtn = document.getElementById('next-btn');
+  if (n === 8) {
+    nextBtn.textContent = '🖨️ 인쇄';
+    nextBtn.onclick = function() { printSummary(); };
+  } else {
+    nextBtn.textContent = n === 7 ? '📄 요약본 ▶' : '다음 ▶';
+    nextBtn.onclick = nextStep;
+  }
 
   // 진입 시 렌더링
   renderStep(n);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function nextStep() { if (currentStep < 7) goStep(currentStep + 1); }
+function nextStep() { if (currentStep < 8) goStep(currentStep + 1); }
 function prevStep() { if (currentStep > 0) goStep(currentStep - 1); }
 
 // 각 스텝 진입 시 렌더링 호출
@@ -2504,6 +2664,7 @@ function renderStep(n) {
   if (n === 5) renderSignboard();
   if (n === 6) renderManual();
   if (n === 7) renderOST();
+  if (n === 8) renderSummaryPage();
 }
 
 // 현재 스텝 데이터 수집
@@ -2774,12 +2935,20 @@ function setTodayGuest(name) {
 function renderBuilding() {
   updateHeaderInfo();
   renderPropGrid();
-  // 저장된 방 데이터로 UI 복원
+  const root = document.getElementById('page-3');
   for (let id = 0; id <= 9; id++) {
-    const room = appData.rooms[id];
-    if (room) applyRoomToBuilding(id, room);
+    applyRoomToBuilding(id, appData.rooms[id] || {}, root);
   }
   renderRoomSummary();
+}
+
+function getBuildingRoomEl(id, scope) {
+  if (!scope) scope = document;
+  if (id === 0) return scope.querySelector('.hotel-lobby');
+  if (scope.id === 'summary-building' || scope.querySelector('[data-summary-room]')) {
+    return scope.querySelector('[data-summary-room="' + id + '"]');
+  }
+  return document.getElementById('room-' + id);
 }
 
 function isRoomDecorated(room) {
@@ -2792,26 +2961,28 @@ function isRoomDecorated(room) {
   );
 }
 
-function applyRoomToBuilding(id, room) {
+function applyRoomToBuilding(id, room, scope) {
+  if (!room) room = {};
   const props = room.props || [];
   const guestEmoji = room.guest ? (defaultEmotionData[room.guest]?.emoji || '💭') : '';
   const decorated = isRoomDecorated(room);
   const hasName = !!(room.roomName && room.roomName.trim());
   const hasGuest = !!room.guest;
   const hasLabel = hasName || hasGuest;
+  const root = scope || document.getElementById('page-3') || document;
 
   if (id === 0) {
-    const lobby = document.querySelector('.hotel-lobby');
+    const lobby = getBuildingRoomEl(0, root);
     if (lobby) {
       lobby.style.background = `linear-gradient(135deg, ${room.color || '#FFD9B7'}, ${(room.color || '#FFD9B7')}cc)`;
       lobby.classList.toggle('is-decorated', decorated);
       lobby.classList.toggle('has-label', hasLabel);
       const layer = lobby.querySelector('.lobby-props-layer');
       renderPropLayer(layer, props);
-      const label = document.getElementById('lobby-label');
+      const label = lobby.querySelector('.lobby-label');
       if (label) {
         if (!decorated) {
-          label.textContent = '🛎️ 로비 (클릭해서 꾸미기)';
+          label.textContent = root.id === 'summary-building' ? '' : '🛎️ 로비 (클릭해서 꾸미기)';
         } else if (hasName) {
           label.textContent = '🛎️ ' + room.roomName.trim();
         } else if (hasGuest) {
@@ -2823,16 +2994,17 @@ function applyRoomToBuilding(id, room) {
     }
     return;
   }
-  const el = document.getElementById('room-' + id);
+  const el = getBuildingRoomEl(id, root);
   if (!el) return;
   el.style.background = room.color || '#f0e8ff';
   el.classList.toggle('is-decorated', decorated);
   el.classList.toggle('has-label', hasLabel);
   const layer = el.querySelector('.room-props-layer');
   renderPropLayer(layer, props);
-  el.querySelector('.room-name').textContent  = hasName ? room.roomName.trim() : (decorated ? '' : '빈 방');
-  el.querySelector('.room-guest').textContent =
-    hasGuest ? guestEmoji + ' ' + room.guest : (decorated ? '' : '클릭해서 꾸미기');
+  const nameEl = el.querySelector('.room-name');
+  const guestEl = el.querySelector('.room-guest');
+  if (nameEl) nameEl.textContent = hasName ? room.roomName.trim() : (decorated ? '' : (root.id === 'summary-building' ? '' : '빈 방'));
+  if (guestEl) guestEl.textContent = hasGuest ? guestEmoji + ' ' + room.guest : (decorated ? '' : (root.id === 'summary-building' ? '' : '클릭해서 꾸미기'));
 }
 
 function renderRoomSummary() {
@@ -2910,7 +3082,7 @@ function saveRoom() {
   };
 
   autoSave();
-  applyRoomToBuilding(currentRoomId, appData.rooms[currentRoomId]);
+  applyRoomToBuilding(currentRoomId, appData.rooms[currentRoomId], document.getElementById('page-3'));
   renderRoomSummary();
   closeRoomModal();
 }
@@ -3488,78 +3660,77 @@ function resetAll() {
 
 
 /* ───────────────────────────────────────────
-   13. 인쇄 워크시트 (print_paper.png)
+   13. Step 8 요약본 & A4 인쇄
 ─────────────────────────────────────────── */
-function pfSet(id, text) {
+function sumSet(id, text) {
   const el = document.getElementById(id);
   if (el) el.textContent = text || '';
 }
 
-function pfSetHtml(id, html) {
-  const el = document.getElementById(id);
-  if (el) el.innerHTML = html || '';
-}
-
-function roomPrintHtml(roomId) {
-  const r = appData.rooms[roomId];
-  if (!r || !isRoomDecorated(r)) return '';
-  const guestEmoji = r.guest ? (defaultEmotionData[r.guest]?.emoji || '💭') : '';
-  const props = normalizeProps(r.props || []);
-  const hasName = !!(r.roomName && r.roomName.trim());
-  const hasGuest = !!r.guest;
-  const parts = [];
-  props.slice(0, 3).forEach(p => {
-    parts.push(`<img class="pf-prop-img" src="${propImageSrc(p.id)}" alt=""/>`);
-  });
-  if (hasGuest) parts.push(`<span>${guestEmoji} ${r.guest}</span>`);
-  if (hasName) parts.push(`<span>${r.roomName.trim()}</span>`);
-  return parts.join('');
-}
-
-function preparePrintWorksheet() {
+function renderSummaryPage() {
   collectCurrentStep(currentStep);
 
-  const hotel = appData.hotelName || '감정호텔';
-  const manager = appData.managerName || '';
+  sumSet('sum-hotel-name', appData.hotelName || '감정호텔');
+  sumSet('sum-hotel-intro', appData.hotelIntro || '');
+  sumSet('sum-manager-intro', appData.managerIntro || appData.managerName || '');
 
-  pfSet('pf-hotel-name', hotel);
-  pfSet('pf-hotel-intro', appData.hotelIntro || '');
-  const mgrIntro = appData.managerIntro || '';
-  const mgrName = manager ? manager : '';
-  pfSet('pf-manager-intro', mgrIntro || mgrName);
-
-  // 손님 체크인 (최대 4명)
-  const guestLines = appData.guests.slice(0, 4).map(g =>
-    [g.emoji + ' ' + g.name, g.trait, g.visitTime, g.wants]
-      .filter(Boolean).join('  ·  ')
-  );
-  pfSet('pf-guests', guestLines.join('\n'));
+  const tbody = document.getElementById('sum-guest-tbody');
+  if (tbody) {
+    const guests = appData.guests.slice(0, 4);
+    if (!guests.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:#999;">손님을 추가해주세요</td></tr>';
+    } else {
+      tbody.innerHTML = guests.map(g => `
+        <tr>
+          <td>${escHtml(g.emoji + ' ' + g.name)}</td>
+          <td>${escHtml(g.trait || '')}</td>
+          <td>${escHtml(g.visitTime || '')}</td>
+          <td>${escHtml(g.wants || '')}</td>
+        </tr>`).join('');
+    }
+  }
 
   const todayG = appData.guests.find(g => g.isToday);
-  pfSet('pf-today-guest', todayG ? '⭐ ' + todayG.emoji + ' ' + todayG.name : '');
-  pfSet('pf-today-reason', appData.todayReason || '');
+  sumSet('sum-today-guest', todayG ? '⭐ ' + todayG.emoji + ' ' + todayG.name : '');
+  sumSet('sum-today-reason', appData.todayReason || '');
 
-  // 규칙 (최대 8개)
   const rules = appData.rules.filter(r => r && r.trim()).slice(0, 8);
-  pfSet('pf-rules', rules.map((r, i) => (i + 1) + '. ' + r).join('\n'));
+  const rulesEl = document.getElementById('sum-rules');
+  if (rulesEl) {
+    rulesEl.innerHTML = rules.length
+      ? rules.map((r, i) => `<div class="summary-rule-line">${i + 1}. ${escHtml(r)}</div>`).join('')
+      : '';
+  }
 
-  // OST
-  pfSet('pf-ost-title', appData.ost.title ? '🎼 ' + appData.ost.title : '');
-  pfSet('pf-ost-reason', appData.ost.reason || '');
-  pfSet('pf-ost-lyrics', appData.ost.lyrics || '');
+  sumSet('sum-ost-title', appData.ost.title ? '🎼 ' + appData.ost.title : '');
+  sumSet('sum-ost-reason', appData.ost.reason || '');
+  const lyricsEl = document.getElementById('sum-ost-lyrics');
+  if (lyricsEl) lyricsEl.textContent = appData.ost.lyrics || '';
 
-  // 비밀 무기 상자
-  pfSet('pf-secret', appData.secretWeapons || '');
+  sumSet('sum-secret', appData.secretWeapons || '');
+  sumSet('sum-footer-msg', '');
 
-  // 방 1~9, 로비
-  for (let id = 0; id <= 9; id++) {
-    pfSetHtml('pf-room-' + id, roomPrintHtml(id));
+  const root = document.getElementById('summary-building');
+  if (root) {
+    for (let id = 0; id <= 9; id++) {
+      applyRoomToBuilding(id, appData.rooms[id] || {}, root);
+    }
   }
 }
 
+function printSummary() {
+  if (currentStep !== 8) {
+    collectCurrentStep(currentStep);
+    goStep(8);
+    setTimeout(function() { renderSummaryPage(); window.print(); }, 400);
+    return;
+  }
+  renderSummaryPage();
+  setTimeout(function() { window.print(); }, 200);
+}
+
 function printWorksheet() {
-  preparePrintWorksheet();
-  window.print();
+  printSummary();
 }
 
 /* ───────────────────────────────────────────
