@@ -176,9 +176,76 @@
       font-size: 0.85rem;
       color: #c0b8d0;
     }
+
+    #authGate {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 70vh;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      gap: 16px;
+    }
+    .auth-card {
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 24px;
+      padding: 36px 28px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      width: 100%;
+    }
+    .auth-card h2 {
+      font-size: 1.3rem;
+      color: #6a5acd;
+      margin-bottom: 8px;
+    }
+    .auth-card p {
+      font-size: 0.9rem;
+      color: #9e9eb0;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .auth-err {
+      color: #e53e3e;
+      font-size: 0.84rem;
+      min-height: 20px;
+    }
+    .auth-user {
+      font-size: 0.82rem;
+      color: #7e57c2;
+      margin-bottom: 8px;
+    }
+    .auth-logout {
+      border: none;
+      background: none;
+      color: #9e9eb0;
+      font-size: 0.78rem;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-bottom: 24px;
+    }
+    #homeContent { display: none; width: 100%; flex-direction: column; align-items: center; }
+    #homeContent.on { display: flex; }
+    .gsi-btn-wrap { display: flex; justify-content: center; min-height: 44px; }
   </style>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="home-auth-config.js"></script>
 </head>
 <body>
+
+  <div id="authGate">
+    <div class="auth-card">
+      <h2>🔐 프로젝트 홈</h2>
+      <p>선생님 Google 계정으로 로그인하면<br>프로젝트 목록을 볼 수 있어요.</p>
+      <div class="gsi-btn-wrap" id="gsiButton"></div>
+      <div class="auth-err" id="authErr"></div>
+    </div>
+  </div>
+
+  <div id="homeContent">
+  <button type="button" class="auth-logout" id="btnLogout" hidden>로그아웃</button>
+  <div class="auth-user" id="authUser"></div>
   <header>
     <h1>✨ 프로젝트 모음</h1>
     <p>원하는 프로젝트를 선택하세요</p>
@@ -225,5 +292,121 @@
   </nav>
 
   <footer>123-vibe</footer>
+  </div>
+
+<script>
+const AUTH_SESSION_KEY = "homeAuthSession";
+
+function parseJwt(token) {
+  const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+  const json = decodeURIComponent(
+    atob(base64).split("").map(function (c) {
+      return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join("")
+  );
+  return JSON.parse(json);
+}
+
+function isEmailAllowed(email) {
+  const cfg = typeof HOME_AUTH_CONFIG !== "undefined" ? HOME_AUTH_CONFIG : {};
+  const allowed = (cfg.ALLOWED_EMAILS || []).map(function (e) { return e.toLowerCase(); });
+  return allowed.indexOf(String(email || "").toLowerCase()) >= 0;
+}
+
+function showHome(email) {
+  document.getElementById("authGate").style.display = "none";
+  document.getElementById("homeContent").classList.add("on");
+  document.getElementById("authUser").textContent = email ? "👋 " + email : "";
+  document.getElementById("btnLogout").hidden = false;
+}
+
+function showGate(errMsg) {
+  document.getElementById("authGate").style.display = "flex";
+  document.getElementById("homeContent").classList.remove("on");
+  document.getElementById("authErr").textContent = errMsg || "";
+}
+
+function saveSession(payload) {
+  sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(payload));
+}
+
+function loadSession() {
+  try {
+    const raw = sessionStorage.getItem(AUTH_SESSION_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data.exp || Date.now() / 1000 > data.exp) {
+      sessionStorage.removeItem(AUTH_SESSION_KEY);
+      return null;
+    }
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+function handleCredentialResponse(response) {
+  try {
+    const payload = parseJwt(response.credential);
+    const email = payload.email;
+    if (!isEmailAllowed(email)) {
+      showGate("허용되지 않은 계정이에요. (" + email + ")");
+      return;
+    }
+    saveSession({ email: email, exp: payload.exp });
+    showHome(email);
+  } catch (e) {
+    showGate("로그인 처리 중 오류가 발생했어요.");
+  }
+}
+
+function initGoogleAuth() {
+  const cfg = typeof HOME_AUTH_CONFIG !== "undefined" ? HOME_AUTH_CONFIG : {};
+  const clientId = cfg.GOOGLE_CLIENT_ID || "";
+
+  const saved = loadSession();
+  if (saved && isEmailAllowed(saved.email)) {
+    showHome(saved.email);
+    return;
+  }
+
+  if (!clientId) {
+    showGate("home-auth-config.js에 GOOGLE_CLIENT_ID와 ALLOWED_EMAILS를 설정해 주세요.");
+    return;
+  }
+
+  if (!cfg.ALLOWED_EMAILS || !cfg.ALLOWED_EMAILS.length) {
+    showGate("home-auth-config.js에 ALLOWED_EMAILS(본인 Gmail)를 추가해 주세요.");
+    return;
+  }
+
+  function renderButton() {
+    if (!window.google || !google.accounts || !google.accounts.id) {
+      setTimeout(renderButton, 120);
+      return;
+    }
+    google.accounts.id.initialize({
+      client_id: clientId,
+      callback: handleCredentialResponse
+    });
+    google.accounts.id.renderButton(
+      document.getElementById("gsiButton"),
+      { theme: "outline", size: "large", text: "signin_with", shape: "pill", locale: "ko" }
+    );
+  }
+  renderButton();
+}
+
+document.getElementById("btnLogout").addEventListener("click", function () {
+  sessionStorage.removeItem(AUTH_SESSION_KEY);
+  if (window.google && google.accounts && google.accounts.id) {
+    google.accounts.id.disableAutoSelect();
+  }
+  showGate("");
+  initGoogleAuth();
+});
+
+initGoogleAuth();
+</script>
 </body>
 </html>

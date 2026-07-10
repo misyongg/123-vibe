@@ -241,12 +241,37 @@ input[type="password"]:focus, input[type="text"]:focus { border-color: var(--acc
   gap: 10px;
   position: relative;
 }
+.pour-cup-wrap {
+  position: relative;
+  width: 220px;
+  height: 260px;
+}
+.teacher-notes-in-cup {
+  position: absolute;
+  top: 44px;
+  left: 54px;
+  width: 112px;
+  height: 172px;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+.teacher-mini-note {
+  position: absolute;
+  width: 56px;
+  height: 44px;
+  background: center/contain no-repeat url("../emotion-hotel/paper.png");
+  filter: drop-shadow(0 2px 3px rgba(90, 70, 20, 0.22));
+}
 .pour-cup-svg {
   width: 220px;
   height: 260px;
   object-fit: contain;
   transform-origin: bottom center;
   transition: transform 1.15s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease;
+  position: relative;
+  z-index: 2;
+  display: block;
 }
 .pour-cup-svg.tilt { transform: rotate(-112deg) translate(-20px, -12px); }
 .pour-cup-svg.hide { opacity: 0; }
@@ -671,7 +696,10 @@ textarea:focus { border-color: var(--accent); background: #fff; }
       </div>
 
       <div class="cup-pour-scene">
-        <img id="pourCup" class="pour-cup-svg" src="../emotion-hotel/emptycup.png" alt="종이컵">
+        <div class="pour-cup-wrap">
+          <img id="pourCup" class="pour-cup-svg" src="../emotion-hotel/emptycup.png" alt="종이컵">
+          <div class="teacher-notes-in-cup" id="teacherNotesStack"></div>
+        </div>
         <img id="pourCupFloor" class="pour-cup-floor" src="../emotion-hotel/emptycup.png" alt="빈 종이컵">
 
         <div class="spinner" id="spinner1"></div>
@@ -857,6 +885,68 @@ let selectedDbt = -1;
 let breathTimer = null;
 let breathCycle = 0;
 let filterNicknameUsed = "";
+let cupPreviewCount = 0;
+
+const CUP_NOTE_SLOTS = [
+  { top: 12, left: 6, rot: -9 },
+  { top: 24, left: 42, rot: 7 },
+  { top: 38, left: 20, rot: -4 },
+  { top: 56, left: 50, rot: 8 },
+  { top: 70, left: 10, rot: -10 },
+  { top: 86, left: 38, rot: 6 },
+  { top: 102, left: 16, rot: -5 },
+  { top: 118, left: 46, rot: 9 },
+  { top: 132, left: 24, rot: -3 },
+  { top: 144, left: 8, rot: 5 }
+];
+
+function renderTeacherCup(count) {
+  const stack = document.getElementById("teacherNotesStack");
+  stack.innerHTML = "";
+  if (!count) return;
+  const show = Math.min(count, CUP_NOTE_SLOTS.length);
+  for (let i = 0; i < show; i++) {
+    const n = document.createElement("div");
+    n.className = "teacher-mini-note";
+    n.style.top = CUP_NOTE_SLOTS[i].top + "px";
+    n.style.left = CUP_NOTE_SLOTS[i].left + "px";
+    n.style.transform = "rotate(" + CUP_NOTE_SLOTS[i].rot + "deg)";
+    stack.appendChild(n);
+  }
+}
+
+function resetPourCupView() {
+  const cup = document.getElementById("pourCup");
+  const floor = document.getElementById("pourCupFloor");
+  cup.classList.remove("tilt", "hide");
+  floor.classList.remove("on");
+  renderTeacherCup(cupPreviewCount);
+}
+
+async function refreshCupPreview() {
+  const statusEl = document.getElementById("pourStatus");
+  const filterNick = document.getElementById("filterNickname").value.trim();
+  if (!SCRIPT_URL) return;
+
+  try {
+    const notes = await fetchNotes(filterNick);
+    cupPreviewCount = notes.length;
+    resetPourCupView();
+    if (cupPreviewCount > 0) {
+      statusEl.style.color = "var(--muted)";
+      statusEl.textContent = filterNick
+        ? `"${filterNick}" 학생의 미처리 쪽지 ${cupPreviewCount}장`
+        : `미처리 쪽지 ${cupPreviewCount}장이 컵에 있어요`;
+    } else {
+      statusEl.style.color = "var(--muted)";
+      statusEl.textContent = filterNick
+        ? `"${filterNick}" 학생의 새 쪽지가 없어요`
+        : "아직 새 쪽지가 없어요";
+    }
+  } catch (e) {
+    /* ignore preview errors */
+  }
+}
 
 function escapeHtml(str) {
   return String(str || "")
@@ -907,10 +997,16 @@ function initTeacherApp() {
   if (savedFilter) {
     document.getElementById("filterNickname").value = savedFilter;
   }
-  document.getElementById("filterNickname").addEventListener("blur", function () {
+  const filterInput = document.getElementById("filterNickname");
+  filterInput.addEventListener("blur", function () {
     const v = this.value.trim();
     if (v) localStorage.setItem(FILTER_NICK_KEY, v);
+    refreshCupPreview();
   });
+  filterInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") refreshCupPreview();
+  });
+  refreshCupPreview();
 }
 
 function goStep(n) {
@@ -1040,13 +1136,17 @@ async function pourNotes() {
   }
 
   statusEl.textContent = `쪽지 ${allNotes.length}장을 불러왔어요`;
+  cupPreviewCount = allNotes.length;
 
   const cupSvg = document.getElementById("pourCup");
   const floorCup = document.getElementById("pourCupFloor");
+  const notesStack = document.getElementById("teacherNotesStack");
   floorCup.classList.remove("on");
-  cupSvg.classList.remove("hide");
-  cupSvg.classList.remove("tilt");
-  void cupSvg.offsetWidth;
+  cupSvg.classList.remove("hide", "tilt");
+  renderTeacherCup(allNotes.length);
+
+  await new Promise(function (resolve) { setTimeout(resolve, 700); });
+
   cupSvg.classList.add("tilt");
 
   const area = document.getElementById("pourNotesArea");
@@ -1062,8 +1162,10 @@ async function pourNotes() {
   });
 
   setTimeout(() => {
+    notesStack.innerHTML = "";
     cupSvg.classList.add("hide");
     floorCup.classList.add("on");
+    cupPreviewCount = 0;
   }, 900);
 
   setTimeout(() => {
@@ -1391,6 +1493,7 @@ async function finishSession() {
     nickname: filterNicknameUsed || (nicknames.length === 1 ? nicknames[0] : nicknames.join(", ")),
     nicknames: nicknames,
     noteCount: allNotes.length,
+    processedNoteIds: allNotes.map(function (n) { return n.id; }),
     canNotes: canList,
     cantNotes: cantList,
     dbtTechnique: DBT_DATA[selectedDbt].name,
@@ -1421,7 +1524,8 @@ async function finishSession() {
     finishMsg.innerHTML =
       "불안을 꺼내고, 나누고, 흘려보내고,<br>" +
       "그리고 파도를 함께 탔어요.<br><br>" +
-      "상담 기록이 시트에 저장됐어요 📋<br><br>" +
+      "상담 기록이 시트에 저장됐어요 📋<br>" +
+      "이번에 꺼낸 쪽지는 처리완료로 표시됐어요.<br><br>" +
       "다음에도 불안이 파도처럼 찾아오면<br>오늘 연습한 기술을 꺼내봐요 🌿";
     setSaveStatus("시트에 저장 완료", "ok");
   } else if (!SCRIPT_URL) {

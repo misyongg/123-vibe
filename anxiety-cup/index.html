@@ -418,6 +418,24 @@ function syncNoteCountFromRecords() {
   localStorage.setItem(COUNT_KEY, String(noteCount));
 }
 
+async function syncNoteCountFromServer() {
+  const nick = getNickname();
+  if (!nick || !SCRIPT_URL) return;
+  try {
+    const res = await fetch(
+      SCRIPT_URL + "?action=get&nickname=" + encodeURIComponent(nick)
+    );
+    const json = await res.json();
+    if (json.ok && Array.isArray(json.notes)) {
+      noteCount = json.notes.length;
+      localStorage.setItem(COUNT_KEY, String(noteCount));
+      renderCup();
+    }
+  } catch (e) {
+    /* keep local count if server sync fails */
+  }
+}
+
 function scheduleNicknameSave() {
   clearTimeout(nicknameSaveTimer);
   nicknameSaveTimer = setTimeout(() => {
@@ -430,12 +448,16 @@ function scheduleNicknameSave() {
   updateNicknameUI(getNickname());
   syncNoteCountFromRecords();
   renderCup();
+  syncNoteCountFromServer();
 
   const nickInput = document.getElementById("nickname");
   nickInput.addEventListener("input", scheduleNicknameSave);
   nickInput.addEventListener("blur", () => {
     const val = nickInput.value.trim();
-    if (val) saveNickname(val);
+    if (val) {
+      saveNickname(val);
+      syncNoteCountFromServer();
+    }
   });
   document.getElementById("nicknameEdit").addEventListener("click", () => {
     nickInput.focus();
