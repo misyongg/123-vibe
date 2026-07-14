@@ -1033,44 +1033,37 @@
       width: 100%;
       max-width: 1120px;
       margin: 0 auto;
-      aspect-ratio: 297 / 210;
-      background: url('256px/summary-bg-a4.png') no-repeat center / 100% 100%;
-      border-radius: 8px;
-      box-shadow: 0 4px 24px var(--shadow);
-      padding: 2.2% 2%;
       box-sizing: border-box;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
     .summary-grid {
-      display: grid;
-      grid-template-columns: 27% 46% 27%;
-      grid-template-rows: 34% 38% 24%;
-      gap: 1.2% 1.5%;
-      height: 100%;
+      display: flex;
+      align-items: flex-start;
+      gap: 1.4%;
       font-family: 'Nanum Pen Script', 'Noto Sans KR', sans-serif;
       color: #3a3340;
     }
-    .summary-cell {
-      position: relative;
-      min-height: 0;
-      min-width: 0;
-    }
-    .summary-cell:not(.summary-cell-building) .summary-frame {
-      position: absolute;
-      inset: 0;
+    .summary-col { display: flex; flex-direction: column; min-width: 0; }
+    .summary-col-left, .summary-col-right { flex: 1 1 0; gap: 1.4%; }
+    .summary-col-center { flex: 0 0 auto; }
+
+    /* 프레임 이미지 + 텍스트 오버레이 wrapper: 각자 원본 이미지 비율 그대로 유지 */
+    .summary-frame-wrap { position: relative; width: 100%; min-width: 0; }
+    .summary-frame-wrap > .summary-frame {
       width: 100%;
       height: 100%;
-    }
-    .summary-frame {
-      width: 100%;
-      height: 100%;
-      object-fit: fill;
       display: block;
-      border-radius: 6px;
       pointer-events: none;
     }
-    .summary-cell-building .summary-frame { display: none; }
+    .wrap-sign    { aspect-ratio: 1493 / 1043; }
+    .wrap-rules   { aspect-ratio: 1395 / 1258; }
+    .wrap-ost     { aspect-ratio: 1405 / 1483; }
+    .wrap-guests  { aspect-ratio: 1380 / 1835; }
+    .wrap-secret  { aspect-ratio: 1385 / 1023; }
+    .wrap-badge   { aspect-ratio: 1258 / 671; }
+    .wrap-rooms   { aspect-ratio: 1767 / 1992; height: 100%; }
+
     .summary-fill {
       position: absolute;
       overflow: hidden;
@@ -1079,103 +1072,58 @@
       box-sizing: border-box;
       z-index: 1;
     }
-    .summary-fill-guests {
-      left: 7%; right: 6%; top: 19%; bottom: 6%;
-      font-size: 0.52rem;
-      display: flex;
-      flex-direction: column;
-    }
-    .summary-table {
-      width: 100%;
-      border-collapse: collapse;
-      flex: 1;
-      font-size: inherit;
-    }
+    /* 손님 테이블 프레임 (guest-table-frame.png 실측 좌표) */
+    .summary-fill-guest-table { left: 8%; right: 8%; top: 16%; height: 35%; font-size: 0.5rem; }
+    .summary-table { width: 100%; height: 100%; border-collapse: collapse; font-size: inherit; }
     .summary-table td {
-      padding: 2px 3px;
+      padding: 1px 3px;
       vertical-align: top;
       border-bottom: 1px dashed rgba(120,100,130,0.25);
       line-height: 1.25;
     }
     .summary-table td:first-child { width: 28%; }
-    .summary-today-block { margin-top: 4px; flex-shrink: 0; }
-    .summary-today-line {
-      min-height: 1.1em;
-      font-size: 0.55rem;
-      padding: 1px 0;
-    }
+    .summary-fill-guest-q1 { left: 8%; right: 8%; top: 62%; height: 12%; font-size: 0.5rem; }
+    .summary-fill-guest-q2 { left: 8%; right: 8%; top: 82%; height: 13%; font-size: 0.5rem; }
+
+    /* 간판 프레임 */
     .summary-fill-sign {
-      left: 8%; right: 8%; top: 22%; bottom: 8%;
+      left: 9%; right: 9%; top: 11%; bottom: 10%;
       display: flex;
       flex-direction: column;
       justify-content: space-evenly;
       text-align: center;
     }
     .summary-sign-line { font-size: 0.58rem; line-height: 1.2; }
-    .summary-sign-name { font-size: 0.72rem; font-weight: 700; }
-    .summary-fill-ost {
-      left: 8%; right: 7%; top: 18%; bottom: 5%;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .summary-ost-title { font-size: 0.58rem; min-height: 1.2em; flex-shrink: 0; }
-    .summary-ost-reason { font-size: 0.52rem; min-height: 2.2em; flex-shrink: 0; }
-    .summary-ost-lyrics {
-      flex: 1;
-      font-size: 0.5rem;
-      line-height: 1.4;
-      white-space: pre-wrap;
-      overflow: hidden;
-    }
+    .summary-sign-name { font-size: 0.74rem; font-weight: 700; }
+
+    /* OST 프레임 (ost-frame.png 실측 좌표) */
+    .summary-fill-ost-title  { left: 8%; right: 8%; top: 20.5%; height: 6%; font-size: 0.56rem; }
+    .summary-fill-ost-reason { left: 8%; right: 8%; top: 30.5%; height: 15%; font-size: 0.5rem; }
+    .summary-fill-ost-lyrics { left: 8%; right: 8%; top: 49.5%; bottom: 5%; font-size: 0.5rem; line-height: 1.4; white-space: pre-wrap; }
+
+    /* 규칙 클립보드 (제목 "호텔 규칙" 아래 여백부터) */
     .summary-fill-rules {
-      left: 10%; right: 8%; top: 20%; bottom: 6%;
-      font-size: 0.55rem;
-      line-height: 1.55;
+      left: 8%; right: 8%; top: 21%; bottom: 6%;
+      font-size: 0.52rem;
+      line-height: 1.5;
     }
     .summary-rule-line { margin-bottom: 1px; }
+
+    /* 비밀상자 프레임 */
     .summary-fill-secret {
-      left: 9%; right: 8%; top: 22%; bottom: 28%;
+      left: 8%; right: 8%; top: 34%; bottom: 9%;
       font-size: 0.52rem;
       line-height: 1.4;
       white-space: pre-wrap;
     }
-    .summary-complete-img {
-      position: absolute;
-      left: 5%; right: 5%; bottom: 2%;
-      width: 90%;
-      height: auto;
-      max-height: 26%;
-      object-fit: contain;
-      pointer-events: none;
-    }
-    .summary-fill-footer {
-      left: 6%; right: 6%; top: 38%; bottom: 12%;
-      font-size: 0.58rem;
-      text-align: center;
-    }
-    .summary-cell-guests { grid-column: 1; grid-row: 1; }
-    .summary-cell-rules   { grid-column: 1; grid-row: 2 / 4; }
-    .summary-cell-sign    { grid-column: 2; grid-row: 1; }
-    .summary-cell-building { grid-column: 2; grid-row: 2; }
-    .summary-cell-footer  { grid-column: 2; grid-row: 3; }
-    .summary-cell-ost     { grid-column: 3; grid-row: 1; }
-    .summary-cell-secret  { grid-column: 3; grid-row: 2 / 4; }
 
-    /* 요약본 건물 (Step 3 축소) */
-    .summary-hotel-building {
-      height: 100%;
-      padding: 4px 6px !important;
-      background: rgba(255,255,255,0.35);
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-    }
-    .summary-hotel-building .hotel-floor { gap: 4px; margin-bottom: 4px; }
+    /* 요약본 건물 오버레이 (summary-rooms.png 실측 좌표) */
+    .summary-hotel-building { position: absolute; inset: 0; }
     .summary-hotel-building .hotel-room {
-      min-height: 0 !important;
-      height: 100%;
-      border-width: 2px;
+      position: absolute;
+      min-height: 0;
+      border: none;
+      border-radius: 8px;
       cursor: default;
     }
     .summary-hotel-building .hotel-room:hover { transform: none; }
@@ -1183,21 +1131,30 @@
     .summary-hotel-building .hotel-room .room-guest { font-size: 0.38rem; }
     .summary-hotel-building .hotel-room .placed-prop { width: 48%; height: 48%; }
     .summary-hotel-building .hotel-lobby {
-      min-height: 0 !important;
-      flex: 1;
-      margin-top: 2px;
+      position: absolute;
+      min-height: 0;
       cursor: default;
     }
     .summary-hotel-building .hotel-lobby:hover { transform: none; }
     .summary-hotel-building .hotel-lobby .placed-prop { width: 14%; height: 70%; }
     .summary-hotel-building .edit-icon { display: none !important; }
     .summary-hotel-building .room-placeholder { display: none !important; }
+    .summary-hotel-building [data-summary-room="5"] { left: 14.3%; top: 25.6%; width: 21.8%; height: 12.7%; }
+    .summary-hotel-building [data-summary-room="6"] { left: 38.5%; top: 25.6%; width: 21.7%; height: 12.7%; }
+    .summary-hotel-building [data-summary-room="7"] { left: 62.6%; top: 25.6%; width: 21.8%; height: 12.7%; }
+    .summary-hotel-building [data-summary-room="3"] { left: 14.3%; top: 42.8%; width: 21.8%; height: 12.7%; }
+    .summary-hotel-building [data-summary-room="4"] { left: 38.5%; top: 42.8%; width: 21.7%; height: 12.7%; }
+    .summary-hotel-building [data-summary-room="8"] { left: 62.6%; top: 42.8%; width: 21.8%; height: 12.7%; }
+    .summary-hotel-building [data-summary-room="1"] { left: 14.3%; top: 60.4%; width: 21.8%; height: 12.5%; }
+    .summary-hotel-building [data-summary-room="2"] { left: 38.5%; top: 60.4%; width: 21.7%; height: 12.5%; }
+    .summary-hotel-building [data-summary-room="9"] { left: 62.6%; top: 60.4%; width: 21.8%; height: 12.5%; }
+    .summary-hotel-building .hotel-lobby { left: 14.4%; top: 78.2%; width: 50.2%; height: 6.8%; }
 
     /* ===========================
        19. 인쇄용 스타일 (요약본)
     =========================== */
     @media print {
-      @page { size: A4 landscape; margin: 5mm; }
+      @page { size: A4 landscape; margin: 8mm; }
       html, body {
         margin: 0; padding: 0;
         background: white;
@@ -1209,21 +1166,13 @@
       #main-content { padding: 0 !important; margin: 0 !important; }
       .section-page { display: none !important; }
       #page-8 { display: block !important; }
+
       #page-8 .summary-sheet {
         max-width: none;
         width: 100%;
-        aspect-ratio: auto;
-        height: auto;
-        min-height: 0;
-        box-shadow: none;
-        border-radius: 0;
-        padding: 0;
         page-break-inside: avoid;
       }
-      #page-8 .summary-grid {
-        height: 190mm;
-        max-height: 190mm;
-      }
+      #page-8 .summary-grid { height: 184mm; max-height: 184mm; }
     }
 
     /* ===========================
@@ -1256,11 +1205,7 @@
 
       #step-bar .step-label { font-size: 0.52rem; }
       #step-bar .step-dot { width: 28px; height: 28px; font-size: 0.85rem; }
-      .summary-sheet {
-        aspect-ratio: auto;
-        min-height: 520px;
-        overflow-x: auto;
-      }
+      .summary-sheet { overflow-x: auto; }
       .summary-grid {
         min-width: 680px;
         height: 520px;
@@ -2048,82 +1993,69 @@
 
       <div class="summary-sheet" id="summary-sheet">
         <div class="summary-grid">
-          <!-- 왼쪽: 손님 -->
-          <div class="summary-cell summary-cell-guests">
-            <img class="summary-frame" src="256px/summary-guest-table-frame.png" alt=""/>
-            <div class="summary-fill summary-fill-guests">
-              <table class="summary-table" id="sum-guest-table">
-                <tbody id="sum-guest-tbody"></tbody>
-              </table>
-              <div class="summary-today-block">
-                <div class="summary-today-line" id="sum-today-guest"></div>
-                <div class="summary-today-line" id="sum-today-reason"></div>
+          <!-- 왼쪽 컬럼: 간판 → 규칙 → OST -->
+          <div class="summary-col summary-col-left">
+            <div class="summary-frame-wrap wrap-sign">
+              <img class="summary-frame" src="256px/summary-sign-frame.png" alt=""/>
+              <div class="summary-fill summary-fill-sign">
+                <div class="summary-sign-line summary-sign-name" id="sum-hotel-name"></div>
+                <div class="summary-sign-line" id="sum-hotel-intro"></div>
+                <div class="summary-sign-line" id="sum-manager-intro"></div>
               </div>
             </div>
-          </div>
-
-          <!-- 가운데 위: 간판 -->
-          <div class="summary-cell summary-cell-sign">
-            <img class="summary-frame" src="256px/summary-sign-frame.png" alt=""/>
-            <div class="summary-fill summary-fill-sign">
-              <div class="summary-sign-line summary-sign-name" id="sum-hotel-name"></div>
-              <div class="summary-sign-line" id="sum-hotel-intro"></div>
-              <div class="summary-sign-line" id="sum-manager-intro"></div>
+            <div class="summary-frame-wrap wrap-rules">
+              <img class="summary-frame" src="256px/summary-rules-clipboard.png" alt=""/>
+              <div class="summary-fill summary-fill-rules" id="sum-rules"></div>
+            </div>
+            <div class="summary-frame-wrap wrap-ost">
+              <img class="summary-frame" src="256px/summary-ost-frame.png" alt=""/>
+              <div class="summary-fill summary-fill-ost-title" id="sum-ost-title"></div>
+              <div class="summary-fill summary-fill-ost-reason" id="sum-ost-reason"></div>
+              <div class="summary-fill summary-fill-ost-lyrics" id="sum-ost-lyrics"></div>
             </div>
           </div>
 
-          <!-- 오른쪽: OST -->
-          <div class="summary-cell summary-cell-ost">
-            <img class="summary-frame" src="256px/summary-ost-frame.png" alt=""/>
-            <div class="summary-fill summary-fill-ost">
-              <div class="summary-ost-title" id="sum-ost-title"></div>
-              <div class="summary-ost-reason" id="sum-ost-reason"></div>
-              <div class="summary-ost-lyrics" id="sum-ost-lyrics"></div>
-            </div>
-          </div>
-
-          <!-- 가운데: 건물 -->
-          <div class="summary-cell summary-cell-building">
-            <div class="hotel-building summary-hotel-building" id="summary-building">
-              <div class="hotel-floor">
+          <!-- 가운데 컬럼: 호텔 건물 (실사진 위에 방 내용 겹치기) -->
+          <div class="summary-col summary-col-center">
+            <div class="summary-frame-wrap wrap-rooms">
+              <img class="summary-frame" src="256px/summary-rooms.png" alt=""/>
+              <div class="hotel-building summary-hotel-building" id="summary-building">
                 <div class="hotel-room" data-summary-room="5"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
                 <div class="hotel-room" data-summary-room="6"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
                 <div class="hotel-room" data-summary-room="7"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
-              </div>
-              <div class="hotel-floor">
                 <div class="hotel-room" data-summary-room="3"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
                 <div class="hotel-room" data-summary-room="4"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
                 <div class="hotel-room" data-summary-room="8"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
-              </div>
-              <div class="hotel-floor">
                 <div class="hotel-room" data-summary-room="1"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
                 <div class="hotel-room" data-summary-room="2"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
                 <div class="hotel-room" data-summary-room="9"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
-              </div>
-              <div class="hotel-lobby">
-                <div class="lobby-props-layer"></div>
-                <div class="lobby-info"><strong class="lobby-label"></strong></div>
+                <div class="hotel-lobby">
+                  <div class="lobby-props-layer"></div>
+                  <div class="lobby-info"><strong class="lobby-label"></strong></div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- 왼쪽 아래: 규칙 -->
-          <div class="summary-cell summary-cell-rules">
-            <img class="summary-frame" src="256px/summary-rules-clipboard.png" alt=""/>
-            <div class="summary-fill summary-fill-rules" id="sum-rules"></div>
-          </div>
-
-          <!-- 오른쪽 아래: 비밀상자 + 완성 배지 -->
-          <div class="summary-cell summary-cell-secret">
-            <img class="summary-frame" src="256px/summary-secret-box.png" alt=""/>
-            <div class="summary-fill summary-fill-secret" id="sum-secret"></div>
-            <img class="summary-complete-img" src="256px/summary-complete-badge.png" alt="완성"/>
-          </div>
-
-          <!-- 하단: 한마디 -->
-          <div class="summary-cell summary-cell-footer">
-            <img class="summary-frame" src="256px/summary-footer-bubble.png" alt=""/>
-            <div class="summary-fill summary-fill-footer" id="sum-footer-msg"></div>
+          <!-- 오른쪽 컬럼: 체크인 손님 → 비밀상자 → 완성 배지 -->
+          <div class="summary-col summary-col-right">
+            <div class="summary-frame-wrap wrap-guests">
+              <img class="summary-frame" src="256px/summary-guest-table-frame.png" alt=""/>
+              <div class="summary-fill summary-fill-guest-table">
+                <table class="summary-table" id="sum-guest-table">
+                  <tbody id="sum-guest-tbody"></tbody>
+                </table>
+              </div>
+              <div class="summary-fill summary-fill-guest-q1" id="sum-today-guest"></div>
+              <div class="summary-fill summary-fill-guest-q2" id="sum-today-reason"></div>
+            </div>
+            <div class="summary-frame-wrap wrap-secret">
+              <img class="summary-frame" src="256px/summary-secret-box.png" alt=""/>
+              <div class="summary-fill summary-fill-secret" id="sum-secret"></div>
+            </div>
+            <div class="summary-frame-wrap wrap-badge">
+              <img class="summary-frame" src="256px/summary-complete-badge.png" alt="완성"/>
+            </div>
           </div>
         </div>
       </div>
