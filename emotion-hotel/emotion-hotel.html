@@ -1041,13 +1041,15 @@
       display: flex;
       align-items: flex-start;
       gap: 1.4%;
+      min-height: 500px;
       font-family: 'Nanum Pen Script', 'Noto Sans KR', sans-serif;
       color: #3a3340;
     }
     .summary-col { display: flex; flex-direction: column; min-width: 0; }
-    .summary-col-left, .summary-col-right { flex: 1 1 0; gap: 1.4%; }
-    .summary-col-center { flex: 0 0 auto; }
-
+    .summary-col-left  { flex: 1 1 0; }
+    .summary-col-right { flex: 1 1 0; }
+    .summary-col-center { flex: 0 0 38%; width: 38%; }
+    
     /* 프레임 이미지 + 텍스트 오버레이 wrapper: 각자 원본 이미지 비율 그대로 유지 */
     .summary-frame-wrap { position: relative; width: 100%; min-width: 0; }
     .summary-frame-wrap > .summary-frame {
