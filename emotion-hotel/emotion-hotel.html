@@ -1287,7 +1287,157 @@
       display: inline-block;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+/* ============================================================
+   [패치] 9가지 개선사항
+============================================================ */
 
+/* 1. 오른쪽 여백 제거 — 전체 너비 활용 */
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch !important;
+  min-height: 100vh;
+}
+#main-content {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: 28px 32px 100px !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+}
+
+/* 9. 전체 글씨 크기 확대 */
+html { font-size: 17px; }
+body { font-size: 1rem; }
+.card { font-size: 1rem; }
+.field-label { font-size: 1rem; font-weight: 600; }
+input, textarea, select { font-size: 1rem !important; }
+button { font-size: 0.97rem; }
+h2 { font-size: 1.5rem !important; }
+h3 { font-size: 1.2rem !important; }
+p, li, span, label { font-size: 1rem; }
+
+/* 2. 호텔 규칙 칸 크기 축소 */
+#page-1 .card,
+.hotel-rules-section,
+[id*="rule"],
+.rules-card {
+  max-height: 360px !important;
+  overflow-y: auto;
+  padding: 18px !important;
+}
+#page-1 textarea {
+  min-height: 100px !important;
+  max-height: 180px !important;
+  font-size: 1rem;
+}
+
+/* 3-A. 감정호텔 사인(간판) 크기 축소 */
+#hotel-sign,
+.hotel-sign,
+.sign-display,
+.cover-hotel-sign {
+  font-size: 2rem !important;
+  padding: 14px 24px !important;
+  max-width: 480px !important;
+  margin: 0 auto 16px !important;
+  border-radius: 16px;
+  transition: background 0.4s ease, color 0.4s ease;
+  text-align: center;
+}
+
+/* 3-B. 색상 스와치 선택 시 간판 배경 반영 (JS와 연동) */
+.color-swatch {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.color-swatch.selected {
+  border-color: #333 !important;
+  transform: scale(1.25);
+}
+
+/* 4. 지배인의 무기상자 높이 제한 — 이미지 겹침 방지 */
+#weapon-box,
+.weapon-box,
+.manager-weapon,
+[id*="weapon"] {
+  max-height: 260px !important;
+  overflow-y: auto !important;
+  margin-bottom: 24px !important;
+}
+
+/* 5 & 6. 룸 이미지 표시 및 칸 대응 */
+.hotel-room {
+  position: relative;
+  overflow: hidden;
+}
+.hotel-room img,
+.room-img,
+.room-image {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 8px;
+}
+.room-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: #f0f0f0;
+  color: #aaa;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+/* 7. 호텔룸 이미지 하단 별도 이미지 제거 */
+.hotel-bottom-image,
+#hotel-bottom-img,
+.room-section + img,
+.hotel-building + img,
+.hotel-room-section ~ img:last-of-type {
+  display: none !important;
+}
+
+/* 8. OST 칸 — 제목/만든이유/가사 레이아웃 조정 */
+.ost-section,
+#page-6 .card,
+[id*="ost"] .card {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-rows: auto auto 1fr !important;
+  gap: 16px !important;
+  align-items: start !important;
+}
+.ost-title-row,
+#ost-title,
+[id*="ost-title"] {
+  grid-column: 1 / 2;
+}
+.ost-reason,
+#ost-reason,
+[id*="ost-reason"] {
+  grid-column: 2 / 3;
+}
+.ost-lyrics,
+#ost-lyrics,
+[id*="ost-lyric"] {
+  grid-column: 1 / -1 !important;
+  min-height: 140px !important;
+}
+#page-6 textarea,
+[id*="ost"] textarea {
+  width: 100% !important;
+  min-height: 100px !important;
+  font-size: 1rem !important;
+  resize: vertical;
+}
   </style>
 </head>
 
@@ -3717,6 +3867,99 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ───────────────────────────────────────────
    끝
 ─────────────────────────────────────────── */
+  /* ============================================================
+   [패치] 3-B: 색상 선택 시 간판 배경 반영
+============================================================ */
+
+// 기존 selectHotelColor 함수를 덮어씁니다
+function selectHotelColor(mainColor, lightColor) {
+  // 헤더 및 간판 배경색 반영
+  const sign = document.getElementById('hotel-sign')
+             || document.querySelector('.hotel-sign')
+             || document.querySelector('.cover-hotel-sign')
+             || document.querySelector('.sign-display');
+
+  if (sign) {
+    sign.style.background = lightColor;
+    sign.style.borderColor = mainColor;
+    sign.style.color = mainColor;
+  }
+
+  // 헤더 색상 반영
+  const header = document.getElementById('app-header');
+  if (header) {
+    header.style.borderBottom = `3px solid ${mainColor}`;
+    header.style.background = lightColor;
+  }
+
+  // 스와치 선택 표시
+  document.querySelectorAll('.color-swatch').forEach(el => {
+    el.classList.remove('selected');
+    if (el.style.background === mainColor ||
+        el.getAttribute('onclick')?.includes(mainColor)) {
+      el.classList.add('selected');
+    }
+  });
+
+  // CSS 변수에도 저장 (기존 로직 호환)
+  document.documentElement.style.setProperty('--hotel-color', mainColor);
+  document.documentElement.style.setProperty('--hotel-color-light', lightColor);
+}
+
+/* ============================================================
+   [패치] 5 & 6: 룸 이미지 — 각 칸에 대응 출력
+============================================================ */
+
+function renderRoomImages() {
+  const rooms = document.querySelectorAll('.hotel-room');
+  rooms.forEach((room, idx) => {
+    const roomId = room.dataset.roomId || `room-${idx + 1}`;
+    const imgKey = `roomImg_${roomId}`;
+    const savedImg = localStorage.getItem(imgKey);
+
+    // 기존 placeholder 제거
+    room.querySelectorAll('.room-img, .room-placeholder').forEach(el => el.remove());
+
+    if (savedImg) {
+      const img = document.createElement('img');
+      img.src = savedImg;
+      img.className = 'room-img';
+      img.alt = `${roomId} 이미지`;
+      room.appendChild(img);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'room-placeholder';
+      ph.textContent = '🖼️ 이미지 없음';
+      room.appendChild(ph);
+    }
+  });
+}
+
+// 페이지 전환 시마다 룸 이미지 렌더링
+const _origNextStep = typeof nextStep === 'function' ? nextStep : null;
+if (_origNextStep) {
+  window.nextStep = function() {
+    _origNextStep();
+    renderRoomImages();
+  };
+}
+const _origGoStep = typeof goStep === 'function' ? goStep : null;
+if (_origGoStep) {
+  window.goStep = function(n) {
+    _origGoStep(n);
+    renderRoomImages();
+  };
+}
+
+// 초기 로드 시 실행
+document.addEventListener('DOMContentLoaded', () => {
+  renderRoomImages();
+
+  // 7. 하단 불필요 이미지 제거 (동적으로 추가된 경우 대비)
+  document.querySelectorAll('.hotel-room-section ~ img, .hotel-building ~ img').forEach(el => {
+    el.style.display = 'none';
+  });
+});
 </script>
 </body>
 </html>
