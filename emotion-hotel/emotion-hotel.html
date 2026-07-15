@@ -431,28 +431,49 @@
       color: var(--text-soft); line-height: 1;
     }
 
-    /* ===========================
+ /* ===========================
    summary 호텔룸 override
 =========================== */
 .summary-hotel-building {
   overflow: visible !important;
+  pointer-events: none; /* ← 추가 */
 }
 .wrap-rooms {
   overflow: visible !important;
+  pointer-events: none;
 }
 .summary-hotel-building .hotel-room {
   overflow: visible !important;
+  pointer-events: none;
 }
-.summary-hotel-building .hotel-room .room-info {
+
+/* room-info는 이제 안 쓰니까 삭제해도 됨 */
+/* .summary-hotel-building .hotel-room .room-info { ... } */
+
+/* 라벨 레이어 */
+.summary-room-label {
   position: absolute;
-  top: -22px;
-  left: 0;
-  width: 100%;
-  background: transparent;
-  border-radius: 0;
-  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  pointer-events: none;
+  z-index: 2;
 }
+.summary-room-label .room-name  { font-size: 11px !important; font-weight: bold; line-height: 1.2; }
+.summary-room-label .room-guest { font-size: 10px !important; line-height: 1.2; }
+
+/* 라벨 위치 */
+.summary-room-label[data-label-room="5"] { left: 14.3%; top: 22%;   width: 21.8%; }
+.summary-room-label[data-label-room="6"] { left: 38.5%; top: 22%;   width: 21.7%; }
+.summary-room-label[data-label-room="7"] { left: 62.6%; top: 22%;   width: 21.8%; }
+.summary-room-label[data-label-room="3"] { left: 14.3%; top: 39.5%; width: 21.8%; }
+.summary-room-label[data-label-room="4"] { left: 38.5%; top: 39.5%; width: 21.7%; }
+.summary-room-label[data-label-room="8"] { left: 62.6%; top: 39.5%; width: 21.8%; }
+.summary-room-label[data-label-room="1"] { left: 14.3%; top: 57%;   width: 21.8%; }
+.summary-room-label[data-label-room="2"] { left: 38.5%; top: 57%;   width: 21.7%; }
+.summary-room-label[data-label-room="9"] { left: 62.6%; top: 57%;   width: 21.8%; }
 
     /* ===========================
        11. 호텔 건물 단면도 (방 꾸미기)
