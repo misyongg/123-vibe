@@ -1081,19 +1081,23 @@
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
-    .summary-grid {
+   .summary-grid {
       display: flex;
       align-items: flex-start;
       gap: 1.4%;
-      height: 210mm;
+      height: auto; /* 고정 높이 대신 auto 사용 */
+      max-height: 194mm; /* A4 마진 고려 */
       font-family: 'Nanum Pen Script', 'Noto Sans KR', sans-serif;
       color: #3a3340;
     }
     
-   @media print {
-  #page-8 .summary-grid { height: 210mm; max-height: 210mm; }
-}
-    
+    @media print {
+      #page-8 .summary-grid { 
+        height: auto; 
+        max-height: 194mm; 
+      }
+    }
+        
     .summary-col { display: flex; flex-direction: column; min-width: 0; }
     .summary-col-left  { flex: 1 1 0; }
     .summary-col-right { flex: 1 1 0; }
@@ -1103,7 +1107,7 @@
     .summary-frame-wrap { position: relative; width: 100%; min-width: 0;container-type: inline-size; }
     .summary-frame-wrap > .summary-frame {
       width: 100%;
-      height: 100%;
+      height: auto !important;;
       display: block;
       pointer-events: none;
     }
