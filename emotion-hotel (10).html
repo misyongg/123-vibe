@@ -1,0 +1,3808 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>감정호텔 🏨</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Nanum+Pen+Script&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ===========================
+       1. 기본 리셋 & 변수
+    =========================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:     #FFF8F0;
+      --peach:     #FFD9B7;
+      --peach-dk:  #FFA96A;
+      --lavender:  #E8DEFF;
+      --lavender-dk: #A98FE0;
+      --mint:      #C8F0E8;
+      --mint-dk:   #5BBFA8;
+      --yellow:    #FFF3B0;
+      --yellow-dk: #F5C842;
+      --rose:      #FFD6D6;
+      --rose-dk:   #E07070;
+      --blue:      #D0EEFF;
+      --blue-dk:   #5A9FD4;
+      --text:      #3A3340;
+      --text-soft: #7A6E80;
+      --white:     #FFFFFF;
+      --shadow:    rgba(120,100,140,0.13);
+      --radius:    18px;
+      --radius-sm: 10px;
+      --transition: 0.25s ease;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===========================
+       2. 헤더
+    =========================== */
+    #app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: linear-gradient(135deg, #fff0fa 0%, var(--lavender) 100%);
+      border-bottom: 2px solid var(--lavender-dk);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px var(--shadow);
+    }
+
+    #app-header .hotel-title {
+      font-family: 'Nanum Pen Script', cursive;
+      font-size: 1.6rem;
+      color: var(--lavender-dk);
+      letter-spacing: 1px;
+    }
+
+    #app-header .manager-badge {
+      font-size: 0.82rem;
+      color: var(--text-soft);
+      background: var(--white);
+      border: 1.5px solid var(--lavender-dk);
+      border-radius: 20px;
+      padding: 3px 12px;
+    }
+
+    #print-btn {
+      background: none;
+      border: 1.5px solid var(--lavender-dk);
+      border-radius: 20px;
+      padding: 4px 13px;
+      font-size: 0.8rem;
+      color: var(--lavender-dk);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    #print-btn:hover { background: var(--lavender); }
+
+    /* ===========================
+       3. 스텝 진행바
+    =========================== */
+    #step-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      padding: 14px 16px 6px;
+      overflow-x: auto;
+    }
+
+    .step-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+      min-width: 52px;
+    }
+
+    .step-item + .step-item::before {
+      content: '';
+      position: absolute;
+      left: -26px;
+      top: 16px;
+      width: 28px;
+      height: 2px;
+      background: #ddd;
+      transition: background var(--transition);
+    }
+    .step-item.done + .step-item::before { background: var(--lavender-dk); }
+
+    .step-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #ddd;
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    .step-item.active .step-dot {
+      border-color: var(--lavender-dk);
+      background: var(--lavender-dk);
+      box-shadow: 0 0 0 4px var(--lavender);
+      transform: scale(1.15);
+    }
+    .step-item.done .step-dot {
+      border-color: var(--mint-dk);
+      background: var(--mint-dk);
+    }
+
+    .step-label {
+      font-size: 0.62rem;
+      margin-top: 4px;
+      color: var(--text-soft);
+      text-align: center;
+      white-space: nowrap;
+    }
+    .step-item.active .step-label { color: var(--lavender-dk); font-weight: 700; }
+
+    /* ===========================
+       4. 메인 콘텐츠 래퍼
+    =========================== */
+    #main-content {
+      flex: 1;
+      max-width: 780px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 28px 18px 100px;
+    }
+
+    /* 섹션 공통 */
+    .section-page {
+      display: none;
+      animation: fadeIn 0.35s ease;
+    }
+    .section-page.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===========================
+       5. 카드 & 박스 공통
+    =========================== */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 18px var(--shadow);
+      padding: 28px 26px;
+      margin-bottom: 22px;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hint-box {
+      background: var(--yellow);
+      border-left: 4px solid var(--yellow-dk);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: #7A6010;
+      margin-bottom: 16px;
+      line-height: 1.7;
+    }
+
+    .info-box {
+      background: var(--blue);
+      border-left: 4px solid var(--blue-dk);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      color: #1A4A6E;
+      margin-bottom: 16px;
+      line-height: 1.7;
+    }
+
+    /* ===========================
+       6. 폼 요소 공통
+    =========================== */
+    input[type="text"],
+    input[type="color"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.8px solid #ddd;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: var(--cream);
+      transition: border-color var(--transition);
+      outline: none;
+    }
+    input[type="text"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--lavender-dk);
+      background: var(--white);
+    }
+    input[type="color"] {
+      padding: 3px 6px;
+      height: 42px;
+      cursor: pointer;
+    }
+    textarea { resize: vertical; line-height: 1.7; }
+
+    label.field-label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-soft);
+      margin-bottom: 5px;
+      margin-top: 14px;
+    }
+
+    /* ===========================
+       7. 버튼 공통
+    =========================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border-radius: 50px;
+      border: none;
+      font-family: inherit;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-primary {
+      background: var(--lavender-dk);
+      color: var(--white);
+      box-shadow: 0 3px 10px rgba(169,143,224,0.35);
+    }
+    .btn-primary:hover { background: #8B6FCC; transform: translateY(-1px); }
+
+    .btn-secondary {
+      background: var(--white);
+      color: var(--lavender-dk);
+      border: 2px solid var(--lavender-dk);
+    }
+    .btn-secondary:hover { background: var(--lavender); }
+
+    .btn-mint {
+      background: var(--mint-dk);
+      color: var(--white);
+      box-shadow: 0 3px 10px rgba(91,191,168,0.3);
+    }
+    .btn-mint:hover { background: #46A892; transform: translateY(-1px); }
+
+    .btn-danger {
+      background: none;
+      color: var(--rose-dk);
+      border: none;
+      font-size: 1rem;
+      padding: 4px 8px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: var(--transition);
+    }
+    .btn-danger:hover { background: var(--rose); }
+
+    .btn-add {
+      background: var(--mint);
+      color: var(--mint-dk);
+      border: 2px dashed var(--mint-dk);
+      border-radius: var(--radius-sm);
+      width: 100%;
+      padding: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: 8px;
+    }
+    .btn-add:hover { background: var(--mint-dk); color: var(--white); }
+
+    /* ===========================
+       8. 감정 뱃지
+    =========================== */
+    .emotion-badge-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .emotion-badge {
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: var(--transition);
+      user-select: none;
+    }
+    .emotion-badge:hover { transform: scale(1.07); }
+    .emotion-badge.selected {
+      border-color: var(--text);
+      transform: scale(1.1);
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    /* 감정별 색상 */
+    .eb-joy       { background: var(--yellow); color: #7A5C00; }
+    .eb-sad       { background: var(--blue);   color: #1A4A6E; }
+    .eb-angry     { background: var(--rose);   color: #8B2020; }
+    .eb-anxious   { background: var(--peach);  color: #7A3A00; }
+    .eb-peace     { background: var(--mint);   color: #1A5A4E; }
+    .eb-shame     { background: var(--lavender); color: #4A2A7A; }
+    .eb-sorry     { background: #F0F0F0;       color: #444; }
+    .eb-excited   { background: #FFE4F0;       color: #8B2060; }
+    .eb-custom    { background: var(--cream);  color: var(--text); border: 2px dashed #aaa; }
+
+    /* ===========================
+       9. 하단 네비게이션
+    =========================== */
+    #bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 0;
+      background: var(--white);
+      border-top: 2px solid var(--lavender);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      z-index: 100;
+      box-shadow: 0 -2px 12px var(--shadow);
+    }
+
+    #save-indicator {
+      font-size: 0.78rem;
+      color: var(--mint-dk);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ===========================
+       10. 모달 (방 꾸미기 등)
+    =========================== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(60,40,80,0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      width: min(500px, 94vw);
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+      animation: modalIn 0.25s ease;
+    }
+    @keyframes modalIn {
+      from { transform: scale(0.92); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .modal-title { font-size: 1.1rem; font-weight: 700; }
+    .modal-close {
+      background: none; border: none;
+      font-size: 1.4rem; cursor: pointer;
+      color: var(--text-soft); line-height: 1;
+    }
+
+    /* ===========================
+   summary 호텔룸 override
+=========================== */
+.summary-hotel-building {
+  overflow: visible !important;
+}
+.wrap-rooms {
+  overflow: visible !important;
+}
+.summary-hotel-building .hotel-room {
+  overflow: visible !important;
+}
+.summary-hotel-building .hotel-room .room-info {
+  position: absolute;
+  top: -22px;
+  left: 0;
+  width: 100%;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  text-align: center;
+}
+
+    /* ===========================
+       11. 호텔 건물 단면도 (방 꾸미기)
+    =========================== */
+    .hotel-building {
+      background: linear-gradient(180deg, #b8d4f0 0%, #dbe8f8 100%);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative;
+    }
+
+    .hotel-sign {
+      text-align: center;
+      font-family: 'Nanum Pen Script', cursive;
+      font-size: 1.6rem;
+      color: var(--lavender-dk);
+      background: var(--white);
+      border-radius: 12px;
+      padding: 4px 20px;
+      margin: 0 auto 18px;
+      display: inline-block;
+      left: 50%; transform: translateX(-50%);
+      position: relative;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .hotel-floors {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .hotel-floor {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .hotel-room {
+      border-radius: 12px;
+      padding: 0;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 3px solid rgba(255,255,255,0.7);
+      min-height: 124px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-end;
+      box-shadow: 0 2px 8px var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .hotel-room:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 18px var(--shadow);
+    }
+    .hotel-room .room-props-layer {
+      position: absolute;
+      inset: 0;
+      bottom: 24px;
+      pointer-events: none;
+    }
+    .hotel-room.is-decorated .room-props-layer {
+      bottom: 0;
+    }
+    .hotel-room.is-decorated.has-label .room-props-layer {
+      bottom: 24px;
+    }
+    .hotel-room .room-info {
+      position: relative;
+      z-index: 2;
+      padding: 4px 6px 6px;
+      background: rgba(255,255,255,0.42);
+      border-radius: 0 0 9px 9px;
+      line-height: 1.2;
+      min-height: 1.4em;
+    }
+    .hotel-room.is-decorated:not(.has-label) .room-info {
+      display: none;
+    }
+    .hotel-room .room-placeholder {
+      display: none;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+    .hotel-room:not(.has-props) .room-placeholder { display: block; margin-bottom: 2px; }
+    .hotel-room .room-name  { font-size: 0.72rem; font-weight: 600; color: var(--text); display: block; }
+    .hotel-room .room-guest { font-size: 0.7rem; color: var(--text-soft); display: block; }
+    .hotel-room .edit-icon  {
+      position: absolute; top: 5px; right: 7px;
+      font-size: 0.75rem; opacity: 0.5; z-index: 3;
+    }
+
+    .placed-prop {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      touch-action: none;
+      user-select: none;
+    }
+    .placed-prop img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      display: block;
+    }
+    .hotel-room .placed-prop { width: 50%; height: 50%; }
+    .hotel-lobby .placed-prop { width: 18%; height: 75%; }
+
+    .room-edit-canvas {
+      position: relative;
+      width: 100%;
+      height: 220px;
+      border-radius: var(--radius-sm);
+      border: 2.5px dashed var(--lavender-dk);
+      margin: 8px 0 12px;
+      overflow: hidden;
+      touch-action: none;
+      background: var(--cream);
+    }
+    .room-edit-canvas .placed-prop {
+      width: 32%;
+      height: 32%;
+      cursor: grab;
+      z-index: 1;
+    }
+    .room-edit-canvas .placed-prop.selected {
+      z-index: 15;
+      outline: 2px dashed var(--lavender-dk);
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+    .room-edit-canvas .placed-prop.dragging {
+      cursor: grabbing;
+      z-index: 20;
+      opacity: 0.92;
+    }
+    .room-edit-canvas .placed-prop .prop-resize-handle {
+      position: absolute;
+      right: -4px; bottom: -4px;
+      width: 16px; height: 16px;
+      background: var(--lavender-dk);
+      border: 2px solid white;
+      border-radius: 4px;
+      cursor: nwse-resize;
+      display: none;
+      touch-action: none;
+    }
+    .room-edit-canvas .placed-prop.selected .prop-resize-handle { display: block; }
+    .prop-size-toolbar {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: -4px 0 10px;
+      padding: 8px 12px;
+      background: var(--lavender);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+    }
+    .prop-size-toolbar.visible { display: flex; }
+    .prop-size-toolbar .size-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--lavender-dk);
+      background: white;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--lavender-dk);
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+    }
+    .prop-size-toolbar .size-btn:hover { background: var(--lavender-dk); color: white; }
+    .prop-size-toolbar .size-label { min-width: 4.5rem; text-align: center; font-weight: 600; color: #4a2a7a; }
+    .room-edit-canvas .placed-prop .prop-remove {
+      position: absolute;
+      top: -6px; right: -6px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: none;
+      background: var(--rose-dk);
+      color: white;
+      font-size: 0.65rem;
+      line-height: 1;
+      cursor: pointer;
+      display: none;
+      padding: 0;
+    }
+    .room-edit-canvas .placed-prop:hover .prop-remove,
+    .room-edit-canvas .placed-prop.selected .prop-remove { display: block; }
+    .room-edit-canvas-empty {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-soft);
+      font-size: 0.82rem;
+      pointer-events: none;
+      text-align: center;
+      padding: 12px;
+      line-height: 1.6;
+    }
+
+    .hotel-lobby {
+      background: linear-gradient(135deg, var(--peach) 0%, var(--yellow) 100%);
+      border-radius: 12px;
+      padding: 0;
+      text-align: center;
+      margin-top: 10px;
+      border: 3px solid var(--white);
+      box-shadow: 0 2px 8px var(--shadow);
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      min-height: 88px;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+    }
+    .hotel-lobby .lobby-props-layer {
+      position: absolute;
+      inset: 0;
+      bottom: 0;
+      pointer-events: none;
+    }
+    .hotel-lobby.has-label .lobby-props-layer {
+      bottom: 28px;
+    }
+    .hotel-lobby .lobby-info {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.25);
+    }
+    .hotel-lobby.is-decorated:not(.has-label) .lobby-info {
+      display: none;
+    }
+    .hotel-lobby:hover { transform: scale(1.02); }
+
+    /* ===========================
+       12. 소품 선택 그리드
+    =========================== */
+    .prop-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0;
+      max-height: 220px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+    .prop-item {
+      width: 52px; height: 52px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      background: var(--cream);
+      transition: var(--transition);
+      padding: 4px;
+      position: relative;
+    }
+    .prop-item img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+    .prop-item:hover { background: var(--lavender); transform: scale(1.12); }
+    .prop-item.selected {
+      border-color: var(--lavender-dk);
+      background: var(--lavender);
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    .prop-item .prop-fallback {
+      font-size: 0.55rem;
+      font-weight: 700;
+      color: var(--text-soft);
+      text-align: center;
+      line-height: 1.1;
+      display: none;
+    }
+    .prop-item img[data-failed="1"] { display: none; }
+    .prop-item img[data-failed="1"] + .prop-fallback { display: block; }
+
+    /* (구 room-prop-icons — placed-prop 로 대체) */
+
+    /* ===========================
+       13. 규칙 리스트
+    =========================== */
+    .rule-list { list-style: none; }
+
+    .rule-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--cream);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border: 1.5px solid #eee;
+      transition: var(--transition);
+    }
+    .rule-item:hover { border-color: var(--lavender-dk); }
+
+    .rule-num {
+      min-width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--lavender-dk);
+      color: var(--white);
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .rule-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid #ddd;
+      border-radius: 0;
+      padding: 4px 6px;
+      font-size: 0.93rem;
+    }
+    .rule-input:focus { border-bottom-color: var(--lavender-dk); }
+
+    /* ===========================
+       14. 매뉴얼 카드
+    =========================== */
+    .manual-card {
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 18px;
+      border: 2px solid transparent;
+      transition: var(--transition);
+    }
+    .manual-card:hover { transform: translateY(-2px); }
+
+    .manual-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .manual-emoji { font-size: 2rem; }
+    .manual-name  { font-size: 1.05rem; font-weight: 700; }
+
+    .signal-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 6px 0 12px;
+    }
+    .signal-chip {
+      padding: 4px 12px;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      background: var(--white);
+      border: 1.5px solid #ddd;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .signal-chip.checked {
+      background: var(--lavender-dk);
+      color: var(--white);
+      border-color: var(--lavender-dk);
+    }
+
+    .action-list { list-style: none; }
+    .action-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .action-num {
+      font-weight: 700;
+      color: var(--lavender-dk);
+      min-width: 20px;
+    }
+    .action-input {
+      flex: 1;
+      border: none;
+      border-bottom: 1.5px solid #ddd;
+      background: transparent;
+      border-radius: 0;
+      padding: 5px 4px;
+      font-size: 0.9rem;
+    }
+    .action-input:focus { border-bottom-color: var(--lavender-dk); }
+
+    /* ===========================
+       15. OST / 가사
+    =========================== */
+    .lyrics-box {
+      background: linear-gradient(135deg, #1a1a2e 0%, #2d1b4e 100%);
+      border-radius: var(--radius);
+      padding: 24px;
+      color: #f0e8ff;
+      font-family: 'Nanum Pen Script', cursive;
+      font-size: 1.15rem;
+      line-height: 2.2;
+      min-height: 200px;
+    }
+    .lyrics-box textarea {
+      background: transparent;
+      border: none;
+      color: #f0e8ff;
+      font-family: 'Nanum Pen Script', cursive;
+      font-size: 1.15rem;
+      line-height: 2.2;
+      width: 100%;
+      resize: vertical;
+    }
+    .lyrics-box textarea::placeholder { color: rgba(240,232,255,0.4); }
+
+    .suno-output {
+      background: #1e1e1e;
+      color: #a8ff78;
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: monospace;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      margin-top: 12px;
+    }
+
+    /* ===========================
+       16. 표지 화면
+    =========================== */
+    #cover-screen {
+      min-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .hotel-illustration {
+      width: 200px; height: 200px;
+      margin: 0 auto 28px;
+      position: relative;
+    }
+
+    .cover-title {
+      font-family: 'Nanum Pen Script', cursive;
+      font-size: 2.8rem;
+      color: var(--lavender-dk);
+      margin-bottom: 8px;
+    }
+
+    .cover-subtitle {
+      font-size: 1rem;
+      color: var(--text-soft);
+      margin-bottom: 12px;
+      line-height: 1.7;
+    }
+
+    .page-credit {
+      font-size: 0.72rem;
+      color: #b0a8c0;
+      margin-top: 28px;
+      padding: 10px 0 4px;
+      text-align: center;
+    }
+
+    .app-credit { /* 하위 호환 */
+      font-size: 0.72rem;
+      color: #b0a8c0;
+      text-align: center;
+    }
+
+    .cover-form {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      box-shadow: 0 6px 30px var(--shadow);
+      width: min(400px, 92vw);
+      text-align: left;
+    }
+
+    .cover-form h3 {
+      text-align: center;
+      font-size: 1rem;
+      color: var(--text-soft);
+      margin-bottom: 20px;
+    }
+
+    /* ===========================
+       17. 책 슬라이드
+    =========================== */
+    .book-slide {
+      position: relative;
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      min-height: 260px;
+      box-shadow: 0 4px 18px var(--shadow);
+      text-align: center;
+    }
+
+    .book-page-text {
+      font-size: 1.05rem;
+      line-height: 2.0;
+      color: var(--text);
+      margin: 16px 0;
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+
+    .book-emoji-large { font-size: 4rem; margin: 10px 0; display: block; }
+
+    .book-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+    }
+    .book-page-num { font-size: 0.85rem; color: var(--text-soft); }
+
+    .empathy-btn {
+      background: var(--rose);
+      border: none;
+      border-radius: 50px;
+      padding: 8px 18px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .empathy-btn:hover { background: var(--rose-dk); color: var(--white); }
+    .empathy-btn.clicked { background: var(--rose-dk); color: var(--white); }
+
+    /* ===========================
+       18. 체크인 테이블
+    =========================== */
+    .guest-table-wrap { overflow-x: auto; }
+
+    .guest-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 6px;
+      font-size: 0.88rem;
+    }
+    .guest-table th {
+      padding: 8px 10px;
+      text-align: left;
+      color: var(--text-soft);
+      font-weight: 600;
+      font-size: 0.78rem;
+      border-bottom: 2px solid #eee;
+    }
+    .guest-table td {
+      padding: 10px 10px;
+      background: var(--cream);
+      border-top: 1px solid #eee;
+      border-bottom: 1px solid #eee;
+    }
+    .guest-table td:first-child {
+      border-radius: 10px 0 0 10px;
+      border-left: 3px solid var(--lavender-dk);
+    }
+    .guest-table td:last-child { border-radius: 0 10px 10px 0; }
+    .guest-table td input {
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px dashed #ccc;
+      border-radius: 0;
+      padding: 2px 4px;
+      font-size: 0.88rem;
+      width: 100%;
+    }
+    .guest-table td input:focus { border-bottom-color: var(--lavender-dk); }
+
+    /* ===========================
+       18b. Step 8 요약본 (A4 인쇄)
+    =========================== */
+    .summary-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 14px 18px;
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+    .summary-toolbar-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--lavender-dk);
+      margin: 0;
+    }
+    .summary-sheet {
+      width: 100%;
+      max-width: 1120px;
+      margin: 0 auto;
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .summary-grid {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.4%;
+      height: 210mm;
+      font-family: 'Nanum Pen Script', 'Noto Sans KR', sans-serif;
+      color: #3a3340;
+    }
+    /* @media print 위에 추가! */
+#page-8 .summary-grid { height: 210mm; max-height: 210mm; }
+
+@media print {
+  #page-8 .summary-grid { height: 210mm; max-height: 210mm; }
+}
+    
+    .summary-col { display: flex; flex-direction: column; min-width: 0; }
+    .summary-col-left  { flex: 1 1 0; }
+    .summary-col-right { flex: 1 1 0; }
+    .summary-col-center { flex: 0 0 56%; width: 56%; }
+    
+    /* 프레임 이미지 + 텍스트 오버레이 wrapper: 각자 원본 이미지 비율 그대로 유지 */
+    .summary-frame-wrap { position: relative; width: 100%; min-width: 0;container-type: inline-size; }
+    .summary-frame-wrap > .summary-frame {
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+    }
+    .wrap-sign    { aspect-ratio: 1493 / 1043; }
+    .wrap-rules   { aspect-ratio: 1395 / 1258; }
+    .wrap-ost     { aspect-ratio: 1405 / 1483; }
+    .wrap-guests  { aspect-ratio: 1380 / 1835; }
+    .wrap-secret  { aspect-ratio: 1385 / 1023; }
+    .wrap-badge   { aspect-ratio: 1258 / 671; }
+    .wrap-rooms { aspect-ratio: 1767 / 1992; width: 100%;overflow: visible !important; }
+ 
+    .summary-fill {
+      position: absolute;
+      overflow: hidden;
+      word-break: keep-all;
+      line-height: 1.35;
+      box-sizing: border-box;
+      z-index: 1;
+    }
+    /* 손님 테이블 프레임 (guest-table-frame.png 실측 좌표) */
+    .summary-fill-guest-table { left: 8%; right: 8%; top: 12%; height: 10%; font-size: 0.5rem;  font-size: 5cqi;
+}
+    .summary-table { width: 100%; height: 100%; border-collapse: collapse; font-size: inherit; }
+    .summary-table td {
+      padding: 1px 3px;
+      vertical-align: top;
+      border-bottom: 1px dashed rgba(120,100,130,0.25);
+      line-height: 1.25;
+    }
+    .summary-table td:first-child { width: 28%; }
+    .summary-fill-guest-q1 { left: 8%; right: 8%; top: 72%; height: 12%; font-size: 0.5rem;  font-size: 5cqi;
+ }
+    .summary-fill-guest-q2 { left: 10%; right: 8%; top: 88%; height: 13%; font-size: 0.5rem;   font-size:5cqi;
+}
+
+    /* 간판 프레임 */
+   .summary-fill-sign {
+  left: 9%; right: 9%; top: 11%; bottom: 10%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  text-align: center;
+  font-size: 3.2cqi;
+    z-index: 2;
+}
+    .summary-sign-line { font-size: 0.58rem; line-height: 1.2; }
+    .summary-sign-name { font-size: 0.74rem; font-weight: 700; }
+
+    /* OST 프레임 (ost-frame.png 실측 좌표) */
+.summary-fill-ost-title {
+  left: 8%; right: 8%; top: 15%; height: 5%;
+  font-size: 7cqi;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+} 
+    .summary-fill-ost-reason { left: 12%; right: 8%; top: 27%; height: 5%;  font-size: 4.5cqi}
+ .summary-fill-ost-lyrics {
+  left: 8%; right: 8%; top: 44%; bottom: 4%;
+  font-size: 5cqi;
+  line-height: 1;
+  white-space: pre-wrap;
+  column-count: 2;          /* 2단으로 나누기 */
+  column-gap: 16px;         /* 단과 단 사이의 간격 (숫자 조절 가능) */
+  column-fill: auto;        /* 텍스트가 위에서부터 차례대로 채워지게 함 */
+}
+
+    /* 규칙 클립보드 (제목 "호텔 규칙" 아래 여백부터) */
+    .summary-fill-rules {
+      left: 8%; right: 8%; top: 21%; bottom: 6%;
+      font-size: 7cqi;
+      line-height: 1;
+    }
+    .summary-rule-line { margin-bottom: 1px; }
+
+    /* 비밀상자 프레임 */
+    .summary-fill-secret {
+      left: 8%; right: 8%; top: 34%; bottom: 9%;
+      font-size: 7cqi;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    /* 요약본 건물 오버레이 (summary-rooms.png 실측 좌표) */
+    .summary-hotel-building { 
+      position: absolute; 
+      inset: 0; 
+      /* 🌟 핵심: 전체 큰 네모 박스(하늘색 배경 등)를 완전히 투명하게 날립니다! */
+      background: transparent !important; 
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    
+    /* 각 방과 로비 (원래의 배경색과 디자인 유지) */
+    .summary-hotel-building {
+  overflow: visible !important;
+}
+    .summary-hotel-building .hotel-room,
+    .summary-hotel-building .hotel-lobby {
+      position: absolute;
+      min-height: 0;
+      border-radius: 8px; /* 방 모서리 둥글게 유지 */
+      cursor: default;
+    }
+    
+    .summary-hotel-building .hotel-room:hover,
+    .summary-hotel-building .hotel-lobby:hover { transform: none; }
+    
+    .summary-hotel-building .hotel-room .room-info { 
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-start; padding-top: 1px;
+      width: 100%; height: 100%; gap: 1px;
+      position: relative; z-index: 2;
+    }
+    
+    .summary-hotel-building .hotel-room .room-name  { 
+      font-size: 11px !important; 
+      font-weight: bold; 
+      line-height: 1.2;
+    }
+    .summary-hotel-building .hotel-room .room-guest { 
+      font-size: 10px !important; 
+      line-height: 1.2;
+    }
+    
+    .summary-hotel-building .hotel-room .placed-prop { width: 48%; height: 48%; }
+    .summary-hotel-building .hotel-lobby .placed-prop { width: 14%; height: 70%; }
+    
+    .summary-hotel-building .edit-icon { display: none !important; }
+    .summary-hotel-building .room-placeholder { display: none !important; }
+    .summary-hotel-building [data-summary-room="5"] { left: 14.3%; top: 25.6%; width: 21.8%; height: 12.7%; }
+    .summary-hotel-building [data-summary-room="6"] { left: 38.5%; top: 25.6%; width: 21.7%; height: 12.7%; }
+    .summary-hotel-building [data-summary-room="7"] { left: 62.6%; top: 25.6%; width: 21.8%; height: 12.7%; }
+    .summary-hotel-building [data-summary-room="3"] { left: 14.3%; top: 42.8%; width: 21.8%; height: 12.7%; }
+    .summary-hotel-building [data-summary-room="4"] { left: 38.5%; top: 42.8%; width: 21.7%; height: 12.7%; }
+    .summary-hotel-building [data-summary-room="8"] { left: 62.6%; top: 42.8%; width: 21.8%; height: 12.7%; }
+    .summary-hotel-building [data-summary-room="1"] { left: 14.3%; top: 60.4%; width: 21.8%; height: 12.5%; }
+    .summary-hotel-building [data-summary-room="2"] { left: 38.5%; top: 60.4%; width: 21.7%; height: 12.5%; }
+    .summary-hotel-building [data-summary-room="9"] { left: 62.6%; top: 60.4%; width: 21.8%; height: 12.5%; }
+    .summary-hotel-building .hotel-lobby { left: 14.4%; top: 76%; width: 50.2%; height: 15%; }
+
+    /* ===========================
+       19. 인쇄용 스타일 (요약본)
+    =========================== */
+    @media print {
+      @page { size: A4 landscape; margin: 8mm; }
+      html, body {
+        margin: 0; padding: 0;
+        background: white;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .no-print,
+      #app-header, #step-bar, #bottom-nav, #room-modal { display: none !important; }
+      #main-content { padding: 0 !important; margin: 0 !important; }
+      .section-page { display: none !important; }
+      #page-8 { display: block !important; }
+
+      #page-8 .summary-sheet {
+        max-width: none;
+        width: 100%;
+        page-break-inside: avoid;
+      }
+      #page-8 .summary-grid { height: 210mm; max-height: 210mm; }
+    }
+
+    /* ===========================
+       20. 반응형
+    =========================== */
+    @media (max-width: 600px) {
+      #main-content { padding: 18px 10px 100px; }
+      .card { padding: 18px 14px; }
+      .cover-title { font-size: 2.1rem; }
+      #app-header .hotel-title { font-size: 1.2rem; }
+
+      /* 호텔 방: 층당 3개 유지 */
+      .hotel-building { padding: 12px 8px; }
+      .hotel-floor {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+      .hotel-room {
+        min-height: 108px;
+        border-width: 2px;
+      }
+      .hotel-lobby { min-height: 96px; }
+      .hotel-room .room-name  { font-size: 0.58rem; line-height: 1.2; word-break: keep-all; }
+      .hotel-room .room-guest { font-size: 0.55rem; line-height: 1.2; }
+      .hotel-room .placed-prop { width: 52%; height: 52%; }
+      .room-edit-canvas { height: 190px; }
+      .hotel-room .edit-icon  { font-size: 0.6rem; top: 3px; right: 4px; }
+      .hotel-sign { font-size: 1.2rem; padding: 3px 12px; }
+      .prop-item { width: 46px; height: 46px; }
+
+      #step-bar .step-label { font-size: 0.52rem; }
+      #step-bar .step-dot { width: 28px; height: 28px; font-size: 0.85rem; }
+      .summary-sheet { overflow-x: auto; }
+      .summary-grid {
+        min-width: 680px;
+        height: 520px;
+      }
+
+      /* 체크인 테이블 → 카드형 */
+      .guest-table thead { display: none; }
+      .guest-table,
+      .guest-table tbody,
+      .guest-table tr,
+      .guest-table td { display: block; width: 100%; }
+      .guest-table tr {
+        background: var(--cream);
+        border-radius: var(--radius-sm);
+        border: 1.5px solid #eee;
+        margin-bottom: 12px;
+        padding: 12px;
+      }
+      .guest-table td {
+        background: transparent;
+        border: none;
+        padding: 0 0 10px;
+      }
+      .guest-table td:last-child {
+        padding: 0;
+        text-align: right;
+      }
+      .guest-table td:first-child {
+        border-left: none;
+        border-radius: 0;
+        padding-bottom: 12px;
+        margin-bottom: 8px;
+        border-bottom: 1.5px dashed #e0d8f0;
+      }
+      .guest-table td:not(:first-child):not(:last-child)::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--text-soft);
+        margin-bottom: 4px;
+      }
+      .guest-table td input {
+        font-size: 0.9rem;
+        padding: 8px 6px;
+        border-bottom-style: solid;
+        background: var(--white);
+        border-radius: 6px;
+      }
+
+      /* 매뉴얼 카드 */
+      .manual-card { padding: 14px; }
+      .signal-chip { font-size: 0.75rem; padding: 4px 10px; }
+    }
+
+    /* ===========================
+       21. 유틸리티
+    =========================== */
+    .flex-row  { display: flex; align-items: center; gap: 10px; }
+    .flex-wrap { display: flex; flex-wrap: wrap; gap: 10px; }
+    .mt-8  { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .mb-8  { margin-bottom: 8px; }
+    .text-soft  { color: var(--text-soft); font-size: 0.88rem; }
+    .text-center { text-align: center; }
+    .divider {
+      border: none;
+      border-top: 1.5px dashed #e0d8f0;
+      margin: 20px 0;
+    }
+
+    /* 로딩 스피너 (저장 중) */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--mint);
+      border-top-color: var(--mint-dk);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- ======= 헤더 ======= -->
+  <header id="app-header">
+    <span class="hotel-title" id="header-hotel-name">🏨 감정호텔</span>
+    <span class="manager-badge" id="header-manager-name">지배인</span>
+    <button id="print-btn" onclick="goStep(8)">🖨️ 요약본</button>
+  </header>
+
+  <!-- ======= 스텝 진행바 ======= -->
+  <nav id="step-bar">
+    <div class="step-item active" data-step="0" onclick="goStep(0)">
+      <div class="step-dot">🏨</div>
+      <div class="step-label">시작</div>
+    </div>
+    <div class="step-item" data-step="1" onclick="goStep(1)">
+      <div class="step-dot">📖</div>
+      <div class="step-label">책읽기</div>
+    </div>
+    <div class="step-item" data-step="2" onclick="goStep(2)">
+      <div class="step-dot">🛎️</div>
+      <div class="step-label">손님</div>
+    </div>
+    <div class="step-item" data-step="3" onclick="goStep(3)">
+      <div class="step-dot">🛏️</div>
+      <div class="step-label">방꾸미기</div>
+    </div>
+    <div class="step-item" data-step="4" onclick="goStep(4)">
+      <div class="step-dot">📋</div>
+      <div class="step-label">규칙</div>
+    </div>
+    <div class="step-item" data-step="5" onclick="goStep(5)">
+      <div class="step-dot">🏷️</div>
+      <div class="step-label">이름/소개</div>
+    </div>
+    <div class="step-item" data-step="6" onclick="goStep(6)">
+      <div class="step-dot">📖</div>
+      <div class="step-label">매뉴얼</div>
+    </div>
+    <div class="step-item" data-step="7" onclick="goStep(7)">
+      <div class="step-dot">🎵</div>
+      <div class="step-label">OST</div>
+    </div>
+    <div class="step-item" data-step="8" onclick="goStep(8)">
+      <div class="step-dot">📄</div>
+      <div class="step-label">요약본</div>
+    </div>
+  </nav>
+
+  <!-- ======= 메인 콘텐츠 (섹션은 파트 2에서 추가) ======= -->
+  <main id="main-content">
+     <!-- ===================== STEP 0: 표지 ===================== -->
+    <section class="section-page active" id="page-0">
+      <div id="cover-screen">
+
+        <!-- 호텔 일러스트 (SVG) -->
+        <div class="hotel-illustration">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- 하늘 배경 -->
+            <rect width="200" height="200" fill="#d0eeff" rx="20"/>
+            <!-- 구름 -->
+            <ellipse cx="40" cy="35" rx="22" ry="12" fill="white" opacity="0.8"/>
+            <ellipse cx="160" cy="28" rx="18" ry="10" fill="white" opacity="0.8"/>
+            <!-- 건물 본체 -->
+            <rect x="30" y="70" width="140" height="110" fill="#f8e8ff" rx="8"/>
+            <!-- 지붕 -->
+            <polygon points="20,72 100,30 180,72" fill="#c8a0e8"/>
+            <!-- 간판 -->
+            <rect x="55" y="48" width="90" height="22" fill="white" rx="6"/>
+            <text x="100" y="63" text-anchor="middle" font-size="10" fill="#9060c0" font-family="sans-serif" font-weight="bold">감정호텔</text>
+            <!-- 창문 3×2 -->
+            <rect x="45"  y="90"  width="28" height="24" fill="#ffe4b0" rx="4"/>
+            <rect x="86"  y="90"  width="28" height="24" fill="#b0f0e0" rx="4"/>
+            <rect x="127" y="90"  width="28" height="24" fill="#ffb0c0" rx="4"/>
+            <rect x="45"  y="126" width="28" height="24" fill="#b0d8ff" rx="4"/>
+            <rect x="86"  y="126" width="28" height="24" fill="#ffe4b0" rx="4"/>
+            <rect x="127" y="126" width="28" height="24" fill="#d4b0ff" rx="4"/>
+            <!-- 창문 하이라이트 -->
+            <rect x="47"  y="92"  width="8"  height="4" fill="white" opacity="0.6" rx="2"/>
+            <rect x="88"  y="92"  width="8"  height="4" fill="white" opacity="0.6" rx="2"/>
+            <rect x="129" y="92"  width="8"  height="4" fill="white" opacity="0.6" rx="2"/>
+            <!-- 문 -->
+            <rect x="82" y="148" width="36" height="32" fill="#e0a878" rx="5"/>
+            <circle cx="113" cy="165" r="3" fill="#c07840"/>
+            <!-- 별 장식 -->
+            <text x="22"  y="55"  font-size="14">⭐</text>
+            <text x="162" y="60"  font-size="12">✨</text>
+            <text x="90"  y="195" font-size="11" text-anchor="middle" fill="#9060c0" font-family="sans-serif">내 마음이 머무는 곳</text>
+          </svg>
+        </div>
+
+        <h1 class="cover-title">🏨 감정호텔</h1>
+        <p class="cover-subtitle">
+          내 마음 속 다양한 감정들이 찾아오는 곳<br/>
+          <strong>나는 이 호텔의 지배인이에요</strong>
+        </p>
+
+        <!-- 입력 폼 -->
+        <div class="cover-form">
+          <h3>✏️ 지배인 정보를 입력해요</h3>
+          <label class="field-label">🏨 호텔 이름</label>
+          <input type="text" id="input-hotel-name" placeholder="예) 햇살 감정호텔, 마음이 쉬는 곳..."
+                 oninput="updateHeaderInfo()" maxlength="30"/>
+          <label class="field-label">👤 지배인 별칭 (닉네임)</label>
+          <input type="text" id="input-manager-name" placeholder="예) 별이, 초코, 해맑음..."
+                 oninput="updateHeaderInfo()" maxlength="15"/>
+          <div class="mt-16 text-center">
+            <button class="btn btn-primary" style="width:100%; justify-content:center; font-size:1rem; padding:14px;"
+                    onclick="startHotel()">
+              🚪 감정호텔 입장하기
+            </button>
+          </div>
+          <p class="text-soft text-center mt-8">입력한 내용은 이 기기에만 저장돼요 🔒</p>
+        </div>
+      </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
+    </section>
+
+    <!-- ===================== STEP 1: 책 읽기 ===================== -->
+    <section class="section-page" id="page-1">
+      <div class="card">
+        <div class="card-title">📖 감정호텔 책 읽기</div>
+        <div class="hint-box">
+          리디아 브란코비치 글/그림의 그림책 <strong>《감정호텔》</strong> 핵심 내용을 함께 읽어봐요.<br/>
+          공감이 되는 장면에서 ❤️ 버튼을 눌러보세요!
+        </div>
+      </div>
+
+      <!-- 책 슬라이드 -->
+      <div class="book-slide" id="book-slide-box">
+        <span class="book-emoji-large" id="book-emoji">🏨</span>
+        <p class="book-page-text" id="book-text"></p>
+        <div id="empathy-wrap" style="margin-top:12px;"></div>
+        <div class="book-nav">
+          <button class="btn btn-secondary" onclick="bookPrev()">◀ 이전</button>
+          <span class="book-page-num" id="book-page-num">1 / 10</span>
+          <button class="btn btn-primary" onclick="bookNext()">다음 ▶</button>
+        </div>
+      </div>
+
+      <!-- 공감 모음 -->
+      <div class="card mt-16">
+        <div class="card-title">💬 내가 공감한 장면들</div>
+        <div id="empathy-log" class="text-soft">아직 공감한 장면이 없어요. 책을 읽으며 ❤️ 버튼을 눌러보세요!</div>
+      </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
+    </section>
+
+    <!-- ===================== STEP 2: 손님 ===================== -->
+    <section class="section-page" id="page-2">
+      <div class="card">
+        <div class="card-title">🛎️ 감정호텔에 찾아온 손님</div>
+        <div class="hint-box">
+          나의 감정호텔에 머무는 손님들을 체크인 해봐요.<br/>
+          기본 손님을 선택하거나, 직접 추가할 수 있어요!
+        </div>
+
+        <!-- 기본 감정 뱃지 선택 -->
+        <div class="card-title" style="font-size:0.95rem; margin-bottom:8px;">💡 자주 찾아오는 손님 선택</div>
+        <div class="emotion-badge-group" id="emotion-badge-group">
+          <span class="emotion-badge eb-joy"     data-emotion="기쁨"   data-emoji="😊" onclick="toggleEmotionBadge(this)">😊 기쁨</span>
+          <span class="emotion-badge eb-sad"     data-emotion="슬픔"   data-emoji="😢" onclick="toggleEmotionBadge(this)">😢 슬픔</span>
+          <span class="emotion-badge eb-angry"   data-emotion="분노"   data-emoji="😡" onclick="toggleEmotionBadge(this)">😡 분노</span>
+          <span class="emotion-badge eb-anxious" data-emotion="불안"   data-emoji="😰" onclick="toggleEmotionBadge(this)">😰 불안</span>
+          <span class="emotion-badge eb-peace"   data-emotion="평화"   data-emoji="🌿" onclick="toggleEmotionBadge(this)">🌿 평화</span>
+          <span class="emotion-badge eb-shame"   data-emotion="수치심" data-emoji="😳" onclick="toggleEmotionBadge(this)">😳 수치심</span>
+          <span class="emotion-badge eb-sorry"   data-emotion="죄책감" data-emoji="😔" onclick="toggleEmotionBadge(this)">😔 죄책감</span>
+          <span class="emotion-badge eb-excited" data-emotion="설렘"   data-emoji="🥰" onclick="toggleEmotionBadge(this)">🥰 설렘</span>
+          <span class="emotion-badge eb-joy"     data-emotion="감사"   data-emoji="🙏" onclick="toggleEmotionBadge(this)">🙏 감사</span>
+          <span class="emotion-badge eb-peace"   data-emotion="만족감" data-emoji="😌" onclick="toggleEmotionBadge(this)">😌 만족감</span>
+          <span class="emotion-badge eb-sad"     data-emotion="우울감" data-emoji="🌧️" onclick="toggleEmotionBadge(this)">🌧️ 우울감</span>
+          <span class="emotion-badge eb-anxious" data-emotion="자극심" data-emoji="⚡" onclick="toggleEmotionBadge(this)">⚡ 자극심</span>
+          <span class="emotion-badge eb-joy"     data-emotion="자신감" data-emoji="💪" onclick="toggleEmotionBadge(this)">💪 자신감</span>
+          <span class="emotion-badge eb-excited" data-emotion="사랑"   data-emoji="❤️" onclick="toggleEmotionBadge(this)">❤️ 사랑</span>
+        </div>
+
+        <hr class="divider"/>
+
+        <!-- 체크인 명단 테이블 -->
+        <div class="card-title" style="font-size:0.95rem; margin-bottom:8px;">📋 체크인 명단</div>
+        <div class="guest-table-wrap">
+          <table class="guest-table">
+            <thead>
+              <tr>
+                <th>감정 손님</th>
+                <th>특징</th>
+                <th>자주 오는 때</th>
+                <th>원하는 것</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="guest-tbody">
+              <!-- JS로 채워짐 -->
+            </tbody>
+          </table>
+        </div>
+        <button class="btn-add" onclick="addCustomGuest()">＋ 손님 직접 추가하기</button>
+      </div>
+
+      <!-- 오늘의 손님 -->
+      <div class="card">
+        <div class="card-title">⭐ 오늘 가장 오래 머문 손님은?</div>
+        <div id="today-guest-radios" class="emotion-badge-group">
+          <span class="text-soft">위에서 손님을 먼저 추가해주세요!</span>
+        </div>
+        <label class="field-label" style="margin-top:14px;">💬 그 손님이 온 이유가 뭘까요?</label>
+        <textarea id="today-reason" rows="2" placeholder="예) 친구랑 다퉈서 분노가 많이 찾아왔어요..."
+                  oninput="autoSave()"></textarea>
+      </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
+    </section>
+
+    <!-- ===================== STEP 3: 방 꾸미기 ===================== -->
+    <section class="section-page" id="page-3">
+      <div class="card">
+        <div class="card-title">🛏️ 감정호텔 방 꾸미기</div>
+        <div class="hint-box">
+          방을 클릭해서 손님을 배정하고 방을 꾸며봐요!<br/>
+          각 방에 어울리는 색상과 소품을 골라주세요 🎨
+        </div>
+      </div>
+
+      <!-- 호텔 건물 -->
+      <div class="card">
+        <div class="hotel-building">
+          <div style="text-align:center; margin-bottom:14px;">
+            <span class="hotel-sign" id="building-hotel-name">🏨 감정호텔</span>
+          </div>
+
+          <!-- 3층 -->
+          <div style="text-align:center; font-size:0.72rem; color:#7a6e80; margin-bottom:4px;">3층</div>
+          <div class="hotel-floor" id="floor-3">
+            <div class="hotel-room" id="room-5" onclick="openRoomModal(5)"
+                 style="background:#f0e8ff;">
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
+              <span class="edit-icon">✏️</span>
+            </div>
+            <div class="hotel-room" id="room-6" onclick="openRoomModal(6)"
+                 style="background:#e8f4ff;">
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
+              <span class="edit-icon">✏️</span>
+            </div>
+            <div class="hotel-room" id="room-7" onclick="openRoomModal(7)"
+                 style="background:#fff8e8;">
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
+              <span class="edit-icon">✏️</span>
+            </div>
+          </div>
+
+          <!-- 2층 -->
+          <div style="text-align:center; font-size:0.72rem; color:#7a6e80; margin:10px 0 4px;">2층</div>
+          <div class="hotel-floor" id="floor-2">
+            <div class="hotel-room" id="room-3" onclick="openRoomModal(3)"
+                 style="background:#ffe8f0;">
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
+              <span class="edit-icon">✏️</span>
+            </div>
+            <div class="hotel-room" id="room-4" onclick="openRoomModal(4)"
+                 style="background:#e8fff0;">
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
+              <span class="edit-icon">✏️</span>
+            </div>
+            <div class="hotel-room" id="room-8" onclick="openRoomModal(8)"
+                 style="background:#fff0e8;">
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
+              <span class="edit-icon">✏️</span>
+            </div>
+          </div>
+
+          <!-- 1층 -->
+          <div style="text-align:center; font-size:0.72rem; color:#7a6e80; margin:10px 0 4px;">1층</div>
+          <div class="hotel-floor" id="floor-1">
+            <div class="hotel-room" id="room-1" onclick="openRoomModal(1)"
+                 style="background:#f8e8d0;">
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
+              <span class="edit-icon">✏️</span>
+            </div>
+            <div class="hotel-room" id="room-2" onclick="openRoomModal(2)"
+                 style="background:#e8e8ff;">
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
+              <span class="edit-icon">✏️</span>
+            </div>
+            <div class="hotel-room" id="room-9" onclick="openRoomModal(9)"
+                 style="background:#f0ffe8;">
+              <div class="room-props-layer"></div>
+              <div class="room-info">
+                <span class="room-placeholder">🪟</span>
+                <span class="room-name">빈 방</span>
+                <span class="room-guest">클릭해서 꾸미기</span>
+              </div>
+              <span class="edit-icon">✏️</span>
+            </div>
+          </div>
+
+          <!-- 로비 -->
+          <div class="hotel-lobby" onclick="openRoomModal(0)">
+            <div class="lobby-props-layer"></div>
+            <div class="lobby-info">
+              <strong class="lobby-label">🛎️ 로비 (클릭해서 꾸미기)</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 범례 -->
+      <div class="card">
+        <div class="card-title" style="font-size:0.9rem;">📌 배정된 방 현황</div>
+        <div id="room-summary" class="emotion-badge-group">
+          <span class="text-soft">방을 클릭해서 손님을 배정해보세요!</span>
+        </div>
+      </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
+    </section>
+
+    <!-- 방 꾸미기 모달 -->
+    <div class="modal-overlay" id="room-modal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <span class="modal-title" id="modal-room-title">🛏️ 방 꾸미기</span>
+          <button class="modal-close" onclick="closeRoomModal()">✕</button>
+        </div>
+
+        <!-- 손님 배정 -->
+        <label class="field-label">😊 이 방의 손님 (감정)</label>
+        <select id="modal-guest-select">
+          <option value="">-- 손님 선택 --</option>
+        </select>
+
+        <!-- 방 이름 -->
+        <label class="field-label">🏷️ 방 이름</label>
+        <input type="text" id="modal-room-name" placeholder="예) 분노의 스위트룸, 슬픔의 아늑한 방..."/>
+
+        <!-- 배경색 -->
+        <label class="field-label">🎨 방 배경색</label>
+        <div class="flex-row" style="flex-wrap:wrap; gap:10px; margin-top:6px;">
+          <div id="color-swatches" style="display:flex; flex-wrap:wrap; gap:8px;">
+            <div class="color-swatch" style="background:#FFE4B0;" onclick="selectColor('#FFE4B0')"></div>
+            <div class="color-swatch" style="background:#B0F0E0;" onclick="selectColor('#B0F0E0')"></div>
+            <div class="color-swatch" style="background:#FFB0C0;" onclick="selectColor('#FFB0C0')"></div>
+            <div class="color-swatch" style="background:#B0D8FF;" onclick="selectColor('#B0D8FF')"></div>
+            <div class="color-swatch" style="background:#D4B0FF;" onclick="selectColor('#D4B0FF')"></div>
+            <div class="color-swatch" style="background:#C8F8C0;" onclick="selectColor('#C8F8C0')"></div>
+            <div class="color-swatch" style="background:#FFD6A0;" onclick="selectColor('#FFD6A0')"></div>
+            <div class="color-swatch" style="background:#E0E0E0;" onclick="selectColor('#E0E0E0')"></div>
+          </div>
+          <input type="color" id="modal-room-color" value="#f0e8ff"
+                 style="width:42px; height:42px; border-radius:8px; padding:2px; cursor:pointer;"
+                 oninput="syncColorSwatch(this.value)"/>
+        </div>
+
+        <!-- 방 안 꾸미기 캔버스 -->
+        <label class="field-label">🏠 방 안 꾸미기</label>
+        <p class="text-soft" style="font-size:0.8rem; margin:-4px 0 6px;">
+          소품을 탭해서 넣고, 드래그로 옮기고, 선택 후 ＋／－ 또는 모서리를 끌어 크기를 조절해요 ✨
+        </p>
+        <div class="room-edit-canvas" id="room-edit-canvas">
+          <div class="room-edit-canvas-empty" id="room-canvas-hint">
+            소품을 아래에서 골라주세요
+          </div>
+        </div>
+        <div class="prop-size-toolbar" id="prop-size-toolbar">
+          <span class="text-soft" style="font-size:0.78rem;">선택한 소품</span>
+          <button type="button" class="size-btn" onclick="adjustSelectedPropScale(-0.15)" aria-label="작게">−</button>
+          <span class="size-label" id="prop-scale-label">100%</span>
+          <button type="button" class="size-btn" onclick="adjustSelectedPropScale(0.15)" aria-label="크게">＋</button>
+        </div>
+
+        <!-- 소품 선택 -->
+        <label class="field-label">🛋️ 방 소품 선택 (여러 개 가능)</label>
+        <div class="prop-grid" id="prop-grid"></div>
+
+        <!-- 방 메모 -->
+        <label class="field-label">📝 이 방에 대한 한 마디</label>
+        <textarea id="modal-room-memo" rows="2"
+                  placeholder="예) 슬픔이 오면 조용히 기다려줘요. 물이 넘쳐도 괜찮아요."></textarea>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button class="btn btn-secondary" style="flex:1; justify-content:center;"
+                  onclick="closeRoomModal()">취소</button>
+          <button class="btn btn-primary" style="flex:1; justify-content:center;"
+                  onclick="saveRoom()">💾 저장하기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 색상 스와치 스타일 (인라인) -->
+    <style>
+      .color-swatch {
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        border: 2.5px solid transparent;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .color-swatch:hover { transform: scale(1.15); }
+      .color-swatch.selected { border-color: #6030a0; box-shadow: 0 0 0 2px #d4b0ff; }
+    </style>
+
+    <!-- ===================== STEP 4: 규칙 ===================== -->
+    <section class="section-page" id="page-4">
+      <div class="card">
+        <div class="card-title">📋 감정호텔 규칙 만들기</div>
+        <div class="hint-box">
+          우리 호텔만의 규칙을 만들어요!<br/>
+          어떤 감정 손님도 편안하게 머물 수 있는 규칙이면 좋겠어요 😊
+        </div>
+        <div class="info-box">
+          💡 예시: "어떤 손님도 돌려보내지 않는다" · "슬픔이 오면 조용히 기다려준다" ·
+          "분노에게는 넓은 공간을 준다" · "평화가 떠나도 다시 찾아온다는 것을 안다"
+        </div>
+
+        <ul class="rule-list" id="rule-list">
+          <!-- JS로 채워짐 -->
+        </ul>
+
+        <button class="btn-add" onclick="addRule()" id="add-rule-btn">＋ 규칙 추가하기</button>
+
+        <!-- 규칙 미리보기 -->
+        <hr class="divider"/>
+        <div class="card-title" style="font-size:0.9rem;">📜 호텔 규칙 미리보기</div>
+        <div id="rule-preview" style="
+          background: linear-gradient(135deg, #fdf6ff, #f0e8ff);
+          border-radius: 14px;
+          padding: 20px 24px;
+          border: 2px solid #d4b0ff;
+          font-family: 'Nanum Pen Script', cursive;
+          font-size: 1.15rem;
+          line-height: 2.2;
+          min-height: 80px;
+          color: #4a2a7a;
+        ">
+          규칙을 추가하면 여기에 표시돼요!
+        </div>
+      </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
+    </section>
+
+    <!-- ===================== STEP 5: 이름/소개글 ===================== -->
+    <section class="section-page" id="page-5">
+      <div class="card">
+        <div class="card-title">🏷️ 감정호텔 이름짓기 & 소개글</div>
+        <div class="hint-box">
+          나만의 감정호텔에 이름을 붙이고, 소개글을 써봐요!<br/>
+          완성되면 아래에서 호텔 간판으로 미리볼 수 있어요 ✨
+        </div>
+
+        <label class="field-label">🏨 호텔 이름</label>
+        <input type="text" id="hotel-name-step5"
+               placeholder="예) 별빛 감정호텔, 따뜻한 마음 호텔..."
+               oninput="syncHotelName()" maxlength="30"/>
+
+        <label class="field-label">🎨 대표 색상 (간판 색)</label>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
+          <div class="color-swatch" style="background:#A98FE0;" onclick="selectHotelColor('#A98FE0','#E8DEFF')"></div>
+          <div class="color-swatch" style="background:#5BBFA8;" onclick="selectHotelColor('#5BBFA8','#C8F0E8')"></div>
+          <div class="color-swatch" style="background:#FFA96A;" onclick="selectHotelColor('#FFA96A','#FFD9B7')"></div>
+          <div class="color-swatch" style="background:#5A9FD4;" onclick="selectHotelColor('#5A9FD4','#D0EEFF')"></div>
+          <div class="color-swatch" style="background:#E07070;" onclick="selectHotelColor('#E07070','#FFD6D6')"></div>
+          <div class="color-swatch" style="background:#F5C842;" onclick="selectHotelColor('#F5C842','#FFF3B0')"></div>
+        </div>
+
+        <label class="field-label">✍️ 호텔 소개글</label>
+        <textarea id="hotel-intro" rows="5"
+                  placeholder="예) 이 호텔에서는 어떤 감정도 환영받아요. 지배인은 모든 손님의 이야기를 귀 기울여 들어요. 슬픔이 와도, 분노가 와도, 모두에게 방을 내어줘요..."
+                  oninput="updateSignboard(); autoSave()"></textarea>
+
+        <label class="field-label">🌟 지배인 소개 한 마디</label>
+        <input type="text" id="manager-intro"
+               placeholder="예) 저는 모든 감정을 소중히 여기는 지배인이에요."
+               oninput="updateSignboard(); autoSave()" maxlength="60"/>
+      </div>
+
+      <!-- 간판 미리보기 -->
+      <div class="card">
+        <div class="card-title">✨ 호텔 간판 미리보기</div>
+        <div id="signboard" style="
+          background: linear-gradient(135deg, var(--lavender-dk), #6030b0);
+          border-radius: 20px;
+          padding: 32px 28px;
+          text-align: center;
+          color: white;
+          box-shadow: 0 8px 30px rgba(100,50,180,0.3);
+          transition: 0.3s;
+        ">
+          <div style="font-size:2.5rem; margin-bottom:8px;">🏨</div>
+          <div id="signboard-name" style="
+            font-family: 'Nanum Pen Script', cursive;
+            font-size: 2rem;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          ">감정호텔</div>
+          <div id="signboard-intro" style="
+            font-size: 0.9rem;
+            line-height: 1.8;
+            opacity: 0.9;
+            margin-bottom: 14px;
+          ">소개글을 입력하면 여기에 표시돼요</div>
+          <div id="signboard-manager" style="
+            font-size: 0.82rem;
+            opacity: 0.75;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 12px;
+          ">지배인</div>
+        </div>
+      </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
+    </section>
+
+    <!-- ===================== STEP 6: 손님 대응 매뉴얼 ===================== -->
+    <section class="section-page" id="page-6">
+      <div class="card">
+        <div class="card-title">📖 감정호텔 손님 대응 매뉴얼</div>
+        <div class="hint-box">
+          각 손님(감정)이 찾아왔을 때 어떻게 대응할지 매뉴얼을 작성해봐요!<br/>
+          Step 2에서 추가한 손님들이 자동으로 카드로 만들어져요 🃏
+        </div>
+      </div>
+
+      <!-- 매뉴얼 카드들 -->
+      <div id="manual-cards-container">
+        <div class="info-box">
+          Step 2에서 손님을 추가하면 여기에 매뉴얼 카드가 생겨요!
+        </div>
+      </div>
+
+      <!-- 지배인의 비밀 무기 상자 -->
+      <div class="card" style="background: linear-gradient(135deg, #1a1a2e, #2d1b4e); color: white;">
+        <div class="card-title" style="color:#d4b0ff;">🗃️ 지배인의 비밀 무기 상자</div>
+        <p style="font-size:0.88rem; opacity:0.8; margin-bottom:14px;">
+          힘들 때 나를 도와주는 나만의 방법들을 적어두세요!
+        </p>
+        <textarea id="secret-weapons" rows="4"
+                  style="background:rgba(255,255,255,0.1); border:1.5px solid rgba(212,176,255,0.4);
+                         color:white; border-radius:10px; padding:12px;"
+                  placeholder="예) 🎵 좋아하는 노래 듣기 / 🧸 인형 꼭 안기 / 🚿 따뜻한 물로 씻기 / 📔 일기 쓰기..."
+                  oninput="autoSave()"></textarea>
+      </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
+    </section>
+
+    <!-- ===================== STEP 7: OST ===================== -->
+    <section class="section-page" id="page-7">
+      <div class="card">
+        <div class="card-title">🎵 감정호텔 OST 만들기</div>
+        <div class="hint-box">
+          나의 감정호텔을 위한 OST를 만들어봐요!<br/>
+          가사를 쓰고, SUNO AI에 넣을 프롬프트도 자동으로 만들어 드려요 🎶
+        </div>
+
+        <label class="field-label">🎼 OST 제목</label>
+        <input type="text" id="ost-title" placeholder="예) 감정들에게, 내 마음의 문을 열며..."
+               oninput="autoSave()" maxlength="40"/>
+
+        <label class="field-label">💭 이 노래를 만든 이유</label>
+        <textarea id="ost-reason" rows="2"
+                  placeholder="예) 슬픔이 찾아올 때 혼자가 아니라는 걸 느끼고 싶어서..."
+                  oninput="autoSave()"></textarea>
+      </div>
+
+      <!-- 가사 쓰기 -->
+      <div class="card">
+        <div class="card-title">✍️ 가사 쓰기</div>
+        <div class="lyrics-box">
+          <textarea id="ost-lyrics" rows="12"
+                    placeholder="여기에 가사를 자유롭게 써봐요&#10;&#10;예)&#10;어떤 감정이 찾아와도&#10;내 마음의 문은 열려있어&#10;슬픔아 들어와, 분노야 앉아&#10;여기는 네 방이 있으니까..."
+                    oninput="autoSave()"></textarea>
+        </div>
+      </div>
+
+      <!-- SUNO 프롬프트 생성기 -->
+      <div class="card">
+        <div class="card-title">🤖 SUNO 프롬프트 자동 생성기</div>
+        <div class="info-box">
+          아래에서 원하는 분위기를 선택하면 SUNO AI에 바로 넣을 수 있는 영어 프롬프트가 만들어져요!
+        </div>
+
+        <label class="field-label">🎸 장르 선택</label>
+        <div class="emotion-badge-group" id="suno-genre-group">
+          <span class="emotion-badge eb-joy"   data-suno="genre" data-val="pop"        onclick="toggleSunoTag(this,'genre')">🎵 팝</span>
+          <span class="emotion-badge eb-sad"   data-suno="genre" data-val="ballad"     onclick="toggleSunoTag(this,'genre')">🎻 발라드</span>
+          <span class="emotion-badge eb-peace" data-suno="genre" data-val="jazz"       onclick="toggleSunoTag(this,'genre')">🎷 재즈</span>
+          <span class="emotion-badge eb-mint"  data-suno="genre" data-val="acoustic"   onclick="toggleSunoTag(this,'genre')">🎸 어쿠스틱</span>
+          <span class="emotion-badge eb-angry" data-suno="genre" data-val="indie rock" onclick="toggleSunoTag(this,'genre')">🎸 인디록</span>
+          <span class="emotion-badge eb-lavender" data-suno="genre" data-val="cinematic" onclick="toggleSunoTag(this,'genre')">🎬 시네마틱</span>
+        </div>
+
+        <label class="field-label">🌈 분위기 선택 (여러 개 가능)</label>
+        <div class="emotion-badge-group" id="suno-mood-group">
+          <span class="emotion-badge eb-peach"   data-suno="mood" data-val="warm"       onclick="toggleSunoTag(this,'mood')">☀️ 따뜻한</span>
+          <span class="emotion-badge eb-blue"    data-suno="mood" data-val="calm"       onclick="toggleSunoTag(this,'mood')">🌊 잔잔한</span>
+          <span class="emotion-badge eb-joy"     data-suno="mood" data-val="uplifting"  onclick="toggleSunoTag(this,'mood')">✨ 신나는</span>
+          <span class="emotion-badge eb-lavender" data-suno="mood" data-val="dreamy"   onclick="toggleSunoTag(this,'mood')">💜 몽환적</span>
+          <span class="emotion-badge eb-mint"    data-suno="mood" data-val="healing"    onclick="toggleSunoTag(this,'mood')">🌿 힐링</span>
+          <span class="emotion-badge eb-sad"     data-suno="mood" data-val="emotional"  onclick="toggleSunoTag(this,'mood')">💧 감성적</span>
+          <span class="emotion-badge eb-sorry"   data-suno="mood" data-val="peaceful"   onclick="toggleSunoTag(this,'mood')">🕊️ 평화로운</span>
+          <span class="emotion-badge eb-excited" data-suno="mood" data-val="hopeful"   onclick="toggleSunoTag(this,'mood')">🌟 희망찬</span>
+        </div>
+
+        <label class="field-label">⏱️ 템포</label>
+        <div class="emotion-badge-group" id="suno-tempo-group">
+          <span class="emotion-badge eb-blue"  data-suno="tempo" data-val="slow tempo"   onclick="toggleSunoTag(this,'tempo')">🐢 느리게</span>
+          <span class="emotion-badge eb-mint"  data-suno="tempo" data-val="medium tempo" onclick="toggleSunoTag(this,'tempo')">🚶 보통</span>
+          <span class="emotion-badge eb-joy"   data-suno="tempo" data-val="uptempo"      onclick="toggleSunoTag(this,'tempo')">🏃 빠르게</span>
+        </div>
+
+        <label class="field-label">🎤 보컬 스타일</label>
+        <div class="emotion-badge-group" id="suno-vocal-group">
+          <span class="emotion-badge eb-lavender" data-suno="vocal" data-val="female vocals" onclick="toggleSunoTag(this,'vocal')">👩 여성</span>
+          <span class="emotion-badge eb-blue"     data-suno="vocal" data-val="male vocals"   onclick="toggleSunoTag(this,'vocal')">👨 남성</span>
+          <span class="emotion-badge eb-mint"     data-suno="vocal" data-val="children chorus" onclick="toggleSunoTag(this,'vocal')">👧 어린이 합창</span>
+          <span class="emotion-badge eb-sorry"    data-suno="vocal" data-val="instrumental"  onclick="toggleSunoTag(this,'vocal')">🎹 연주만</span>
+        </div>
+
+        <button class="btn btn-mint" style="width:100%; justify-content:center; margin-top:16px;"
+                onclick="generateSunoPrompt()">
+          ✨ SUNO 프롬프트 생성하기
+        </button>
+
+        <!-- 생성된 프롬프트 -->
+        <div id="suno-result" style="display:none; margin-top:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <strong style="font-size:0.9rem;">📋 생성된 프롬프트</strong>
+            <button class="btn btn-secondary" style="padding:5px 14px; font-size:0.82rem;"
+                    onclick="copySunoPrompt()">📋 복사</button>
+          </div>
+          <div class="suno-output" id="suno-prompt-text"></div>
+          <div class="info-box" style="margin-top:10px; font-size:0.82rem;">
+            💡 위 프롬프트를 복사해서 <strong>suno.com</strong>의 Custom 모드 → Style of Music 칸에 붙여넣으세요!<br/>
+            가사는 Lyrics 칸에 별도로 입력해요.
+          </div>
+        </div>
+      </div>
+
+      <!-- 마무리 메시지 -->
+      <div class="card" style="background: linear-gradient(135deg, #fff8f0, #f0e8ff); text-align:center;">
+        <div style="font-size:3rem; margin-bottom:12px;">🎉</div>
+        <div class="card-title" style="justify-content:center; font-size:1.1rem;">
+          나만의 감정호텔 완성!
+        </div>
+        <p style="color:var(--text-soft); font-size:0.9rem; line-height:1.9; margin-bottom:16px;">
+          어떤 감정이 찾아와도 괜찮아요.<br/>
+          당신의 감정호텔은 언제나 문이 열려있어요 🏨<br/>
+          <em>"날마다 감정들이 머물다 가는 곳, 감정호텔에 오신 것을 환영합니다."</em>
+        </p>
+        <button class="btn btn-primary" style="margin:0 auto; display:flex;"
+                onclick="goStep(8)">📄 요약본 보기 & 인쇄</button>
+      </div>
+      <p class="page-credit">© 제작 · 전문상담교사 김미선(misyongg)</p>
+    </section>
+
+    <!-- ===================== STEP 8: 요약본 (A4 인쇄) ===================== -->
+    <section class="section-page" id="page-8">
+      <div class="summary-toolbar no-print">
+        <div>
+          <h2 class="summary-toolbar-title">📄 나의 감정호텔 요약본</h2>
+          <p class="text-soft" style="font-size:0.88rem; margin:4px 0 0;">1~7단계에서 입력한 내용이 모여요. 아래 미리보기 후 인쇄하세요.</p>
+        </div>
+        <button class="btn btn-primary" onclick="printSummary()">🖨️ A4 인쇄하기</button>
+      </div>
+
+      <div class="summary-sheet" id="summary-sheet">
+        <div class="summary-grid">
+          <!-- 왼쪽 컬럼: 간판 → 규칙 → OST -->
+          <div class="summary-col summary-col-left">
+            <div class="summary-frame-wrap wrap-sign">
+              <img class="summary-frame" src="256px/summary-sign-frame.png" alt=""/>
+              <div class="summary-fill summary-fill-sign">
+                <div class="summary-sign-line summary-sign-name" id="sum-hotel-name"></div>
+                <div class="summary-sign-line" id="sum-hotel-intro"></div>
+                <div class="summary-sign-line" id="sum-manager-intro"></div>
+              </div>
+            </div>
+            <div class="summary-frame-wrap wrap-rules">
+              <img class="summary-frame" src="256px/summary-rules-clipboard.png" alt=""/>
+              <div class="summary-fill summary-fill-rules" id="sum-rules"></div>
+            </div>
+            <div class="summary-frame-wrap wrap-ost">
+              <img class="summary-frame" src="256px/summary-ost-frame.png" alt=""/>
+              <div class="summary-fill summary-fill-ost-title" id="sum-ost-title"></div>
+              <div class="summary-fill summary-fill-ost-reason" id="sum-ost-reason"></div>
+              <div class="summary-fill summary-fill-ost-lyrics" id="sum-ost-lyrics"></div>
+            </div>
+          </div>
+
+          <!-- 가운데 컬럼: 호텔 건물 (실사진 위에 방 내용 겹치기) -->
+          <div class="summary-col summary-col-center">
+            <div class="summary-frame-wrap wrap-rooms">
+              <img class="summary-frame" src="256px/summary-rooms.png" alt=""/>
+              <div class="hotel-building summary-hotel-building" id="summary-building">
+                <div class="hotel-room" data-summary-room="5"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="6"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="7"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="3"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="4"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="8"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="1"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="2"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-room" data-summary-room="9"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
+                <div class="hotel-lobby">
+                  <div class="lobby-props-layer"></div>
+                  <div class="lobby-info"><strong class="lobby-label"></strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 오른쪽 컬럼: 체크인 손님 → 비밀상자 → 완성 배지 -->
+          <div class="summary-col summary-col-right">
+            <div class="summary-frame-wrap wrap-guests">
+              <img class="summary-frame" src="256px/summary-guest-table-frame.png" alt=""/>
+              <div class="summary-fill summary-fill-guest-table">
+                <table class="summary-table" id="sum-guest-table">
+                  <tbody id="sum-guest-tbody"></tbody>
+                </table>
+              </div>
+              <div class="summary-fill summary-fill-guest-q1" id="sum-today-guest"></div>
+              <div class="summary-fill summary-fill-guest-q2" id="sum-today-reason"></div>
+            </div>
+            <div class="summary-frame-wrap wrap-secret">
+              <img class="summary-frame" src="256px/summary-secret-box.png" alt=""/>
+              <div class="summary-fill summary-fill-secret" id="sum-secret"></div>
+            </div>
+            <div class="summary-frame-wrap wrap-badge">
+              <img class="summary-frame" src="256px/summary-complete-badge.png" alt="완성"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="page-credit no-print">© 제작 · 전문상담교사 김미선(misyongg)</p>
+    </section>
+  </main>
+
+  <!-- ======= 하단 네비게이션 ======= -->
+  <nav id="bottom-nav">
+    <button class="btn btn-secondary" id="prev-btn" onclick="prevStep()">◀ 이전</button>
+    <span id="save-indicator">💾 저장됨</span>
+    <button class="btn btn-primary" id="next-btn" onclick="nextStep()">다음 ▶</button>
+  </nav>
+
+<script>
+/* ============================================================
+   감정호텔 JavaScript - 전체 로직
+   ============================================================ */
+
+/* ───────────────────────────────────────────
+   0. 전역 상태 & 초기 데이터
+─────────────────────────────────────────── */
+let currentStep = 0;
+let currentBookPage = 0;
+let currentRoomId = null;
+let sunoTags = { genre: '', mood: [], tempo: '', vocal: '' };
+
+// 방 소품 목록 (이미지: 256px/{id}.png, 45종)
+const PROP_BASE_LABELS = {
+  sofa: '소파', bed: '침대', pillow: '베개', blanket: '담요', teddy: '인형',
+  plant: '화분', flower: '꽃', candle: '양초', lamp: '스탠드등', window: '창문',
+  curtain: '커튼', mirror: '거울', book: '책', diary: '일기장', music: '음악',
+  paint: '그림도구', balloon: '풍선', kite: '연', star: '별', moon: '달',
+  sun: '해', cloud: '구름', rain: '비/우산', wave: '파도', bathtub: '욕조',
+  tea: '차', heart: '하트', key: '열쇠', door: '문', puzzle: '퍼즐'
+};
+
+function propIdToLabel(id) {
+  const num = id.match(/(\d+)$/);
+  const base = num ? id.slice(0, -num[0].length) : id;
+  const name = PROP_BASE_LABELS[base] || base;
+  return num ? name + ' ' + num[1] : name;
+}
+
+const ROOM_PROP_IDS = [
+  'sofa', 'sofa2', 'bed', 'bed2', 'pillow', 'blanket', 'teddy', 'teddy2',
+  'plant', 'plant2', 'plant3', 'flower', 'candle', 'lamp', 'lamp2',
+  'window', 'window2', 'curtain', 'mirror', 'book', 'book2', 'diary', 'diary2',
+  'music', 'paint', 'balloon', 'kite', 'star', 'moon', 'sun', 'cloud',
+  'rain', 'rain2', 'wave', 'wave2', 'bathtub', 'bathtub2', 'tea', 'heart',
+  'key', 'key2', 'door', 'door2', 'puzzle', 'puzzle2'
+];
+
+const ROOM_PROPS = ROOM_PROP_IDS.map(id => ({ id, label: propIdToLabel(id) }));
+
+// 구 이모지 소품 → 새 id 매핑 (저장 데이터 호환)
+const LEGACY_PROP_MAP = {
+  '🛋️': 'sofa', '🪴': 'plant', '🕯️': 'candle', '🎵': 'music', '📚': 'book',
+  '🧸': 'teddy', '🪞': 'mirror', '🛁': 'bathtub', '🌊': 'wave', '⚡': 'star',
+  '🥊': 'star', '🌿': 'plant', '🎨': 'paint', '🪁': 'kite', '☁️': 'cloud',
+  '🌸': 'flower', '🎪': 'balloon', '🌙': 'moon', '☀️': 'sun', '🧩': 'puzzle'
+};
+
+const PROP_IMG_BASE = (() => {
+  try { return new URL('256px/', window.location.href).href; }
+  catch (e) { return '256px/'; }
+})();
+
+function propImageSrc(id) {
+  try { return new URL(id + '.png', PROP_IMG_BASE).href; }
+  catch (e) { return '256px/' + id + '.png'; }
+}
+
+function propImgOnError(el) {
+  el.dataset.failed = '1';
+}
+
+function propLabel(id) {
+  const p = ROOM_PROPS.find(x => x.id === id);
+  return p ? p.label : id;
+}
+
+// 소품 기본 배치 좌표 (%)
+const DEFAULT_PROP_POSITIONS = [
+  { x: 50, y: 42 }, { x: 28, y: 58 }, { x: 72, y: 55 },
+  { x: 38, y: 32 }, { x: 62, y: 68 }, { x: 50, y: 62 },
+  { x: 22, y: 40 }, { x: 78, y: 38 }, { x: 45, y: 48 }
+];
+
+let modalRoomProps = []; // 모달 편집 중인 배치 소품 [{id,x,y,scale}]
+let selectedCanvasPropIndex = -1;
+
+const PROP_SCALE_MIN = 0.5;
+const PROP_SCALE_MAX = 2.5;
+const PROP_SCALE_DEFAULT = 1.15;
+const PROP_SCALE_STEP = 0.15;
+
+function clampPropScale(scale) {
+  return Math.round(Math.max(PROP_SCALE_MIN, Math.min(PROP_SCALE_MAX, scale)) * 100) / 100;
+}
+
+function applyPropTransformToEl(el, prop) {
+  if (!el || !prop) return;
+  const sc = prop.scale || 1;
+  el.style.left = prop.x + '%';
+  el.style.top = prop.y + '%';
+  el.style.transform = `translate(-50%, -50%) scale(${sc})`;
+}
+
+function formatScaleLabel(scale) {
+  return Math.round((scale || 1) * 100) + '%';
+}
+
+function updatePropSizeToolbar() {
+  const bar = document.getElementById('prop-size-toolbar');
+  const label = document.getElementById('prop-scale-label');
+  if (!bar) return;
+  const hasSel = selectedCanvasPropIndex >= 0 && selectedCanvasPropIndex < modalRoomProps.length;
+  bar.classList.toggle('visible', hasSel);
+  if (label && hasSel) {
+    label.textContent = formatScaleLabel(modalRoomProps[selectedCanvasPropIndex].scale);
+  }
+}
+
+function selectCanvasProp(index) {
+  selectedCanvasPropIndex = index;
+  const canvas = document.getElementById('room-edit-canvas');
+  if (canvas) {
+    canvas.querySelectorAll('.placed-prop').forEach((el, i) => {
+      el.classList.toggle('selected', i === index);
+    });
+  }
+  updatePropSizeToolbar();
+}
+
+function adjustSelectedPropScale(delta) {
+  if (selectedCanvasPropIndex < 0 || selectedCanvasPropIndex >= modalRoomProps.length) return;
+  const prop = modalRoomProps[selectedCanvasPropIndex];
+  prop.scale = clampPropScale((prop.scale || 1) + delta);
+  const canvas = document.getElementById('room-edit-canvas');
+  const el = canvas?.querySelector(`.placed-prop[data-index="${selectedCanvasPropIndex}"]`);
+  applyPropTransformToEl(el, prop);
+  updatePropSizeToolbar();
+}
+
+function normalizeProps(props) {
+  if (!props || !props.length) return [];
+  const out = [];
+  props.forEach((p, i) => {
+    let id, x, y, scale;
+    if (typeof p === 'string') {
+      id = LEGACY_PROP_MAP[p] || p;
+      const pos = DEFAULT_PROP_POSITIONS[out.length % DEFAULT_PROP_POSITIONS.length];
+      x = pos.x; y = pos.y; scale = PROP_SCALE_DEFAULT;
+    } else if (p && typeof p === 'object') {
+      id = LEGACY_PROP_MAP[p.id] || p.id;
+      x = typeof p.x === 'number' ? p.x : 50;
+      y = typeof p.y === 'number' ? p.y : 50;
+      scale = clampPropScale(p.scale || 1);
+    } else return;
+    if (!ROOM_PROPS.some(x => x.id === id)) return;
+    if (out.some(o => o.id === id)) return;
+    out.push({ id, x, y, scale });
+  });
+  return out;
+}
+
+function normalizePropIds(props) {
+  return normalizeProps(props).map(p => p.id);
+}
+
+function nextPropPosition(count) {
+  return DEFAULT_PROP_POSITIONS[count % DEFAULT_PROP_POSITIONS.length];
+}
+
+function renderPlacedPropsHtml(props, mode) {
+  const list = normalizeProps(props);
+  if (!list.length) return '';
+  const isEdit = mode === 'edit';
+  return list.map((p, i) => {
+    const sc = p.scale || 1;
+    const style = `left:${p.x}%;top:${p.y}%;transform:translate(-50%,-50%) scale(${sc})`;
+    const removeBtn = isEdit
+      ? `<button type="button" class="prop-remove" onclick="removeCanvasProp(${i}); event.stopPropagation();" aria-label="삭제">✕</button>`
+      : '';
+    return `<div class="placed-prop" data-index="${i}" style="${style}"${isEdit ? ' onpointerdown="startPropDrag(event,' + i + ')"' : ''}>
+      <img src="${propImageSrc(p.id)}" alt="${propLabel(p.id)}" data-prop-id="${p.id}" onerror="propImgOnError(this)"/>
+      ${removeBtn}
+    </div>`;
+  }).join('');
+}
+
+function renderPropLayer(el, props) {
+  if (!el) return;
+  const list = normalizeProps(props);
+  el.innerHTML = renderPlacedPropsHtml(list, 'view');
+  const room = el.closest('.hotel-room');
+  if (room) room.classList.toggle('has-props', list.length > 0);
+}
+
+function renderPropGrid(selectedIds) {
+  const grid = document.getElementById('prop-grid');
+  if (!grid) return;
+  const selected = new Set(selectedIds || []);
+  grid.innerHTML = ROOM_PROPS.map(p => `
+    <div class="prop-item ${selected.has(p.id) ? 'selected' : ''}"
+         data-prop="${p.id}" title="${p.label}"
+         onclick="toggleProp(this)" role="button" tabindex="0"
+         aria-label="${p.label}">
+      <img src="${propImageSrc(p.id)}" alt="${p.label}" data-prop-id="${p.id}"
+           onerror="propImgOnError(this)"/>
+      <span class="prop-fallback">${p.label}</span>
+    </div>`).join('');
+}
+
+function renderModalCanvas() {
+  const canvas = document.getElementById('room-edit-canvas');
+  const hint = document.getElementById('room-canvas-hint');
+  if (!canvas) return;
+  const color = document.getElementById('modal-room-color')?.value || '#f0e8ff';
+  canvas.style.background = color;
+  const existing = canvas.querySelectorAll('.placed-prop');
+  existing.forEach(el => el.remove());
+  modalRoomProps.forEach((p, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'placed-prop' + (i === selectedCanvasPropIndex ? ' selected' : '');
+    wrap.dataset.index = i;
+    applyPropTransformToEl(wrap, p);
+    wrap.innerHTML = `<img src="${propImageSrc(p.id)}" alt="${propLabel(p.id)}" data-prop-id="${p.id}" onerror="propImgOnError(this)"/>
+      <button type="button" class="prop-remove" aria-label="삭제">✕</button>
+      <span class="prop-resize-handle" aria-label="크기 조절"></span>`;
+    wrap.querySelector('.prop-remove').onclick = (e) => { e.stopPropagation(); removeCanvasProp(i); };
+    wrap.querySelector('.prop-resize-handle').addEventListener('pointerdown', (e) => startPropResize(e, i));
+    wrap.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.prop-remove') || e.target.closest('.prop-resize-handle')) return;
+      selectCanvasProp(i);
+      startPropDrag(e, i);
+    });
+    canvas.appendChild(wrap);
+  });
+  if (hint) hint.style.display = modalRoomProps.length ? 'none' : 'flex';
+  if (selectedCanvasPropIndex >= modalRoomProps.length) selectedCanvasPropIndex = -1;
+  updatePropSizeToolbar();
+}
+
+function startPropResize(e, index) {
+  if (index < 0 || index >= modalRoomProps.length) return;
+  e.preventDefault();
+  e.stopPropagation();
+  selectCanvasProp(index);
+  const canvas = document.getElementById('room-edit-canvas');
+  const el = canvas?.querySelector(`.placed-prop[data-index="${index}"]`);
+  if (!el) return;
+  const prop = modalRoomProps[index];
+  const rect = canvas.getBoundingClientRect();
+  const startDist = Math.hypot(e.clientX - rect.left - (prop.x / 100) * rect.width,
+                             e.clientY - rect.top - (prop.y / 100) * rect.height);
+  const startScale = prop.scale || 1;
+  el.setPointerCapture(e.pointerId);
+
+  function onMove(ev) {
+    if (ev.pointerId !== e.pointerId) return;
+    const cx = rect.left + (prop.x / 100) * rect.width;
+    const cy = rect.top + (prop.y / 100) * rect.height;
+    const dist = Math.max(20, Math.hypot(ev.clientX - cx, ev.clientY - cy));
+    const ratio = dist / Math.max(40, startDist);
+    prop.scale = clampPropScale(startScale * ratio);
+    applyPropTransformToEl(el, prop);
+    updatePropSizeToolbar();
+  }
+  function onUp(ev) {
+    if (ev.pointerId !== e.pointerId) return;
+    try { el.releasePointerCapture(e.pointerId); } catch (_) {}
+    el.removeEventListener('pointermove', onMove);
+    el.removeEventListener('pointerup', onUp);
+    el.removeEventListener('pointercancel', onUp);
+  }
+  el.addEventListener('pointermove', onMove);
+  el.addEventListener('pointerup', onUp);
+  el.addEventListener('pointercancel', onUp);
+}
+
+function startPropDrag(e, index) {
+  if (e.target.closest('.prop-remove') || e.target.closest('.prop-resize-handle')) return;
+  const canvas = document.getElementById('room-edit-canvas');
+  if (!canvas || index < 0 || index >= modalRoomProps.length) return;
+  e.preventDefault();
+  const el = canvas.querySelector(`.placed-prop[data-index="${index}"]`);
+  if (!el) return;
+  el.classList.add('dragging');
+  el.setPointerCapture(e.pointerId);
+
+  const prop = modalRoomProps[index];
+  const rect = canvas.getBoundingClientRect();
+
+  function moveTo(clientX, clientY) {
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    prop.x = Math.max(8, Math.min(92, x));
+    prop.y = Math.max(8, Math.min(92, y));
+    applyPropTransformToEl(el, prop);
+  }
+
+  function onMove(ev) {
+    if (ev.pointerId !== e.pointerId) return;
+    moveTo(ev.clientX, ev.clientY);
+  }
+  function onUp(ev) {
+    if (ev.pointerId !== e.pointerId) return;
+    el.classList.remove('dragging');
+    try { el.releasePointerCapture(e.pointerId); } catch (_) {}
+    el.removeEventListener('pointermove', onMove);
+    el.removeEventListener('pointerup', onUp);
+    el.removeEventListener('pointercancel', onUp);
+  }
+  el.addEventListener('pointermove', onMove);
+  el.addEventListener('pointerup', onUp);
+  el.addEventListener('pointercancel', onUp);
+}
+
+function removeCanvasProp(index) {
+  if (index < 0 || index >= modalRoomProps.length) return;
+  modalRoomProps.splice(index, 1);
+  if (selectedCanvasPropIndex === index) selectedCanvasPropIndex = -1;
+  else if (selectedCanvasPropIndex > index) selectedCanvasPropIndex--;
+  renderPropGrid(modalRoomProps.map(p => p.id));
+  renderModalCanvas();
+}
+
+function toggleProp(el) {
+  const id = el.dataset.prop;
+  const idx = modalRoomProps.findIndex(p => p.id === id);
+  if (idx >= 0) {
+    modalRoomProps.splice(idx, 1);
+    if (selectedCanvasPropIndex === idx) selectedCanvasPropIndex = -1;
+    else if (selectedCanvasPropIndex > idx) selectedCanvasPropIndex--;
+  } else {
+    const pos = nextPropPosition(modalRoomProps.length);
+    modalRoomProps.push({ id, x: pos.x, y: pos.y, scale: PROP_SCALE_DEFAULT });
+    selectedCanvasPropIndex = modalRoomProps.length - 1;
+  }
+  renderPropGrid(modalRoomProps.map(p => p.id));
+  renderModalCanvas();
+}
+
+// 책 내용 슬라이드 데이터
+const bookPages = [
+  {
+    emoji: '🏨',
+    text: '마음속에는 특별한 호텔이 있어요.\n날마다 여러 감정들이 찾아와 머물다 가는 곳,\n바로 "감정호텔"이에요.'
+  },
+  {
+    emoji: '😊',
+    text: '기쁨은 밝고 활기차게 찾아와요.\n로비를 가득 채우는 따뜻한 빛처럼,\n호텔 전체를 환하게 만들어줘요.'
+  },
+  {
+    emoji: '😢',
+    text: '슬픔은 조용히 문을 두드려요.\n목소리가 작아서 잘 안 들릴 수 있지만,\n슬픔에게도 따뜻한 방이 필요해요.'
+  },
+  {
+    emoji: '😡',
+    text: '분노는 쾅! 하고 문을 열고 들어와요.\n시끄럽고 강렬하지만,\n분노가 말하고 싶은 게 있다는 뜻이에요.'
+  },
+  {
+    emoji: '😰',
+    text: '불안은 복도를 빠르게 오가며 서성여요.\n"괜찮을까?" 하고 계속 물어봐요.\n잠깐 앉아 쉬게 해주면 좀 나아져요.'
+  },
+  {
+    emoji: '🌿',
+    text: '평화는 말없이 조용히 머물러요.\n창문으로 햇살이 들어오는 것처럼,\n평화가 있을 때 모든 게 가벼워져요.'
+  },
+  {
+    emoji: '😳',
+    text: '수치심은 숨고 싶어해요.\n들키지 않으려고 구석에 있지만,\n괜찮다고 말해주면 조금씩 나와요.'
+  },
+  {
+    emoji: '🏨',
+    text: '감정호텔의 지배인은 바로 나예요.\n어떤 손님이 와도 내쫓지 않아요.\n모든 감정은 여기 머물 자격이 있거든요.'
+  },
+  {
+    emoji: '🗝️',
+    text: '지배인의 역할은 감정을 없애는 게 아니에요.\n각 감정이 원하는 걸 들어주고,\n편안하게 머물다 떠날 수 있게 돕는 거예요.'
+  },
+  {
+    emoji: '✨',
+    text: '오늘 내 감정호텔엔 누가 찾아왔나요?\n어떤 손님이든 환영해요.\n문은 언제나 열려있으니까요 🏨'
+  }
+];
+
+// 기본 감정 데이터 (매뉴얼용)
+const defaultEmotionData = {
+  '기쁨':   { emoji:'😊', color:'#FFF3B0', border:'#F5C842',
+               signals:['웃음이 나요','에너지가 넘쳐요','말이 많아져요','몸이 가벼워요'],
+               wants:'이 기분을 함께 나누고 싶어요' },
+  '슬픔':   { emoji:'😢', color:'#D0EEFF', border:'#5A9FD4',
+               signals:['눈물이 나요','혼자 있고 싶어요','아무것도 하기 싫어요','조용해져요'],
+               wants:'그냥 곁에 있어줬으면 해요' },
+  '분노':   { emoji:'😡', color:'#FFD6D6', border:'#E07070',
+               signals:['심장이 빨리 뛰어요','소리 지르고 싶어요','몸이 뜨거워요','물건을 던지고 싶어요'],
+               wants:'내 억울함을 알아줬으면 해요' },
+  '불안':   { emoji:'😰', color:'#FFD9B7', border:'#FFA96A',
+               signals:['배가 아파요','잠이 안 와요','자꾸 확인해요','숨이 가빠져요'],
+               wants:'괜찮다고 안심시켜 주세요' },
+  '평화':   { emoji:'🌿', color:'#C8F0E8', border:'#5BBFA8',
+               signals:['마음이 조용해요','숨이 편해요','여유가 생겨요','주변이 아름다워 보여요'],
+               wants:'이 상태가 오래 이어지면 좋겠어요' },
+  '수치심': { emoji:'😳', color:'#E8DEFF', border:'#A98FE0',
+               signals:['얼굴이 빨개져요','숨고 싶어요','눈을 못 마주쳐요','작아지는 느낌이에요'],
+               wants:'판단받지 않고 싶어요' },
+  '죄책감': { emoji:'😔', color:'#F0F0F0', border:'#AAAAAA',
+               signals:['계속 생각나요','미안해요','잠을 못 자요','자꾸 사과하고 싶어요'],
+               wants:'용서받고 싶어요' },
+  '설렘':   { emoji:'🥰', color:'#FFE4F0', border:'#E07090',
+               signals:['심장이 두근거려요','기대돼요','자꾸 생각나요','에너지가 생겨요'],
+               wants:'이 감정을 표현하고 싶어요' },
+  '감사':   { emoji:'🙏', color:'#FFF3B0', border:'#F5C842',
+               signals:['따뜻해요','미소가 나요','고마운 게 보여요'],
+               wants:'고마움을 전달하고 싶어요' },
+  '만족감': { emoji:'😌', color:'#C8F0E8', border:'#5BBFA8',
+               signals:['뿌듯해요','쉬고 싶어요','충분한 느낌이에요'],
+               wants:'이 순간을 오래 기억하고 싶어요' },
+  '우울감': { emoji:'🌧️', color:'#D0EEFF', border:'#5A9FD4',
+               signals:['무기력해요','아무 의욕이 없어요','어둡고 무거워요','눈물이 자주 나요'],
+               wants:'누군가 먼저 말 걸어줬으면 해요' },
+  '자극심': { emoji:'⚡', color:'#FFD9B7', border:'#FFA96A',
+               signals:['짜증나요','예민해요','작은 것도 신경 쓰여요'],
+               wants:'조용한 공간이 필요해요' },
+  '자신감': { emoji:'💪', color:'#FFF3B0', border:'#F5C842',
+               signals:['할 수 있을 것 같아요','당당해요','도전하고 싶어요'],
+               wants:'내 가능성을 믿어주세요' },
+  '사랑':   { emoji:'❤️', color:'#FFE4F0', border:'#E07090',
+               signals:['따뜻해요','소중한 사람이 생각나요','표현하고 싶어요'],
+               wants:'사랑을 나누고 싶어요' }
+};
+
+// 앱 데이터 구조
+let appData = {
+  hotelName: '',
+  managerName: '',
+  hotelColor: '#A98FE0',
+  hotelColorLight: '#E8DEFF',
+  guests: [],          // { name, emoji, trait, visitTime, wants, isToday }
+  todayReason: '',
+  rooms: {},           // { roomId: { guest, roomName, color, props[], memo } }
+  lobbyMemo: '',
+  rules: [],
+  hotelIntro: '',
+  managerIntro: '',
+  manual: {},          // { emotionName: { signals[], wants, actions[], customSignal } }
+  secretWeapons: '',
+  empathyLog: [],
+  ost: { title:'', reason:'', lyrics:'', sunoPrompt:'' }
+};
+
+
+/* ───────────────────────────────────────────
+   1. localStorage 저장 & 불러오기
+─────────────────────────────────────────── */
+function autoSave() {
+  try {
+    localStorage.setItem('emotionHotel_v1', JSON.stringify(appData));
+    showSaveIndicator('💾 저장됨');
+  } catch(e) {
+    showSaveIndicator('⚠️ 저장 실패');
+  }
+}
+
+function loadData() {
+  try {
+    const saved = localStorage.getItem('emotionHotel_v1');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      appData = Object.assign(appData, parsed);
+      // 구 이모지 소품 → 이미지 id로 마이그레이션
+      Object.values(appData.rooms || {}).forEach(room => {
+        if (room.props) room.props = normalizeProps(room.props);
+      });
+    }
+  } catch(e) { /* 무시 */ }
+}
+
+function showSaveIndicator(msg) {
+  const el = document.getElementById('save-indicator');
+  el.textContent = msg;
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.textContent = '💾 저장됨'; }, 2000);
+}
+
+
+/* ───────────────────────────────────────────
+   2. 스텝 이동
+─────────────────────────────────────────── */
+function goStep(n) {
+  // 현재 섹션 저장 처리
+  collectCurrentStep(currentStep);
+
+  // 페이지 전환
+  document.querySelectorAll('.section-page').forEach(el => el.classList.remove('active'));
+  const target = document.getElementById('page-' + n);
+  if (target) target.classList.add('active');
+
+  // 스텝바 업데이트
+  document.querySelectorAll('.step-item').forEach(el => {
+    const s = parseInt(el.dataset.step);
+    el.classList.remove('active', 'done');
+    if (s === n)  el.classList.add('active');
+    if (s < n)    el.classList.add('done');
+  });
+
+  currentStep = n;
+
+  // 이전/다음 버튼 제어
+  document.getElementById('prev-btn').style.visibility = n === 0 ? 'hidden' : 'visible';
+  const nextBtn = document.getElementById('next-btn');
+  if (n === 8) {
+    nextBtn.textContent = '🖨️ 인쇄';
+    nextBtn.onclick = function() { printSummary(); };
+  } else {
+    nextBtn.textContent = n === 7 ? '📄 요약본 ▶' : '다음 ▶';
+    nextBtn.onclick = nextStep;
+  }
+
+  // 진입 시 렌더링
+  renderStep(n);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextStep() { if (currentStep < 8) goStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0) goStep(currentStep - 1); }
+
+// 각 스텝 진입 시 렌더링 호출
+function renderStep(n) {
+  if (n === 0) renderCover();
+  if (n === 1) renderBook();
+  if (n === 2) renderGuests();
+  if (n === 3) renderBuilding();
+  if (n === 4) renderRules();
+  if (n === 5) renderSignboard();
+  if (n === 6) renderManual();
+  if (n === 7) renderOST();
+  if (n === 8) renderSummaryPage();
+}
+
+// 현재 스텝 데이터 수집
+function collectCurrentStep(n) {
+  if (n === 0) {
+    appData.hotelName    = val('input-hotel-name');
+    appData.managerName  = val('input-manager-name');
+  }
+  if (n === 2) {
+    appData.todayReason = val('today-reason');
+  }
+  if (n === 5) {
+    appData.hotelName    = val('hotel-name-step5') || appData.hotelName;
+    appData.hotelIntro   = val('hotel-intro');
+    appData.managerIntro = val('manager-intro');
+  }
+  if (n === 6) {
+    appData.secretWeapons = val('secret-weapons');
+    collectManualData();
+  }
+  if (n === 7) {
+    appData.ost.title   = val('ost-title');
+    appData.ost.reason  = val('ost-reason');
+    appData.ost.lyrics  = val('ost-lyrics');
+  }
+  autoSave();
+}
+
+// 유틸: input/textarea 값 읽기
+function val(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+function setVal(id, v) {
+  const el = document.getElementById(id);
+  if (el) el.value = v || '';
+}
+
+
+/* ───────────────────────────────────────────
+   3. STEP 0 — 표지
+─────────────────────────────────────────── */
+function renderCover() {
+  setVal('input-hotel-name',  appData.hotelName);
+  setVal('input-manager-name', appData.managerName);
+}
+
+function startHotel() {
+  appData.hotelName   = val('input-hotel-name')   || '나의 감정호텔';
+  appData.managerName = val('input-manager-name')  || '지배인';
+  updateHeaderInfo();
+  autoSave();
+  goStep(1);
+}
+
+function updateHeaderInfo() {
+  appData.hotelName   = val('input-hotel-name')   || appData.hotelName;
+  appData.managerName = val('input-manager-name')  || appData.managerName;
+  const hn = document.getElementById('header-hotel-name');
+  const mn = document.getElementById('header-manager-name');
+  if (hn) hn.textContent = '🏨 ' + (appData.hotelName || '감정호텔');
+  if (mn) mn.textContent = '👤 ' + (appData.managerName || '지배인');
+  // 건물 간판도 동기화
+  const bn = document.getElementById('building-hotel-name');
+  if (bn) bn.textContent = '🏨 ' + (appData.hotelName || '감정호텔');
+}
+
+
+/* ───────────────────────────────────────────
+   4. STEP 1 — 책 읽기
+─────────────────────────────────────────── */
+function renderBook() {
+  currentBookPage = 0;
+  renderBookPage();
+  renderEmpathyLog();
+}
+
+function renderBookPage() {
+  const p = bookPages[currentBookPage];
+  document.getElementById('book-emoji').textContent = p.emoji;
+  document.getElementById('book-text').innerText    = p.text;
+  document.getElementById('book-page-num').textContent =
+    (currentBookPage + 1) + ' / ' + bookPages.length;
+
+  // 공감 버튼
+  const wrap = document.getElementById('empathy-wrap');
+  const already = appData.empathyLog.includes(currentBookPage);
+  wrap.innerHTML = `
+    <button class="empathy-btn ${already ? 'clicked' : ''}"
+            onclick="toggleEmpathy(${currentBookPage})">
+      ${already ? '❤️ 공감했어요!' : '🤍 나도 이런 적 있어요'}
+    </button>`;
+}
+
+function bookNext() {
+  if (currentBookPage < bookPages.length - 1) {
+    currentBookPage++;
+    renderBookPage();
+  }
+}
+function bookPrev() {
+  if (currentBookPage > 0) {
+    currentBookPage--;
+    renderBookPage();
+  }
+}
+
+function toggleEmpathy(idx) {
+  const i = appData.empathyLog.indexOf(idx);
+  if (i === -1) appData.empathyLog.push(idx);
+  else          appData.empathyLog.splice(i, 1);
+  autoSave();
+  renderBookPage();
+  renderEmpathyLog();
+}
+
+function renderEmpathyLog() {
+  const el = document.getElementById('empathy-log');
+  if (!appData.empathyLog.length) {
+    el.innerHTML = '<span class="text-soft">아직 공감한 장면이 없어요. 책을 읽으며 ❤️ 버튼을 눌러보세요!</span>';
+    return;
+  }
+  el.innerHTML = appData.empathyLog
+    .sort((a,b) => a - b)
+    .map(i => `
+      <div style="display:flex; gap:8px; align-items:flex-start; margin-bottom:10px;
+                  background:var(--rose); border-radius:10px; padding:10px 14px;">
+        <span style="font-size:1.4rem;">${bookPages[i].emoji}</span>
+        <span style="font-size:0.88rem; line-height:1.7;">${bookPages[i].text.split('\n')[0]}</span>
+      </div>`)
+    .join('');
+}
+
+
+/* ───────────────────────────────────────────
+   5. STEP 2 — 손님 체크인
+─────────────────────────────────────────── */
+function toggleEmotionBadge(el) {
+  const emotion = el.dataset.emotion;
+  const emoji   = el.dataset.emoji;
+  el.classList.toggle('selected');
+
+  if (el.classList.contains('selected')) {
+    // 이미 있으면 추가 안 함
+    if (!appData.guests.find(g => g.name === emotion)) {
+      const def = defaultEmotionData[emotion] || {};
+      appData.guests.push({
+        name: emotion,
+        emoji: emoji,
+        trait: def.signals ? def.signals[0] : '',
+        visitTime: '',
+        wants: def.wants || '',
+        isToday: false
+      });
+    }
+  } else {
+    appData.guests = appData.guests.filter(g => g.name !== emotion);
+  }
+  autoSave();
+  renderGuestTable();
+  renderTodayRadios();
+  syncGuestSelectInModal();
+}
+
+function addCustomGuest() {
+  const name = prompt('✏️ 추가할 감정 이름을 입력하세요\n(예: 외로움, 두근거림, 부끄러움...)');
+  if (!name || !name.trim()) return;
+  const trimmed = name.trim();
+  if (appData.guests.find(g => g.name === trimmed)) {
+    alert('이미 추가된 손님이에요!'); return;
+  }
+  appData.guests.push({
+    name: trimmed, emoji: '💭',
+    trait: '', visitTime: '', wants: '', isToday: false
+  });
+  autoSave();
+  renderGuestTable();
+  renderTodayRadios();
+}
+
+function renderGuests() {
+  // 뱃지 selected 복원
+  document.querySelectorAll('#emotion-badge-group .emotion-badge').forEach(badge => {
+    const emotion = badge.dataset.emotion;
+    if (appData.guests.find(g => g.name === emotion))
+      badge.classList.add('selected');
+    else
+      badge.classList.remove('selected');
+  });
+  renderGuestTable();
+  renderTodayRadios();
+  setVal('today-reason', appData.todayReason);
+}
+
+function renderGuestTable() {
+  const tbody = document.getElementById('guest-tbody');
+  if (!tbody) return;
+
+  if (!appData.guests.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-soft" style="text-align:center; padding:16px;">
+      위에서 감정 손님을 선택하거나 직접 추가해보세요!</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = appData.guests.map((g, i) => `
+    <tr>
+      <td data-label="">
+        <span style="font-size:1.2rem;">${g.emoji}</span>
+        <strong style="margin-left:4px;">${g.name}</strong>
+      </td>
+      <td data-label="특징"><input type="text" value="${escHtml(g.trait)}"
+           placeholder="특징..."
+           oninput="updateGuest(${i},'trait',this.value)"/></td>
+      <td data-label="자주 오는 때"><input type="text" value="${escHtml(g.visitTime)}"
+           placeholder="언제 오나요?"
+           oninput="updateGuest(${i},'visitTime',this.value)"/></td>
+      <td data-label="원하는 것"><input type="text" value="${escHtml(g.wants)}"
+           placeholder="원하는 것..."
+           oninput="updateGuest(${i},'wants',this.value)"/></td>
+      <td data-label="">
+        <button class="btn-danger" onclick="removeGuest(${i})" title="삭제">✕</button>
+      </td>
+    </tr>`).join('');
+}
+
+function updateGuest(idx, field, value) {
+  if (appData.guests[idx]) {
+    appData.guests[idx][field] = value;
+    autoSave();
+  }
+}
+
+function removeGuest(idx) {
+  appData.guests.splice(idx, 1);
+  autoSave();
+  renderGuestTable();
+  renderTodayRadios();
+}
+
+function renderTodayRadios() {
+  const wrap = document.getElementById('today-guest-radios');
+  if (!wrap) return;
+  if (!appData.guests.length) {
+    wrap.innerHTML = '<span class="text-soft">위에서 손님을 먼저 추가해주세요!</span>';
+    return;
+  }
+  wrap.innerHTML = appData.guests.map(g => `
+    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;
+                  background:var(--cream); border-radius:50px; padding:6px 14px;
+                  border:2px solid ${g.isToday ? 'var(--lavender-dk)' : '#ddd'};
+                  font-size:0.88rem; transition:0.2s;">
+      <input type="radio" name="today-guest" value="${g.name}"
+             ${g.isToday ? 'checked' : ''}
+             onchange="setTodayGuest('${g.name}')">
+      ${g.emoji} ${g.name}
+    </label>`).join('');
+}
+
+function setTodayGuest(name) {
+  appData.guests.forEach(g => g.isToday = (g.name === name));
+  autoSave();
+}
+
+
+/* ───────────────────────────────────────────
+   6. STEP 3 — 방 꾸미기
+─────────────────────────────────────────── */
+function renderBuilding() {
+  updateHeaderInfo();
+  renderPropGrid();
+  const root = document.getElementById('page-3');
+  for (let id = 0; id <= 9; id++) {
+    applyRoomToBuilding(id, appData.rooms[id] || {}, root);
+  }
+  renderRoomSummary();
+}
+
+function getBuildingRoomEl(id, scope) {
+  if (!scope) scope = document;
+  if (id === 0) return scope.querySelector('.hotel-lobby');
+  if (scope.id === 'summary-building' || scope.querySelector('[data-summary-room]')) {
+    return scope.querySelector('[data-summary-room="' + id + '"]');
+  }
+  return document.getElementById('room-' + id);
+}
+
+function isRoomDecorated(room) {
+  if (!room) return false;
+  return !!(
+    (room.roomName && room.roomName.trim()) ||
+    room.guest ||
+    (room.props && normalizeProps(room.props).length) ||
+    (room.memo && room.memo.trim())
+  );
+}
+
+function applyRoomToBuilding(id, room, scope) {
+  if (!room) room = {};
+  const props = room.props || [];
+  const guestEmoji = room.guest ? (defaultEmotionData[room.guest]?.emoji || '💭') : '';
+  const decorated = isRoomDecorated(room);
+  const hasName = !!(room.roomName && room.roomName.trim());
+  const hasGuest = !!room.guest;
+  const hasLabel = hasName || hasGuest;
+  const root = scope || document.getElementById('page-3') || document;
+
+  if (id === 0) {
+    const lobby = getBuildingRoomEl(0, root);
+    if (lobby) {
+      lobby.style.background = `linear-gradient(135deg, ${room.color || '#FFD9B7'}, ${(room.color || '#FFD9B7')}cc)`;
+      lobby.classList.toggle('is-decorated', decorated);
+      lobby.classList.toggle('has-label', hasLabel);
+      const layer = lobby.querySelector('.lobby-props-layer');
+      renderPropLayer(layer, props);
+      const label = lobby.querySelector('.lobby-label');
+      if (label) {
+        if (!decorated) {
+          label.textContent = root.id === 'summary-building' ? '' : '🛎️ 로비 (클릭해서 꾸미기)';
+        } else if (hasName) {
+          label.textContent = '🛎️ ' + room.roomName.trim();
+        } else if (hasGuest) {
+          label.textContent = '🛎️ ' + guestEmoji + ' ' + room.guest;
+        } else {
+          label.textContent = '';
+        }
+      }
+    }
+    return;
+  }
+  const el = getBuildingRoomEl(id, root);
+  if (!el) return;
+  el.style.background = room.color || '#f0e8ff';
+  el.classList.toggle('is-decorated', decorated);
+  el.classList.toggle('has-label', hasLabel);
+  const layer = el.querySelector('.room-props-layer');
+  renderPropLayer(layer, props);
+  const nameEl = el.querySelector('.room-name');
+  const guestEl = el.querySelector('.room-guest');
+  if (nameEl) nameEl.textContent = hasName ? room.roomName.trim() : (decorated ? '' : (root.id === 'summary-building' ? '' : '빈 방'));
+  if (guestEl) guestEl.textContent = hasGuest ? guestEmoji + ' ' + room.guest : (decorated ? '' : (root.id === 'summary-building' ? '' : '클릭해서 꾸미기'));
+}
+
+function renderRoomSummary() {
+  const wrap = document.getElementById('room-summary');
+  if (!wrap) return;
+  const filled = Object.entries(appData.rooms).filter(([,r]) => r.roomName || r.guest);
+  if (!filled.length) {
+    wrap.innerHTML = '<span class="text-soft">방을 클릭해서 손님을 배정해보세요!</span>';
+    return;
+  }
+  wrap.innerHTML = filled.map(([id, r]) => {
+    const props = normalizeProps(r.props);
+    const propHtml = props.length
+      ? `<span style="display:inline-flex;gap:2px;vertical-align:middle;">${props.slice(0,3).map(p =>
+          `<img src="${propImageSrc(p.id)}" alt="" style="width:1rem;height:1rem;object-fit:contain;" onerror="propImgOnError(this)"/>`
+        ).join('')}</span>`
+      : '<span>🪟</span>';
+    return `
+    <span class="emotion-badge eb-lavender" style="border:1.5px solid var(--lavender-dk); display:inline-flex; align-items:center; gap:4px;">
+      ${propHtml}
+      ${r.roomName || (id === '0' ? '로비' : id + '호')}
+      ${r.guest ? '← ' + r.guest : ''}
+    </span>`;
+  }).join('');
+}
+
+// 모달 열기
+function openRoomModal(id) {
+  currentRoomId = id;
+  const room = appData.rooms[id] || {};
+  const isLobby = (id === 0);
+
+  document.getElementById('modal-room-title').textContent =
+    isLobby ? '🛎️ 로비 꾸미기' : `🛏️ ${id}호 방 꾸미기`;
+
+  // 손님 select 동기화
+  syncGuestSelectInModal();
+  document.getElementById('modal-guest-select').value = room.guest || '';
+
+  setVal('modal-room-name',  room.roomName || '');
+  setVal('modal-room-memo',  room.memo     || '');
+
+  // 색상 복원
+  const color = room.color || '#f0e8ff';
+  document.getElementById('modal-room-color').value = color;
+  syncColorSwatch(color);
+
+  modalRoomProps = normalizeProps(room.props).map(p => ({ ...p }));
+  selectedCanvasPropIndex = -1;
+  renderPropGrid(modalRoomProps.map(p => p.id));
+  renderModalCanvas();
+
+  document.getElementById('room-modal').classList.add('open');
+}
+
+function closeRoomModal() {
+  document.getElementById('room-modal').classList.remove('open');
+  currentRoomId = null;
+  modalRoomProps = [];
+  selectedCanvasPropIndex = -1;
+}
+
+function saveRoom() {
+  if (currentRoomId === null) return;
+
+  appData.rooms[currentRoomId] = {
+    guest:    document.getElementById('modal-guest-select').value,
+    roomName: val('modal-room-name'),
+    color:    document.getElementById('modal-room-color').value,
+    props:    modalRoomProps.map(p => ({
+      id: p.id, x: p.x, y: p.y,
+      scale: clampPropScale(p.scale || 1)
+    })),
+    memo:     val('modal-room-memo')
+  };
+
+  autoSave();
+  applyRoomToBuilding(currentRoomId, appData.rooms[currentRoomId], document.getElementById('page-3'));
+  renderRoomSummary();
+  closeRoomModal();
+}
+
+// 손님 select를 guests 목록으로 동기화
+function syncGuestSelectInModal() {
+  const sel = document.getElementById('modal-guest-select');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">-- 손님 선택 --</option>' +
+    appData.guests.map(g =>
+      `<option value="${g.name}" ${g.name === cur ? 'selected' : ''}>${g.emoji} ${g.name}</option>`
+    ).join('');
+}
+
+// 색상 스와치 선택
+function selectColor(hex) {
+  document.getElementById('modal-room-color').value = hex;
+  syncColorSwatch(hex);
+  const canvas = document.getElementById('room-edit-canvas');
+  if (canvas) canvas.style.background = hex;
+}
+function syncColorSwatch(hex) {
+  document.querySelectorAll('#color-swatches .color-swatch').forEach(sw => {
+    sw.classList.toggle('selected',
+      sw.style.background.toLowerCase() === hex.toLowerCase() ||
+      rgbToHex(sw.style.background) === hex.toLowerCase());
+  });
+  const canvas = document.getElementById('room-edit-canvas');
+  if (canvas && document.getElementById('room-modal')?.classList.contains('open')) {
+    canvas.style.background = hex;
+  }
+}
+
+// rgb(r,g,b) → #rrggbb 변환 유틸
+function rgbToHex(rgb) {
+  const m = rgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (!m) return rgb.toLowerCase();
+  return '#' + [m[1],m[2],m[3]].map(x => parseInt(x).toString(16).padStart(2,'0')).join('');
+}
+
+// 소품 선택 — toggleProp() 위에 정의됨
+
+// 모달 외부 클릭 시 닫기
+document.getElementById('room-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeRoomModal();
+});
+document.getElementById('room-edit-canvas')?.addEventListener('pointerdown', function(e) {
+  if (e.target === this || e.target.id === 'room-canvas-hint') {
+    selectedCanvasPropIndex = -1;
+    this.querySelectorAll('.placed-prop').forEach(el => el.classList.remove('selected'));
+    updatePropSizeToolbar();
+  }
+});
+
+
+/* ───────────────────────────────────────────
+   7. STEP 4 — 규칙 만들기
+─────────────────────────────────────────── */
+function renderRules() {
+  if (!appData.rules.length) {
+    // 기본 규칙 3개 미리 제공
+    appData.rules = [
+      '어떤 손님도 돌려보내지 않는다',
+      '모든 감정에게 방을 내어준다',
+      ''
+    ];
+  }
+  renderRuleList();
+}
+
+function renderRuleList() {
+  const ul = document.getElementById('rule-list');
+  if (!ul) return;
+  ul.innerHTML = appData.rules.map((r, i) => `
+    <li class="rule-item">
+      <span class="rule-num">${i + 1}</span>
+      <input class="rule-input" type="text" value="${escHtml(r)}"
+             placeholder="규칙을 입력하세요..."
+             oninput="updateRule(${i}, this.value)"/>
+      <button class="btn-danger" onclick="removeRule(${i})">✕</button>
+    </li>`).join('');
+  updateRulePreview();
+}
+
+function addRule() {
+  if (appData.rules.length >= 12) {
+    alert('규칙은 최대 12개까지 만들 수 있어요!'); return;
+  }
+  appData.rules.push('');
+  autoSave();
+  renderRuleList();
+  // 마지막 input에 포커스
+  const inputs = document.querySelectorAll('.rule-input');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function removeRule(idx) {
+  if (appData.rules.length <= 1) {
+    alert('최소 1개의 규칙은 있어야 해요!'); return;
+  }
+  appData.rules.splice(idx, 1);
+  autoSave();
+  renderRuleList();
+}
+
+function updateRule(idx, value) {
+  appData.rules[idx] = value;
+  autoSave();
+  updateRulePreview();
+}
+
+function updateRulePreview() {
+  const el = document.getElementById('rule-preview');
+  if (!el) return;
+  const filled = appData.rules.filter(r => r.trim());
+  if (!filled.length) {
+    el.innerHTML = '규칙을 추가하면 여기에 표시돼요!';
+    return;
+  }
+  el.innerHTML = `<div style="font-size:1rem; font-weight:700; margin-bottom:10px; color:#4a2a7a;">
+      📜 ${appData.hotelName || '감정호텔'} 규칙
+    </div>` +
+    filled.map((r, i) =>
+      `<div>${i + 1}. ${escHtml(r)}</div>`
+    ).join('');
+}
+
+
+/* ───────────────────────────────────────────
+   8. STEP 5 — 이름 & 소개글
+─────────────────────────────────────────── */
+function renderSignboard() {
+  setVal('hotel-name-step5', appData.hotelName);
+  setVal('hotel-intro',      appData.hotelIntro);
+  setVal('manager-intro',    appData.managerIntro);
+  // 색상 스와치 복원
+  updateSignboard();
+}
+
+function syncHotelName() {
+  appData.hotelName = val('hotel-name-step5') || appData.hotelName;
+  updateHeaderInfo();
+  updateSignboard();
+  autoSave();
+}
+
+function selectHotelColor(dark, light) {
+  appData.hotelColor      = dark;
+  appData.hotelColorLight = light;
+  // 스와치 selected 처리
+  document.querySelectorAll('#page-5 .color-swatch').forEach(sw => {
+    sw.classList.toggle('selected', rgbToHex(sw.style.background) === dark.toLowerCase()
+      || sw.style.background === dark);
+  });
+  updateSignboard();
+  autoSave();
+}
+
+function updateSignboard() {
+  const name    = val('hotel-name-step5') || appData.hotelName || '감정호텔';
+  const intro   = val('hotel-intro')      || appData.hotelIntro || '소개글을 입력하면 여기에 표시돼요';
+  const manager = val('manager-intro')    || appData.managerIntro || '지배인: ' + (appData.managerName || '');
+  const dark    = appData.hotelColor      || '#A98FE0';
+
+  const board = document.getElementById('signboard');
+  if (board) {
+    board.style.background = `linear-gradient(135deg, ${dark}, ${shadeColor(dark, -30)})`;
+  }
+  const sn = document.getElementById('signboard-name');
+  const si = document.getElementById('signboard-intro');
+  const sm = document.getElementById('signboard-manager');
+  if (sn) sn.textContent = name;
+  if (si) si.textContent = intro;
+  if (sm) sm.textContent = '👤 지배인: ' + (appData.managerName || '') + (manager ? '  |  ' + manager : '');
+}
+
+// 색상 어둡게/밝게
+function shadeColor(hex, pct) {
+  const n = parseInt(hex.replace('#',''), 16);
+  const r = Math.min(255, Math.max(0, (n>>16) + pct));
+  const g = Math.min(255, Math.max(0, ((n>>8)&0xff) + pct));
+  const b = Math.min(255, Math.max(0, (n&0xff) + pct));
+  return '#' + [r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+
+/* ───────────────────────────────────────────
+   9. STEP 6 — 손님 대응 매뉴얼
+─────────────────────────────────────────── */
+function renderManual() {
+  const container = document.getElementById('manual-cards-container');
+  if (!container) return;
+
+  if (!appData.guests.length) {
+    container.innerHTML = `<div class="info-box">
+      Step 2에서 손님을 추가하면 여기에 매뉴얼 카드가 생겨요!
+    </div>`;
+    return;
+  }
+
+  // 색상 매핑
+  const colorMap = {
+    '기쁨':'#FFF3B0','슬픔':'#D0EEFF','분노':'#FFD6D6','불안':'#FFD9B7',
+    '평화':'#C8F0E8','수치심':'#E8DEFF','죄책감':'#F0F0F0','설렘':'#FFE4F0',
+    '감사':'#FFF3B0','만족감':'#C8F0E8','우울감':'#D0EEFF','자극심':'#FFD9B7',
+    '자신감':'#FFFDE0','사랑':'#FFE4F0'
+  };
+  const borderMap = {
+    '기쁨':'#F5C842','슬픔':'#5A9FD4','분노':'#E07070','불안':'#FFA96A',
+    '평화':'#5BBFA8','수치심':'#A98FE0','죄책감':'#AAAAAA','설렘':'#E07090',
+    '감사':'#F5C842','만족감':'#5BBFA8','우울감':'#5A9FD4','자극심':'#FFA96A',
+    '자신감':'#F5C842','사랑':'#E07090'
+  };
+
+  container.innerHTML = appData.guests.map(g => {
+    const def  = defaultEmotionData[g.name] || {};
+    const mKey = g.name;
+    if (!appData.manual[mKey]) {
+      appData.manual[mKey] = {
+        signals: [],
+        wants:   g.wants || def.wants || '',
+        actions: ['','',''],
+        customSignal: ''
+      };
+    }
+    const m      = appData.manual[mKey];
+    const bg     = colorMap[g.name]  || '#f8f8f8';
+    const border = borderMap[g.name] || '#ccc';
+    const signals = def.signals || ['신호1','신호2','신호3','신호4'];
+
+    return `
+    <div class="manual-card" style="background:${bg}; border-color:${border};">
+      <div class="manual-card-header">
+        <span class="manual-emoji">${g.emoji || def.emoji || '💭'}</span>
+        <div>
+          <div class="manual-name">${g.name} 손님</div>
+          <div class="text-soft" style="font-size:0.8rem;">${g.trait || ''}</div>
+        </div>
+      </div>
+
+      <!-- 신호 체크 -->
+      <div style="font-size:0.82rem; font-weight:600; color:#555; margin-bottom:6px;">
+        🔔 이 손님이 왔다는 신호
+      </div>
+      <div class="signal-chips" id="signals-${mKey}">
+        ${signals.map(s => `
+          <span class="signal-chip ${m.signals.includes(s) ? 'checked' : ''}"
+                onclick="toggleSignal('${mKey}','${s}',this)">
+            ${s}
+          </span>`).join('')}
+      </div>
+      <input type="text" placeholder="+ 나만의 신호 직접 입력..."
+             value="${escHtml(m.customSignal || '')}"
+             oninput="updateManual('${mKey}','customSignal',this.value)"
+             style="margin-bottom:12px;"/>
+
+      <!-- 원하는 것 -->
+      <label class="field-label">💬 이 손님이 바라는 것</label>
+      <input type="text"
+             value="${escHtml(m.wants)}"
+             placeholder="예) 그냥 곁에 있어줬으면 해요..."
+             oninput="updateManual('${mKey}','wants',this.value)"/>
+
+      <!-- 지배인이 할 수 있는 것 -->
+      <label class="field-label">🗝️ 지배인이 할 수 있는 것</label>
+      <ul class="action-list">
+        ${[0,1,2].map(j => `
+          <li class="action-item">
+            <span class="action-num">①②③`[j+1]`</span>
+            <input class="action-input" type="text"
+                   value="${escHtml((m.actions||[])[j]||'')}"
+                   placeholder="예) 잠깐 눈 감고 숨 쉬기..."
+                   oninput="updateManualAction('${mKey}',${j},this.value)"/>
+          </li>`).join('')}
+      </ul>
+    </div>`;
+  }).join('');
+
+  setVal('secret-weapons', appData.secretWeapons);
+}
+
+// 액션 번호 이모지 헬퍼
+String.prototype[Symbol.iterator]; // 그냥 참고용 주석
+function actionNum(j) { return ['①','②','③'][j] || (j+1); }
+
+function toggleSignal(mKey, signal, el) {
+  if (!appData.manual[mKey]) appData.manual[mKey] = { signals:[], wants:'', actions:['','',''], customSignal:'' };
+  const arr = appData.manual[mKey].signals;
+  const i   = arr.indexOf(signal);
+  if (i === -1) arr.push(signal);
+  else          arr.splice(i, 1);
+  el.classList.toggle('checked');
+  autoSave();
+}
+
+function updateManual(mKey, field, value) {
+  if (!appData.manual[mKey]) appData.manual[mKey] = { signals:[], wants:'', actions:['','',''], customSignal:'' };
+  appData.manual[mKey][field] = value;
+  autoSave();
+}
+
+function updateManualAction(mKey, idx, value) {
+  if (!appData.manual[mKey]) appData.manual[mKey] = { signals:[], wants:'', actions:['','',''], customSignal:'' };
+  if (!appData.manual[mKey].actions) appData.manual[mKey].actions = ['','',''];
+  appData.manual[mKey].actions[idx] = value;
+  autoSave();
+}
+
+function collectManualData() {
+  appData.guests.forEach(g => {
+    const mKey = g.name;
+    if (!appData.manual[mKey]) return;
+    // wants, customSignal은 oninput에서 실시간 저장됨
+    // actions도 실시간 저장됨
+  });
+}
+
+
+/* ───────────────────────────────────────────
+   10. STEP 7 — OST
+─────────────────────────────────────────── */
+function renderOST() {
+  setVal('ost-title',  appData.ost.title);
+  setVal('ost-reason', appData.ost.reason);
+  setVal('ost-lyrics', appData.ost.lyrics);
+
+  // SUNO 태그 복원은 sunoTags 객체 기준
+  sunoTags = { genre:'', mood:[], tempo:'', vocal:'' };
+}
+
+function toggleSunoTag(el, type) {
+  if (type === 'mood') {
+    // 다중 선택
+    el.classList.toggle('selected');
+    const val = el.dataset.val;
+    const i   = sunoTags.mood.indexOf(val);
+    if (i === -1) sunoTags.mood.push(val);
+    else          sunoTags.mood.splice(i, 1);
+  } else {
+    // 단일 선택
+    document.querySelectorAll(`[data-suno="${type}"]`).forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    sunoTags[type] = el.dataset.val;
+  }
+}
+
+function generateSunoPrompt() {
+  const parts = [];
+  if (sunoTags.genre)       parts.push(sunoTags.genre);
+  if (sunoTags.mood.length) parts.push(sunoTags.mood.join(', '));
+  if (sunoTags.tempo)       parts.push(sunoTags.tempo);
+  if (sunoTags.vocal)       parts.push(sunoTags.vocal);
+
+  if (!parts.length) {
+    alert('장르, 분위기, 템포 중 하나 이상 선택해주세요!'); return;
+  }
+
+  const hotelName = appData.hotelName || 'Emotion Hotel';
+  const prompt =
+`[Style of Music]
+${parts.join(', ')}
+
+[Song Description]
+A heartfelt song about welcoming all emotions without judgment,
+like a warm hotel that accepts every guest — joy, sadness, anger, anxiety, and peace.
+Inspired by the story of "${hotelName}", where the hotel manager embraces every feeling with kindness.
+
+[Mood Keywords]
+emotional acceptance, self-compassion, inner peace, healing${sunoTags.mood.length ? ', ' + sunoTags.mood.join(', ') : ''}
+
+[Language]
+Korean (한국어 가사)`;
+
+  appData.ost.sunoPrompt = prompt;
+  autoSave();
+
+  document.getElementById('suno-prompt-text').textContent = prompt;
+  document.getElementById('suno-result').style.display = 'block';
+    document.getElementById('suno-result').scrollIntoView({ behavior: 'smooth' });
+}
+
+function copySunoPrompt() {
+  const text = document.getElementById('suno-prompt-text').textContent;
+  if (!text) return;
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      const btn = document.querySelector('[onclick="copySunoPrompt()"]');
+      if (btn) {
+        btn.textContent = '✅ 복사됨!';
+        setTimeout(() => { btn.textContent = '📋 복사'; }, 2000);
+      }
+    })
+    .catch(() => {
+      // clipboard API 실패 시 fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity  = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      alert('📋 프롬프트가 복사됐어요! SUNO에 붙여넣기 하세요 😊');
+    });
+}
+
+
+/* ───────────────────────────────────────────
+   11. 매뉴얼 카드 렌더링 보완
+   (renderManual 내부 액션 번호 이모지 수정)
+─────────────────────────────────────────── */
+
+// 액션 번호 배열 (renderManual에서 사용)
+const ACTION_NUMS = ['①', '②', '③'];
+
+// renderManual 내 액션 리스트 부분을 올바르게 재정의
+function buildActionList(mKey, actions) {
+  return ACTION_NUMS.map((num, j) => `
+    <li class="action-item">
+      <span class="action-num">${num}</span>
+      <input class="action-input" type="text"
+             value="${escHtml((actions || [])[j] || '')}"
+             placeholder="예) 잠깐 눈 감고 숨 쉬기..."
+             oninput="updateManualAction('${mKey}',${j},this.value)"/>
+    </li>`).join('');
+}
+
+// renderManual 전체를 올바른 버전으로 재선언
+function renderManual() {
+  const container = document.getElementById('manual-cards-container');
+  if (!container) return;
+
+  if (!appData.guests.length) {
+    container.innerHTML = `
+      <div class="info-box">
+        Step 2에서 손님을 추가하면 여기에 매뉴얼 카드가 생겨요!
+      </div>`;
+    return;
+  }
+
+  const colorMap = {
+    '기쁨':'#FFF3B0',  '슬픔':'#D0EEFF',  '분노':'#FFD6D6',
+    '불안':'#FFD9B7',  '평화':'#C8F0E8',  '수치심':'#E8DEFF',
+    '죄책감':'#F0F0F0','설렘':'#FFE4F0',  '감사':'#FFF3B0',
+    '만족감':'#C8F0E8','우울감':'#D0EEFF','자극심':'#FFD9B7',
+    '자신감':'#FFFDE0','사랑':'#FFE4F0'
+  };
+  const borderMap = {
+    '기쁨':'#F5C842',  '슬픔':'#5A9FD4',  '분노':'#E07070',
+    '불안':'#FFA96A',  '평화':'#5BBFA8',  '수치심':'#A98FE0',
+    '죄책감':'#AAAAAA','설렘':'#E07090',  '감사':'#F5C842',
+    '만족감':'#5BBFA8','우울감':'#5A9FD4','자극심':'#FFA96A',
+    '자신감':'#F5C842','사랑':'#E07090'
+  };
+
+  container.innerHTML = appData.guests.map(g => {
+    const def  = defaultEmotionData[g.name] || {};
+    const mKey = g.name;
+
+    // 매뉴얼 데이터 초기화
+    if (!appData.manual[mKey]) {
+      appData.manual[mKey] = {
+        signals:     [],
+        wants:       g.wants || def.wants || '',
+        actions:     ['', '', ''],
+        customSignal:''
+      };
+    }
+    const m       = appData.manual[mKey];
+    const bg      = colorMap[g.name]  || '#f8f8f8';
+    const border  = borderMap[g.name] || '#ccc';
+    const signals = def.signals        || [];
+
+    return `
+      <div class="manual-card"
+           style="background:${bg}; border-color:${border};">
+
+        <!-- 카드 헤더 -->
+        <div class="manual-card-header">
+          <span class="manual-emoji">${g.emoji || def.emoji || '💭'}</span>
+          <div>
+            <div class="manual-name">${g.name} 손님</div>
+            <div class="text-soft" style="font-size:0.8rem;">${g.trait || ''}</div>
+          </div>
+        </div>
+
+        <!-- 신호 체크 -->
+        <div style="font-size:0.82rem; font-weight:600; color:#555; margin-bottom:6px;">
+          🔔 이 손님이 왔다는 신호
+        </div>
+        <div class="signal-chips">
+          ${signals.map(s => `
+            <span class="signal-chip ${m.signals.includes(s) ? 'checked' : ''}"
+                  onclick="toggleSignal('${mKey}','${s}',this)">
+              ${s}
+            </span>`).join('')}
+        </div>
+        <input type="text"
+               placeholder="+ 나만의 신호 직접 입력..."
+               value="${escHtml(m.customSignal || '')}"
+               oninput="updateManual('${mKey}','customSignal',this.value)"
+               style="margin-bottom:12px;"/>
+
+        <!-- 원하는 것 -->
+        <label class="field-label">💬 이 손님이 바라는 것</label>
+        <input type="text"
+               value="${escHtml(m.wants)}"
+               placeholder="예) 그냥 곁에 있어줬으면 해요..."
+               oninput="updateManual('${mKey}','wants',this.value)"/>
+
+        <!-- 해주면 좋은 것 -->
+        <label class="field-label">🌟 이 손님에게 해주면 좋은 것</label>
+        <input type="text"
+               value="${escHtml((m.goodFor || ''))}"
+               placeholder="예) 따뜻한 차 한 잔, 조용한 음악..."
+               oninput="updateManual('${mKey}','goodFor',this.value)"/>
+
+        <!-- 지배인이 할 수 있는 것 -->
+        <label class="field-label">🗝️ 지배인이 할 수 있는 것</label>
+        <ul class="action-list">
+          ${buildActionList(mKey, m.actions)}
+        </ul>
+
+      </div>`;
+  }).join('');
+
+  // 비밀 무기 상자 복원
+  setVal('secret-weapons', appData.secretWeapons);
+}
+
+
+/* ───────────────────────────────────────────
+   12. 유틸리티 함수들
+─────────────────────────────────────────── */
+
+// HTML 이스케이프 (XSS 방지)
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,  '&amp;')
+    .replace(/</g,  '&lt;')
+    .replace(/>/g,  '&gt;')
+    .replace(/"/g,  '&quot;')
+    .replace(/'/g,  '&#39;');
+}
+
+// 토스트 메시지 (가볍게 알림)
+function showToast(msg, duration = 2000) {
+  let toast = document.getElementById('toast-msg');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast-msg';
+    toast.style.cssText = `
+      position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+      background:rgba(60,40,80,0.88); color:white;
+      padding:10px 22px; border-radius:50px;
+      font-size:0.9rem; z-index:999;
+      box-shadow:0 4px 16px rgba(0,0,0,0.2);
+      pointer-events:none; transition:opacity 0.3s;`;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, duration);
+}
+
+// 전체 초기화 (데이터 삭제)
+function resetAll() {
+  if (!confirm('⚠️ 감정호텔 데이터를 모두 초기화할까요?\n이 작업은 되돌릴 수 없어요!')) return;
+  localStorage.removeItem('emotionHotel_v1');
+  location.reload();
+}
+
+
+/* ───────────────────────────────────────────
+   13. Step 8 요약본 & A4 인쇄
+─────────────────────────────────────────── */
+function sumSet(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text || '';
+}
+
+function renderSummaryPage() {
+  collectCurrentStep(currentStep);
+// 간판 배경색 적용
+const signFill = document.querySelector('.summary-fill-sign');
+if (signFill) {
+  signFill.style.background = appData.hotelColor || '#A98FE0';
+  signFill.style.borderRadius = '12px';
+  signFill.style.color = 'white';
+}
+  sumSet('sum-hotel-name', appData.hotelName || '감정호텔');
+  sumSet('sum-hotel-intro', appData.hotelIntro || '');
+  sumSet('sum-manager-intro', appData.managerIntro || appData.managerName || '');
+
+  const tbody = document.getElementById('sum-guest-tbody');
+  if (tbody) {
+    const guests = appData.guests.slice(0, 4);
+    if (!guests.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:#999;">손님을 추가해주세요</td></tr>';
+    } else {
+      tbody.innerHTML = guests.map(g => `
+        <tr>
+          <td>${escHtml(g.emoji + ' ' + g.name)}</td>
+          <td>${escHtml(g.trait || '')}</td>
+          <td>${escHtml(g.visitTime || '')}</td>
+          <td>${escHtml(g.wants || '')}</td>
+        </tr>`).join('');
+    }
+  }
+
+  const todayG = appData.guests.find(g => g.isToday);
+  sumSet('sum-today-guest', todayG ? '⭐ ' + todayG.emoji + ' ' + todayG.name : '');
+  sumSet('sum-today-reason', appData.todayReason || '');
+
+  const rules = appData.rules.filter(r => r && r.trim()).slice(0, 8);
+  const rulesEl = document.getElementById('sum-rules');
+  if (rulesEl) {
+    rulesEl.innerHTML = rules.length
+      ? rules.map((r, i) => `<div class="summary-rule-line">${i + 1}. ${escHtml(r)}</div>`).join('')
+      : '';
+  }
+
+  sumSet('sum-ost-title', appData.ost.title ? '🎼 ' + appData.ost.title : '');
+  sumSet('sum-ost-reason', appData.ost.reason || '');
+  const lyricsEl = document.getElementById('sum-ost-lyrics');
+  if (lyricsEl) lyricsEl.textContent = appData.ost.lyrics || '';
+
+  sumSet('sum-secret', appData.secretWeapons || '');
+  sumSet('sum-footer-msg', '');
+
+  const root = document.getElementById('summary-building');
+  if (root) {
+    for (let id = 0; id <= 9; id++) {
+      applyRoomToBuilding(id, appData.rooms[id] || {}, root);
+    }
+  }
+}
+
+function printSummary() {
+  if (currentStep !== 8) {
+    collectCurrentStep(currentStep);
+    goStep(8);
+    setTimeout(function() { renderSummaryPage(); window.print(); }, 400);
+    return;
+  }
+  renderSummaryPage();
+  setTimeout(function() { window.print(); }, 200);
+}
+
+function printWorksheet() {
+  printSummary();
+}
+
+/* ───────────────────────────────────────────
+   14. 앱 초기화 (DOMContentLoaded)
+─────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+
+  // 1) 저장 데이터 불러오기
+  loadData();
+
+  // 2) 헤더 정보 업데이트
+  updateHeaderInfo();
+
+  // 3) 시작 스텝 결정
+  //    호텔 이름이 저장돼 있으면 Step 1부터, 아니면 Step 0(표지)
+  if (appData.hotelName && appData.hotelName !== '나의 감정호텔') {
+    goStep(0);   // 표지에서 다시 확인하도록
+  } else {
+    goStep(0);
+  }
+
+  // 4) Step 0 폼에 저장값 채우기
+  setVal('input-hotel-name',  appData.hotelName);
+  setVal('input-manager-name', appData.managerName);
+
+  // 5) 자동 저장 — 모든 input/textarea 변경 감지
+  document.addEventListener('input', () => {
+    showSaveIndicator('✏️ 저장 중...');
+    clearTimeout(window._saveTimer);
+    window._saveTimer = setTimeout(autoSave, 800);
+  });
+
+  // 6) 키보드 단축키
+  document.addEventListener('keydown', (e) => {
+    // Alt + → : 다음 스텝
+    if (e.altKey && e.key === 'ArrowRight') { e.preventDefault(); nextStep(); }
+    // Alt + ← : 이전 스텝
+    if (e.altKey && e.key === 'ArrowLeft')  { e.preventDefault(); prevStep(); }
+    // Alt + P : 인쇄
+    if (e.altKey && e.key === 'p')          { e.preventDefault(); printWorksheet(); }
+  });
+
+  // 7) 저장 상태 초기 표시
+  showSaveIndicator('💾 저장됨');
+
+  // 8) 소품 그리드 초기 렌더
+  renderPropGrid();
+
+  console.log('🏨 감정호텔 앱이 시작됐어요!');
+});
+
+/* ───────────────────────────────────────────
+   끝
+─────────────────────────────────────────── */
+
+</script>
+</body>
+</html>
