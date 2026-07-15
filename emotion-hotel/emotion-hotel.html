@@ -2729,7 +2729,7 @@ function renderStep(n) {
   if (n === 3) renderBuilding();
   if (n === 4) renderRules();
   if (n === 5) renderSignboard();
-  if (n === 6) renderManual();
+  if (n === 6) ;
   if (n === 7) renderOST();
   if (n === 8) renderSummaryPage();
 }
@@ -3068,6 +3068,7 @@ function applyRoomToBuilding(id, room, scope) {
   el.classList.toggle('has-label', hasLabel);
   const layer = el.querySelector('.room-props-layer');
   renderPropLayer(layer, props);
+  
 // summary-building이면 라벨 레이어에 따로 넣기
 const isSummary = root.id === 'summary-building';
 const labelEl = isSummary
@@ -3084,6 +3085,7 @@ if (nameEl) nameEl.textContent = hasName
 if (guestEl) guestEl.textContent = hasGuest
   ? guestEmoji + ' ' + room.guest
   : (decorated ? '' : (isSummary ? '' : '클릭해서 꾸미기'));
+}
   
 function renderRoomSummary() {
   const wrap = document.getElementById('room-summary');
@@ -3351,102 +3353,6 @@ function shadeColor(hex, pct) {
 /* ───────────────────────────────────────────
    9. STEP 6 — 손님 대응 매뉴얼
 ─────────────────────────────────────────── */
-function renderManual() {
-  const container = document.getElementById('manual-cards-container');
-  if (!container) return;
-
-  if (!appData.guests.length) {
-    container.innerHTML = `<div class="info-box">
-      Step 2에서 손님을 추가하면 여기에 매뉴얼 카드가 생겨요!
-    </div>`;
-    return;
-  }
-
-  // 색상 매핑
-  const colorMap = {
-    '기쁨':'#FFF3B0','슬픔':'#D0EEFF','분노':'#FFD6D6','불안':'#FFD9B7',
-    '평화':'#C8F0E8','수치심':'#E8DEFF','죄책감':'#F0F0F0','설렘':'#FFE4F0',
-    '감사':'#FFF3B0','만족감':'#C8F0E8','우울감':'#D0EEFF','자극심':'#FFD9B7',
-    '자신감':'#FFFDE0','사랑':'#FFE4F0'
-  };
-  const borderMap = {
-    '기쁨':'#F5C842','슬픔':'#5A9FD4','분노':'#E07070','불안':'#FFA96A',
-    '평화':'#5BBFA8','수치심':'#A98FE0','죄책감':'#AAAAAA','설렘':'#E07090',
-    '감사':'#F5C842','만족감':'#5BBFA8','우울감':'#5A9FD4','자극심':'#FFA96A',
-    '자신감':'#F5C842','사랑':'#E07090'
-  };
-
-  container.innerHTML = appData.guests.map(g => {
-    const def  = defaultEmotionData[g.name] || {};
-    const mKey = g.name;
-    if (!appData.manual[mKey]) {
-      appData.manual[mKey] = {
-        signals: [],
-        wants:   g.wants || def.wants || '',
-        actions: ['','',''],
-        customSignal: ''
-      };
-    }
-    const m      = appData.manual[mKey];
-    const bg     = colorMap[g.name]  || '#f8f8f8';
-    const border = borderMap[g.name] || '#ccc';
-    const signals = def.signals || ['신호1','신호2','신호3','신호4'];
-
-    return `
-    <div class="manual-card" style="background:${bg}; border-color:${border};">
-      <div class="manual-card-header">
-        <span class="manual-emoji">${g.emoji || def.emoji || '💭'}</span>
-        <div>
-          <div class="manual-name">${g.name} 손님</div>
-          <div class="text-soft" style="font-size:0.8rem;">${g.trait || ''}</div>
-        </div>
-      </div>
-
-      <!-- 신호 체크 -->
-      <div style="font-size:0.82rem; font-weight:600; color:#555; margin-bottom:6px;">
-        🔔 이 손님이 왔다는 신호
-      </div>
-      <div class="signal-chips" id="signals-${mKey}">
-        ${signals.map(s => `
-          <span class="signal-chip ${m.signals.includes(s) ? 'checked' : ''}"
-                onclick="toggleSignal('${mKey}','${s}',this)">
-            ${s}
-          </span>`).join('')}
-      </div>
-      <input type="text" placeholder="+ 나만의 신호 직접 입력..."
-             value="${escHtml(m.customSignal || '')}"
-             oninput="updateManual('${mKey}','customSignal',this.value)"
-             style="margin-bottom:12px;"/>
-
-      <!-- 원하는 것 -->
-      <label class="field-label">💬 이 손님이 바라는 것</label>
-      <input type="text"
-             value="${escHtml(m.wants)}"
-             placeholder="예) 그냥 곁에 있어줬으면 해요..."
-             oninput="updateManual('${mKey}','wants',this.value)"/>
-
-      <!-- 지배인이 할 수 있는 것 -->
-      <label class="field-label">🗝️ 지배인이 할 수 있는 것</label>
-      <ul class="action-list">
-        ${[0,1,2].map(j => `
-          <li class="action-item">
-            <span class="action-num">①②③`[j+1]`</span>
-            <input class="action-input" type="text"
-                   value="${escHtml((m.actions||[])[j]||'')}"
-                   placeholder="예) 잠깐 눈 감고 숨 쉬기..."
-                   oninput="updateManualAction('${mKey}',${j},this.value)"/>
-          </li>`).join('')}
-      </ul>
-    </div>`;
-  }).join('');
-
-  setVal('secret-weapons', appData.secretWeapons);
-}
-
-// 액션 번호 이모지 헬퍼
-String.prototype[Symbol.iterator]; // 그냥 참고용 주석
-function actionNum(j) { return ['①','②','③'][j] || (j+1); }
-
 function toggleSignal(mKey, signal, el) {
   if (!appData.manual[mKey]) appData.manual[mKey] = { signals:[], wants:'', actions:['','',''], customSignal:'' };
   const arr = appData.manual[mKey].signals;
