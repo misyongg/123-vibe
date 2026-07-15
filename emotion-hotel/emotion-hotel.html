@@ -1090,10 +1090,7 @@
       color: #3a3340;
     }
     
-    /* @media print 위에 추가! */
-#page-8 .summary-grid { height: 210mm; max-height: 210mm; }
-
-@media print {
+   @media print {
   #page-8 .summary-grid { height: 210mm; max-height: 210mm; }
 }
     
@@ -2731,7 +2728,7 @@ function renderStep(n) {
   if (n === 3) renderBuilding();
   if (n === 4) renderRules();
   if (n === 5) renderSignboard();
-  if (n === 6) ;
+  if (n === 6) renderManual();
   if (n === 7) renderOST();
   if (n === 8) renderSummaryPage();
 }
