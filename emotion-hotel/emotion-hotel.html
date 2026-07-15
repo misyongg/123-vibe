@@ -1229,6 +1229,28 @@
     .summary-hotel-building [data-summary-room="9"] { left: 62.6%; top: 60.4%; width: 21.8%; height: 12.5%; }
     .summary-hotel-building .hotel-lobby { left: 14.4%; top: 76%; width: 50.2%; height: 15%; }
 
+    .summary-room-label {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  z-index: 10;
+}
+.summary-room-label .room-name { font-size: 11px !important; font-weight: bold; line-height: 1.2; }
+.summary-room-label .room-guest { font-size: 10px !important; line-height: 1.2; }
+.summary-room-label[data-label-room="5"] { left: 14.3%; top: 22%;   width: 21.8%; }
+.summary-room-label[data-label-room="6"] { left: 38.5%; top: 22%;   width: 21.7%; }
+.summary-room-label[data-label-room="7"] { left: 62.6%; top: 22%;   width: 21.8%; }
+.summary-room-label[data-label-room="3"] { left: 14.3%; top: 39.5%; width: 21.8%; }
+.summary-room-label[data-label-room="4"] { left: 38.5%; top: 39.5%; width: 21.7%; }
+.summary-room-label[data-label-room="8"] { left: 62.6%; top: 39.5%; width: 21.8%; }
+.summary-room-label[data-label-room="1"] { left: 14.3%; top: 57%;   width: 21.8%; }
+.summary-room-label[data-label-room="2"] { left: 38.5%; top: 57%;   width: 21.7%; }
+.summary-room-label[data-label-room="9"] { left: 62.6%; top: 57%;   width: 21.8%; }
+    
     /* ===========================
        19. 인쇄용 스타일 (요약본)
     =========================== */
@@ -2098,20 +2120,33 @@
           <div class="summary-col summary-col-center">
             <div class="summary-frame-wrap wrap-rooms">
               <img class="summary-frame" src="256px/summary-rooms.png" alt=""/>
-              <div class="hotel-building summary-hotel-building" id="summary-building">
-                <div class="hotel-room" data-summary-room="5"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
-                <div class="hotel-room" data-summary-room="6"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
-                <div class="hotel-room" data-summary-room="7"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
-                <div class="hotel-room" data-summary-room="3"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
-                <div class="hotel-room" data-summary-room="4"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
-                <div class="hotel-room" data-summary-room="8"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
-                <div class="hotel-room" data-summary-room="1"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
-                <div class="hotel-room" data-summary-room="2"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
-                <div class="hotel-room" data-summary-room="9"><div class="room-props-layer"></div><div class="room-info"><span class="room-name"></span><span class="room-guest"></span></div></div>
-                <div class="hotel-lobby">
-                  <div class="lobby-props-layer"></div>
-                  <div class="lobby-info"><strong class="lobby-label"></strong></div>
-                </div>
+          <div class="hotel-building summary-hotel-building" id="summary-building">
+  <!-- 방들 (room-info 제거) -->
+  <div class="hotel-room" data-summary-room="5"><div class="room-props-layer"></div></div>
+  <div class="hotel-room" data-summary-room="6"><div class="room-props-layer"></div></div>
+  <div class="hotel-room" data-summary-room="7"><div class="room-props-layer"></div></div>
+  <div class="hotel-room" data-summary-room="3"><div class="room-props-layer"></div></div>
+  <div class="hotel-room" data-summary-room="4"><div class="room-props-layer"></div></div>
+  <div class="hotel-room" data-summary-room="8"><div class="room-props-layer"></div></div>
+  <div class="hotel-room" data-summary-room="1"><div class="room-props-layer"></div></div>
+  <div class="hotel-room" data-summary-room="2"><div class="room-props-layer"></div></div>
+  <div class="hotel-room" data-summary-room="9"><div class="room-props-layer"></div></div>
+  <div class="hotel-lobby">
+    <div class="lobby-props-layer"></div>
+    <div class="lobby-info"><strong class="lobby-label"></strong></div>
+  </div>
+
+  <!-- 라벨 별도 레이어 -->
+  <div class="summary-room-label" data-label-room="5"><span class="room-name"></span><span class="room-guest"></span></div>
+  <div class="summary-room-label" data-label-room="6"><span class="room-name"></span><span class="room-guest"></span></div>
+  <div class="summary-room-label" data-label-room="7"><span class="room-name"></span><span class="room-guest"></span></div>
+  <div class="summary-room-label" data-label-room="3"><span class="room-name"></span><span class="room-guest"></span></div>
+  <div class="summary-room-label" data-label-room="4"><span class="room-name"></span><span class="room-guest"></span></div>
+  <div class="summary-room-label" data-label-room="8"><span class="room-name"></span><span class="room-guest"></span></div>
+  <div class="summary-room-label" data-label-room="1"><span class="room-name"></span><span class="room-guest"></span></div>
+  <div class="summary-room-label" data-label-room="2"><span class="room-name"></span><span class="room-guest"></span></div>
+  <div class="summary-room-label" data-label-room="9"><span class="room-name"></span><span class="room-guest"></span></div>
+</div>
               </div>
             </div>
           </div>
@@ -3012,12 +3047,23 @@ function applyRoomToBuilding(id, room, scope) {
   el.classList.toggle('has-label', hasLabel);
   const layer = el.querySelector('.room-props-layer');
   renderPropLayer(layer, props);
-  const nameEl = el.querySelector('.room-name');
-  const guestEl = el.querySelector('.room-guest');
-  if (nameEl) nameEl.textContent = hasName ? room.roomName.trim() : (decorated ? '' : (root.id === 'summary-building' ? '' : '빈 방'));
-  if (guestEl) guestEl.textContent = hasGuest ? guestEmoji + ' ' + room.guest : (decorated ? '' : (root.id === 'summary-building' ? '' : '클릭해서 꾸미기'));
-}
+// summary-building이면 라벨 레이어에 따로 넣기
+const isSummary = root.id === 'summary-building';
+const labelEl = isSummary
+  ? root.querySelector(`[data-label-room="${id}"]`)
+  : null;
 
+const nameEl  = labelEl ? labelEl.querySelector('.room-name')  : el.querySelector('.room-name');
+const guestEl = labelEl ? labelEl.querySelector('.room-guest') : el.querySelector('.room-guest');
+
+if (nameEl) nameEl.textContent = hasName
+  ? room.roomName.trim()
+  : (decorated ? '' : (isSummary ? '' : '빈 방'));
+
+if (guestEl) guestEl.textContent = hasGuest
+  ? guestEmoji + ' ' + room.guest
+  : (decorated ? '' : (isSummary ? '' : '클릭해서 꾸미기'));
+  
 function renderRoomSummary() {
   const wrap = document.getElementById('room-summary');
   if (!wrap) return;
