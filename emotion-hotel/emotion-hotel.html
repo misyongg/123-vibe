@@ -1055,7 +1055,7 @@
     .summary-col { display: flex; flex-direction: column; min-width: 0; }
     .summary-col-left  { flex: 1 1 0; }
     .summary-col-right { flex: 1 1 0; }
-    .summary-col-center { flex: 0 0 50%; width: 50%; }
+    .summary-col-center { flex: 0 0 70%; width: 70%; }
     
     /* 프레임 이미지 + 텍스트 오버레이 wrapper: 각자 원본 이미지 비율 그대로 유지 */
     .summary-frame-wrap { position: relative; width: 100%; min-width: 0;container-type: inline-size; }
@@ -1105,10 +1105,8 @@
   justify-content: space-evenly;
   text-align: center;
   font-size: 3.2cqi;
-  background: transparent !important;
-  z-index: 2;
+    z-index: 2;
 }
-    .summary-fill-sign * { background: transparent !important; }
     .summary-sign-line { font-size: 0.58rem; line-height: 1.2; }
     .summary-sign-name { font-size: 0.74rem; font-weight: 700; }
 
@@ -1128,7 +1126,7 @@
   font-size: 5cqi;
   line-height: 1;
   white-space: pre-wrap;
-column-count: 2;          /* 2단으로 나누기 */
+  column-count: 2;          /* 2단으로 나누기 */
   column-gap: 16px;         /* 단과 단 사이의 간격 (숫자 조절 가능) */
   column-fill: auto;        /* 텍스트가 위에서부터 차례대로 채워지게 함 */
 }
@@ -1174,7 +1172,7 @@ column-count: 2;          /* 2단으로 나누기 */
     
     .summary-hotel-building .hotel-room .room-info { 
       display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
+      align-items: center; justify-content: flex-end; padding-bottom: 4px;
       width: 100%; height: 100%; gap: 1px;
       position: relative; z-index: 2;
     }
@@ -1203,7 +1201,7 @@ column-count: 2;          /* 2단으로 나누기 */
     .summary-hotel-building [data-summary-room="1"] { left: 14.3%; top: 60.4%; width: 21.8%; height: 12.5%; }
     .summary-hotel-building [data-summary-room="2"] { left: 38.5%; top: 60.4%; width: 21.7%; height: 12.5%; }
     .summary-hotel-building [data-summary-room="9"] { left: 62.6%; top: 60.4%; width: 21.8%; height: 12.5%; }
-    .summary-hotel-building .hotel-lobby { left: 14.4%; top: 78.2%; width: 50.2%; height: 10%; }
+    .summary-hotel-building .hotel-lobby { left: 14.4%; top: 76%; width: 50.2%; height: 15%; }
 
     /* ===========================
        19. 인쇄용 스타일 (요약본)
