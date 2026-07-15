@@ -432,6 +432,29 @@
     }
 
     /* ===========================
+   summary 호텔룸 override
+=========================== */
+.summary-hotel-building {
+  overflow: visible !important;
+}
+.wrap-rooms {
+  overflow: visible !important;
+}
+.summary-hotel-building .hotel-room {
+  overflow: visible !important;
+}
+.summary-hotel-building .hotel-room .room-info {
+  position: absolute;
+  top: -22px;
+  left: 0;
+  width: 100%;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  text-align: center;
+}
+
+    /* ===========================
        11. 호텔 건물 단면도 (방 꾸미기)
     =========================== */
     .hotel-building {
@@ -1071,7 +1094,7 @@
     .wrap-guests  { aspect-ratio: 1380 / 1835; }
     .wrap-secret  { aspect-ratio: 1385 / 1023; }
     .wrap-badge   { aspect-ratio: 1258 / 671; }
-    .wrap-rooms { aspect-ratio: 1767 / 1992; width: 100%; }
+    .wrap-rooms { aspect-ratio: 1767 / 1992; width: 100%;overflow: visible !important; }
  
     .summary-fill {
       position: absolute;
@@ -1120,9 +1143,9 @@
   text-align: center;
   gap: 6px;
 } 
-    .summary-fill-ost-reason { left: 12%; right: 8%; top: 29%; height: 5%;  font-size: 4.5cqi}
+    .summary-fill-ost-reason { left: 12%; right: 8%; top: 27%; height: 5%;  font-size: 4.5cqi}
  .summary-fill-ost-lyrics {
-  left: 8%; right: 8%; top: 45%; bottom: 4%;
+  left: 8%; right: 8%; top: 44%; bottom: 4%;
   font-size: 5cqi;
   line-height: 1;
   white-space: pre-wrap;
@@ -1159,6 +1182,9 @@
     }
     
     /* 각 방과 로비 (원래의 배경색과 디자인 유지) */
+    .summary-hotel-building {
+  overflow: visible !important;
+}
     .summary-hotel-building .hotel-room,
     .summary-hotel-building .hotel-lobby {
       position: absolute;
