@@ -1115,7 +1115,7 @@
   text-align: center;
   gap: 6px;
 } 
-    .summary-fill-ost-reason { left: 12%; right: 8%; top: 30%; height: 5%;  font-size: 4.5cqi}
+    .summary-fill-ost-reason { left: 12%; right: 8%; top: 29%; height: 5%;  font-size: 4.5cqi}
  .summary-fill-ost-lyrics {
   left: 8%; right: 8%; top: 45%; bottom: 4%;
   font-size: 5cqi;
@@ -1142,24 +1142,29 @@ column-count: 2;          /* 2단으로 나누기 */
       white-space: pre-wrap;
     }
 
-     /* 요약본 건물 오버레이 (summary-rooms.png 실측 좌표) */
-    .summary-hotel-building { position: absolute; inset: 0; }
+    /* 요약본 건물 오버레이 (summary-rooms.png 실측 좌표) */
+    .summary-hotel-building { 
+      position: absolute; 
+      inset: 0; 
+      /* 🌟 핵심: 전체 큰 네모 박스(하늘색 배경 등)를 완전히 투명하게 날립니다! */
+      background: transparent !important; 
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
     
-    /* 🌟 핵심: 방과 로비의 배경색, 테두리, 그림자를 완전히 없애서 투명하게 만듭니다 */
+    /* 각 방과 로비 (원래의 배경색과 디자인 유지) */
     .summary-hotel-building .hotel-room,
     .summary-hotel-building .hotel-lobby {
       position: absolute;
       min-height: 0;
-      border: none !important;
-      background: transparent !important; 
-      box-shadow: none !important;
+      border-radius: 8px; /* 방 모서리 둥글게 유지 */
       cursor: default;
     }
     
     .summary-hotel-building .hotel-room:hover,
     .summary-hotel-building .hotel-lobby:hover { transform: none; }
     
-    /* 글씨 중앙 정렬 및 디자인 */
     .summary-hotel-building .hotel-room .room-info { 
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
@@ -1177,17 +1182,11 @@ column-count: 2;          /* 2단으로 나누기 */
       line-height: 1.2;
     }
     
-    /* 소품 크기 조절 */
     .summary-hotel-building .hotel-room .placed-prop { width: 48%; height: 48%; }
     .summary-hotel-building .hotel-lobby .placed-prop { width: 14%; height: 70%; }
     
-    /* 쓸데없는 아이콘 숨기기 */
     .summary-hotel-building .edit-icon { display: none !important; }
     .summary-hotel-building .room-placeholder { display: none !important; }
-
-    /* --- 좌표 시작 --- */
-    .summary-hotel-building [data-summary-room="5"] { left: 14.3%; top: 25.6%; width: 21.8%; height: 12.7%; }
-    /* ... 이하 기존 좌표 코드 유지 ... */
 }    .summary-hotel-building [data-summary-room="5"] { left: 14.3%; top: 25.6%; width: 21.8%; height: 12.7%; }
     .summary-hotel-building [data-summary-room="6"] { left: 38.5%; top: 25.6%; width: 21.7%; height: 12.7%; }
     .summary-hotel-building [data-summary-room="7"] { left: 62.6%; top: 25.6%; width: 21.8%; height: 12.7%; }
