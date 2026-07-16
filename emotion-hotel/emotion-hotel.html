@@ -2089,13 +2089,14 @@
           <!-- 왼쪽 컬럼: 간판 → 규칙 → OST -->
           <div class="summary-col summary-col-left">
             <div class="summary-frame-wrap wrap-sign">
-              <img class="summary-frame" src="256px/summary-sign-frame.png" alt=""/>
-              <div class="summary-fill summary-fill-sign">
-                <div class="summary-sign-line summary-sign-name" id="sum-hotel-name"></div>
-                <div class="summary-sign-line" id="sum-hotel-intro"></div>
-                <div class="summary-sign-line" id="sum-manager-intro"></div>
-              </div>
-            </div>
+  <div class="summary-fill-sign-bg" id="sum-sign-bg"></div>
+  <img class="summary-frame" src="256px/summary-sign-frame.png" alt=""/>
+  <div class="summary-fill summary-fill-sign">
+    <div class="summary-sign-line summary-sign-name" id="sum-hotel-name"></div>
+    <div class="summary-sign-line" id="sum-hotel-intro"></div>
+    <div class="summary-sign-line" id="sum-manager-intro"></div>
+  </div>
+</div>
             <div class="summary-frame-wrap wrap-rules">
               <img class="summary-frame" src="256px/summary-rules-clipboard.png" alt=""/>
               <div class="summary-fill summary-fill-rules" id="sum-rules"></div>
@@ -3695,11 +3696,14 @@ function sumSet(id, text) {
 function renderSummaryPage() {
   collectCurrentStep(currentStep);
 // 간판 배경색 적용
-const signFill = document.querySelector('.summary-fill-sign');
+const signFill = document.getElementById('sum-sign-bg');
 if (signFill) {
   signFill.style.background = appData.hotelColor || '#A98FE0';
   signFill.style.borderRadius = '12px';
-  signFill.style.color = 'white';
+}
+const signText = document.querySelector('.summary-fill-sign');
+if (signText) {
+  signText.style.color = 'white';
 }
   sumSet('sum-hotel-name', appData.hotelName || '감정호텔');
   sumSet('sum-hotel-intro', appData.hotelIntro || '');
