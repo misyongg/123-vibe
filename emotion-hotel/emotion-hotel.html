@@ -1074,7 +1074,11 @@
 @media print {
   #page-8 .summary-grid { height: 210mm; max-height: 210mm; }
 }
-    
+    .summary-fill-guest-table {
+    overflow: visible;
+    height: auto;
+  }
+}
     .summary-col { display: flex; flex-direction: column; min-width: 0; }
     .summary-col-left  { flex: 1 1 0; }
     .summary-col-right { flex: 1 1 0; }
@@ -1105,7 +1109,7 @@
       z-index: 1;
     }
     /* 손님 테이블 프레임 (guest-table-frame.png 실측 좌표) */
-    .summary-fill-guest-table { left: 8%; right: 8%; top: 12%; height: 56%; font-size: 0.5rem;  font-size: 5cqi;
+    .summary-fill-guest-table { left: 8%; right: 8%; top: 12%; height: 56%; font-size: 0.5rem;  font-size: 4cqi;
 }
     .summary-table { width: 100%; height: 100%; border-collapse: collapse; font-size: inherit; }
     .summary-table td {
@@ -1198,8 +1202,8 @@
     
     .summary-hotel-building .hotel-room .room-info { 
       display: flex; flex-direction: column;
-      align-items: center; justify-content: flex-start; padding-top: 1px;
-      width: 100%; height: 100%; gap: 1px;
+      align-items: center; justify-content: flex-start; padding-top: 4px;
+      width: 100%; height: 100%; gap: 0.5px;
       position: relative; z-index: 2;
     }
     
@@ -3693,7 +3697,7 @@ if (signFill) {
 
   const tbody = document.getElementById('sum-guest-tbody');
   if (tbody) {
-    const guests = appData.guests.slice(0, 4);
+    const guests = appData.guest;
     if (!guests.length) {
       tbody.innerHTML = '<tr><td colspan="4" style="color:#999;">손님을 추가해주세요</td></tr>';
     } else {
