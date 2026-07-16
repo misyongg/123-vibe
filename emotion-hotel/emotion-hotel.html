@@ -1153,7 +1153,9 @@
   word-break: keep-all;
   overflow-wrap: break-word; }
     .summary-sign-name { font-size: 0.74rem; font-weight: 700; }
-    
+    #sum-hotel-intro {
+  white-space: pre-line;
+}
     /* OST 프레임 (ost-frame.png 실측 좌표) */
 .summary-fill-ost-title {
   left: 8%; right: 8%; top: 15%; height: 5%;
@@ -3699,7 +3701,18 @@ function sumSet(id, text) {
   const el = document.getElementById(id);
   if (el) el.textContent = text || '';
 }
+  
+function wrapText(text, maxLen = 15) {
+  if (!text) return '';
 
+  const lines = [];
+  for (let i = 0; i < text.length; i += maxLen) {
+    lines.push(text.substring(i, i + maxLen));
+  }
+
+  return lines.join('\n');
+}
+  
 function renderSummaryPage() {
   collectCurrentStep(currentStep);
 // 간판 배경색 적용
@@ -3713,7 +3726,7 @@ if (signText) {
   signText.style.color = 'white';
 }
   sumSet('sum-hotel-name', appData.hotelName || '감정호텔');
-  sumSet('sum-hotel-intro', appData.hotelIntro || '');
+  sumSet('sum-hotel-intro', wrapText(appData.hotelIntro || '', 15));
   sumSet('sum-manager-name', appData.managerName || '지배인');
 sumSet('sum-manager-intro', appData.managerIntro || '');
   
