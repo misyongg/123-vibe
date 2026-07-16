@@ -444,16 +444,28 @@
   overflow: visible !important;
 }
 .summary-hotel-building .hotel-room .room-info {
-  position: absolute;
-  top: -12px;
-  left: 0;
-  width: 100%;
-  background: transparent;
-  border-radius: 0;
-  padding: 0;
-  text-align: center;
+  position: relative;
+  z-index: 2;
+  padding: 4px 6px 6px;
+  background: rgba(255,255,255,0.42);
+  border-radius: 0 0 9px 9px;
+  line-height: 1.2;
+  min-height: 1.4em;
+}
+.summary-hotel-building .hotel-room .room-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text);
+  display: block;
 }
 
+.summary-hotel-building .hotel-room .room-guest {
+  font-size: 0.7rem;
+  color: var(--text-soft);
+  display: block;
+}
+    
+    
     /* ===========================
        11. 호텔 건물 단면도 (방 꾸미기)
     =========================== */
