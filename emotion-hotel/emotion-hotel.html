@@ -1148,7 +1148,10 @@
   font-size: 3.2cqi;
     z-index: 2;
 }
-    .summary-sign-line { font-size: 0.58rem; line-height: 1.2; }
+    .summary-sign-line { font-size: 0.58rem; line-height: 1.2;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word; }
     .summary-sign-name { font-size: 0.74rem; font-weight: 700; }
     
     /* OST 프레임 (ost-frame.png 실측 좌표) */
@@ -1873,10 +1876,10 @@
           완성되면 아래에서 호텔 간판으로 미리볼 수 있어요 ✨
         </div>
 
-        <label class="field-label">🏨 호텔 이름</label>
-        <input type="text" id="hotel-name-step5"
+        <label class="field-label">🏨 호텔 이름(최대12자)</label>
+        <input type="text" id="hotel-name-step5" 
                placeholder="예) 별빛 감정호텔, 따뜻한 마음 호텔..."
-               oninput="syncHotelName()" maxlength="30"/>
+               oninput="syncHotelName()" maxlength="12"/>
 
         <label class="field-label">🎨 대표 색상 (간판 색)</label>
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
@@ -1888,15 +1891,15 @@
           <div class="color-swatch" style="background:#F5C842;" onclick="selectHotelColor('#F5C842','#FFF3B0')"></div>
         </div>
 
-        <label class="field-label">✍️ 호텔 소개글</label>
-        <textarea id="hotel-intro" rows="5"
+        <label class="field-label">✍️ 호텔 소개글(최대30자)</label>
+        <textarea id="hotel-intro" rows="5" maxlength="30"
                   placeholder="예) 이 호텔에서는 어떤 감정도 환영받아요. 지배인은 모든 손님의 이야기를 귀 기울여 들어요. 슬픔이 와도, 분노가 와도, 모두에게 방을 내어줘요..."
                   oninput="updateSignboard(); autoSave()"></textarea>
 
-        <label class="field-label">🌟 지배인 소개 한 마디</label>
+        <label class="field-label">🌟 지배인 소개 한 마디(최대15자)</label>
         <input type="text" id="manager-intro"
                placeholder="예) 저는 모든 감정을 소중히 여기는 지배인이에요."
-               oninput="updateSignboard(); autoSave()" maxlength="60"/>
+               oninput="updateSignboard(); autoSave()" maxlength="15"/>
       </div>
 
       <!-- 간판 미리보기 -->
