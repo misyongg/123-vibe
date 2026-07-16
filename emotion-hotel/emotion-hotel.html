@@ -1142,7 +1142,8 @@
   left: 9%; right: 9%; top: 11%; bottom: 10%;
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
+ justify-content: center;
+  gap: 3px;
   text-align: center;
   font-size: 3.2cqi;
     z-index: 2;
@@ -2096,6 +2097,7 @@
   <div class="summary-fill summary-fill-sign">
     <div class="summary-sign-line summary-sign-name" id="sum-hotel-name"></div>
     <div class="summary-sign-line" id="sum-hotel-intro"></div>
+      <div class="summary-sign-line" id="sum-manager-name"></div>
     <div class="summary-sign-line" id="sum-manager-intro"></div>
   </div>
 </div>
@@ -3709,8 +3711,9 @@ if (signText) {
 }
   sumSet('sum-hotel-name', appData.hotelName || '감정호텔');
   sumSet('sum-hotel-intro', appData.hotelIntro || '');
-  sumSet('sum-manager-intro', appData.managerIntro || appData.managerName || '');
-
+  sumSet('sum-manager-name', appData.managerName || '지배인');
+sumSet('sum-manager-intro', appData.managerIntro || '');
+  
   const tbody = document.getElementById('sum-guest-tbody');
   if (tbody) {
     const guests = appData.guests;
