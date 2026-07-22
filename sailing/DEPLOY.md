@@ -12,7 +12,7 @@
 | 속성 | 설명 |
 |------|------|
 | `NOTION_TOKEN` | 노션 Integration 토큰 |
-| `NOTION_DATABASE_ID` | 캘린더 Database ID |
+| `NOTION_DATABASE_ID` | 상담 **타이머와 같은** 예약 캘린더 ID (`1ad1b959-3ca0-8187-bc50-e94e057f408d`) |
 | `OPENAI_API_KEY` | OpenAI API 키 |
 | `OPENAI_MODEL` | 선택 (기본 gpt-4o-mini) |
 
@@ -45,6 +45,7 @@ npx @google/clasp push
 
 | 증상 | 해결 |
 |------|------|
+| linked database 오류 | 「상담기록」연결 DB ID X → **타이머 예약 캘린더** 원본 ID 사용 |
 | 일정이 안 보임 | `NOTION_DATABASE_ID`, Connections, `Date` / `일정 구분` 속성명 |
 | OpenAI 오류 | `OPENAI_API_KEY`, 결제/크레딧 |
 | 저장 후 노션에 안 보임 | Integration이 해당 DB에 연결됐는지 |

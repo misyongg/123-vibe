@@ -14,9 +14,10 @@
  */
 
 var CONFIG = {
-  NOTION_DATABASE_ID: '', // 비우면 스크립트 속성 NOTION_DATABASE_ID 사용
+  // 상담 타이머와 동일한 예약 캘린더 DB (원본). 연결 DB(linked) ID는 API 불가.
+  NOTION_DATABASE_ID: '1ad1b959-3ca0-8187-bc50-e94e057f408d',
   PROP_DATE: 'Date',
-  PROP_CASE: '사례번호',
+  PROP_CASE: '케이스번호', // DB 열 이름이 '사례번호'면 여기만 수정
   PROP_TYPE: '유형',
   PROP_CATEGORY: '일정 구분',
   PROP_PLACE: '장소',
@@ -66,7 +67,18 @@ function testNotionConnection() {
       properties: Object.keys(body.properties || {})
     };
   }
-  return { ok: false, message: '연결 실패 (' + code + '): ' + (body.message || res.getContentText()) };
+  var msg = body.message || res.getContentText();
+  if (String(msg).indexOf('linked database') !== -1) {
+    msg += ' → 상담기록 등 연결 DB ID가 아닌, 상담 타이머와 같은 원본 예약 캘린더 DB ID를 쓰세요.';
+  }
+  return { ok: false, message: '연결 실패 (' + code + '): ' + msg };
+}
+
+/** 실행 로그에 결과 출력 (함수 선택 후 실행) */
+function testNotionConnectionLog() {
+  var r = testNotionConnection();
+  Logger.log(JSON.stringify(r, null, 2));
+  return r;
 }
 
 /** 오늘(또는 date=YYYY-MM-DD) 상담 예약 */
