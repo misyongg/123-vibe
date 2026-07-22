@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    :root {
+      --ink: #1c2a33;
+      --ink-soft: #4a5c68;
+      --muted: #7a8d99;
+      --line: rgba(28, 56, 72, 0.12);
+      --teal: #0f6e7a;
+      --teal-deep: #0a5058;
+      --teal-soft: #d7eef1;
+      --ok: #1f7a4c;
+      --danger: #b5433b;
+      --font: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      color: var(--ink);
+      background:
+        radial-gradient(900px 480px at 8% -10%, rgba(15,110,122,0.16), transparent 55%),
+        linear-gradient(165deg, #e4eef2 0%, #f2f6f4 50%, #e8eef1 100%);
+      min-height: 100vh; min-height: 100dvh;
+      padding: 18px 14px 40px;
+    }
+    .app { max-width: 520px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .mark {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, #0f6e7a, #1a8f9c 45%, #c9b896);
+      flex-shrink: 0;
+    }
+    .brand h1 { font-size: 1.35rem; color: var(--teal-deep); letter-spacing: -0.02em; }
+    .brand p { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+    .panel {
+      background: rgba(255,255,255,0.78);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 10px 28px rgba(20,50,60,0.06);
+    }
+    .panel-title { font-size: 0.95rem; font-weight: 700; color: var(--teal-deep); }
+    .hint { font-size: 0.75rem; color: var(--muted); margin-top: 3px; margin-bottom: 10px; }
+
+    .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .row input[type="date"],
+    .row input[type="search"],
+    .field input, .field select, .field textarea,
+    .preview-text {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+      outline: none;
+    }
+    .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; font-size: 0.78rem; color: var(--ink-soft); }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    textarea { min-height: 130px; resize: vertical; line-height: 1.5; }
+    .preview-text { min-height: 220px; font-size: 0.86rem; line-height: 1.55; }
+
+    .btn {
+      border: none; font: inherit; font-weight: 700; cursor: pointer;
+      border-radius: 12px; padding: 11px 14px;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn.primary { background: var(--teal); color: #fff; flex: 1; }
+    .btn.secondary { background: #fff; color: var(--teal-deep); border: 1px solid rgba(15,110,122,0.25); flex: 1; }
+    .btn.ghost {
+      background: rgba(255,255,255,0.8); color: var(--ink-soft);
+      border: 1px solid var(--line); padding: 8px 12px; border-radius: 999px; font-size: 0.82rem;
+    }
+    .btn.tiny {
+      background: var(--teal-soft); color: var(--teal-deep);
+      padding: 4px 10px; border-radius: 999px; font-size: 0.72rem;
+    }
+    .actions { display: flex; gap: 8px; margin-top: 10px; }
+
+    .status { font-size: 0.8rem; color: var(--muted); min-height: 1.1em; margin-bottom: 6px; }
+    .schedule-list { list-style: none; display: flex; flex-direction: column; gap: 8px; max-height: 42vh; overflow: auto; }
+    .schedule-item {
+      display: grid; grid-template-columns: 52px 1fr auto; gap: 8px; align-items: center;
+      width: 100%; text-align: left; border: 1px solid transparent;
+      background: #fff; border-radius: 12px; padding: 11px; cursor: pointer; font: inherit; color: inherit;
+    }
+    .schedule-item.selected { background: var(--teal-soft); border-color: rgba(15,110,122,0.3); }
+    .schedule-item .time { font-weight: 700; color: var(--teal); font-size: 0.92rem; }
+    .schedule-item .title { font-weight: 600; font-size: 0.92rem; }
+    .schedule-item .meta { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+    .badge {
+      font-size: 0.68rem; color: var(--teal-deep); background: rgba(15,110,122,0.1);
+      padding: 3px 7px; border-radius: 999px; white-space: nowrap;
+    }
+    .empty { text-align: center; color: var(--muted); padding: 18px 8px; font-size: 0.88rem; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .chip {
+      font-size: 0.72rem; color: var(--ink-soft); background: #fff;
+      border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px;
+    }
+    .tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+    .tab {
+      border: 1px solid var(--line); background: #fff; color: var(--muted);
+      border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    }
+    .tab.active { background: var(--teal-soft); color: var(--teal-deep); border-color: rgba(15,110,122,0.28); }
+    .save-result {
+      margin-top: 10px; font-size: 0.84rem; color: var(--ok);
+      background: rgba(31,122,76,0.08); border-radius: 10px; padding: 10px;
+    }
+    .save-result a { color: var(--teal); font-weight: 700; }
+    .toast {
+      position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(8px);
+      background: var(--ink); color: #fff; padding: 11px 16px; border-radius: 999px;
+      font-size: 0.84rem; opacity: 0; transition: .2s; z-index: 20; max-width: 90vw; text-align: center;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.error { background: var(--danger); }
+    .loading {
+      position: fixed; inset: 0; background: rgba(232,240,243,0.55);
+      display: none; place-content: center; gap: 10px; z-index: 30; text-align: center; color: var(--teal-deep);
+    }
+    .loading.on { display: grid; }
+    .spinner {
+      width: 34px; height: 34px; border-radius: 50%; margin: 0 auto;
+      border: 3px solid rgba(15,110,122,0.2); border-top-color: var(--teal);
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .memo-label { display: flex; justify-content: space-between; align-items: center; }
+    @media (max-width: 420px) {
+      .field-grid { grid-template-columns: 1fr; }
+      .schedule-item { grid-template-columns: 48px 1fr; }
+      .schedule-item .badge { grid-column: 2; justify-self: start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="brand">
+      <div class="mark"></div>
+      <div>
+        <h1>Sailing</h1>
+        <p>Wee센터 상담기록 · 웹앱 v1.0</p>
+      </div>
+    </div>
+
+    <section class="panel">
+      <div class="panel-title">오늘 상담</div>
+      <p class="hint">노션 캘린더의 기존 예약만 표시합니다</p>
+      <div class="row">
+        <input type="date" id="dateInput" style="flex:1">
+        <button type="button" class="btn ghost" id="refreshBtn">새로고침</button>
+      </div>
+      <div class="row">
+        <input type="search" id="studentSearch" placeholder="학생·사례번호 검색" style="flex:1">
+        <button type="button" class="btn ghost" id="searchBtn">검색</button>
+      </div>
+      <div id="statusBar" class="status"></div>
+      <ul id="scheduleList" class="schedule-list"></ul>
+      <ul id="searchResults" class="schedule-list" hidden></ul>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">상담 기록</div>
+      <p class="hint" id="selectedLabel">학생을 선택하세요</p>
+      <div id="contextChips" class="chips" hidden></div>
+
+      <div class="field-grid">
+        <label class="field"><span>회기</span><input type="text" id="sessionLabel" placeholder="예: 1회기"></label>
+        <label class="field"><span>대상</span>
+          <select id="target">
+            <option value="학생">학생</option>
+            <option value="보호자">보호자</option>
+            <option value="교사">교사</option>
+          </select>
+        </label>
+        <label class="field"><span>성별</span><input type="text" id="gender" placeholder="남 / 여"></label>
+        <label class="field"><span>학교명</span><input type="text" id="school"></label>
+        <label class="field"><span>학년/반</span><input type="text" id="gradeClass"></label>
+        <label class="field"><span>장소</span><input type="text" id="place"></label>
+      </div>
+
+      <label class="field">
+        <span class="memo-label">
+          <span>키워드 메모</span>
+          <button type="button" class="btn tiny" id="voiceBtn">🎤 음성</button>
+        </span>
+        <textarea id="keywords" placeholder="한 줄에 키워드씩&#10;&#10;친구와 다툼&#10;욕 인정&#10;감정온도계 실시&#10;다음시간 감정조절"></textarea>
+      </label>
+      <label class="field">
+        <span>추가 정보 (선택)</span>
+        <textarea id="extraInfo" style="min-height:64px" placeholder="차회일시, 과제 등"></textarea>
+      </label>
+      <div class="actions">
+        <button type="button" class="btn secondary" id="previewBtn" disabled>미리보기</button>
+        <button type="button" class="btn primary" id="saveBtn" disabled>저장</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">미리보기</div>
+      <p class="hint">저장 전 수정 가능 · 기존 예약 페이지만 업데이트</p>
+      <div class="tabs">
+        <button type="button" class="tab active" data-tab="journal">상담일지</button>
+        <button type="button" class="tab" data-tab="memo">상담자 메모</button>
+      </div>
+      <textarea id="journalPreview" class="preview-text" placeholder="미리보기 또는 저장 시 AI가 작성합니다"></textarea>
+      <textarea id="memoPreview" class="preview-text" hidden placeholder="미리보기 또는 저장 시 AI가 작성합니다"></textarea>
+      <div id="saveResult" class="save-result" hidden></div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <div id="loadingText">처리 중…</div>
+  </div>
+
+  <script>
+    var state = { schedules: [], selected: null, listening: false };
+
+    function $(id) { return document.getElementById(id); }
+
+    function todaySeoul() {
+      var d = new Date();
+      var y = d.getFullYear();
+      var m = ('0' + (d.getMonth() + 1)).slice(-2);
+      var day = ('0' + d.getDate()).slice(-2);
+      return y + '-' + m + '-' + day;
+    }
+
+    function showToast(msg, isError) {
+      var t = $('toast');
+      t.textContent = msg;
+      t.className = 'toast show' + (isError ? ' error' : '');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(function () { t.className = 'toast'; }, 3200);
+    }
+
+    function setLoading(on, text) {
+      $('loading').className = on ? 'loading on' : 'loading';
+      $('loadingText').textContent = text || '처리 중…';
+    }
+
+    function setButtons() {
+      var ok = !!(state.selected && $('keywords').value.trim());
+      $('previewBtn').disabled = !ok;
+      $('saveBtn').disabled = !ok;
+    }
+
+    function escapeHtml(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function renderList(list, container, emptyText) {
+      container.innerHTML = '';
+      if (!list.length) {
+        container.innerHTML = '<li class="empty">' + escapeHtml(emptyText) + '</li>';
+        return;
+      }
+      list.forEach(function (item) {
+        var li = document.createElement('li');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'schedule-item' + (state.selected && state.selected.pageId === item.pageId ? ' selected' : '');
+        btn.innerHTML =
+          '<span class="time">' + escapeHtml(item.startLabel || '—') + '</span>' +
+          '<span><div class="title">' + escapeHtml(item.title) + '</div>' +
+          '<div class="meta">' + escapeHtml([item.caseNo && ('사례 ' + item.caseNo), item.category, item.timeRangeLabel].filter(Boolean).join(' · ')) + '</div></span>' +
+          '<span class="badge">' + escapeHtml(item.category || '상담') + '</span>';
+        btn.onclick = function () { selectSchedule(item); };
+        li.appendChild(btn);
+        container.appendChild(li);
+      });
+    }
+
+    function loadSchedules() {
+      var date = $('dateInput').value || todaySeoul();
+      $('statusBar').textContent = '불러오는 중…';
+      $('searchResults').hidden = true;
+      $('scheduleList').hidden = false;
+      google.script.run
+        .withSuccessHandler(function (data) {
+          if (!data || !data.ok) {
+            $('statusBar').textContent = '';
+            renderList([], $('scheduleList'), (data && data.error) || '조회 실패');
+            showToast((data && data.error) || '조회 실패', true);
+            return;
+          }
+          state.schedules = data.schedules || [];
+          $('statusBar').textContent = state.schedules.length
+            ? (data.date + ' 상담 ' + state.schedules.length + '건')
+            : (data.date + ' 상담 예약 없음');
+          renderList(state.schedules, $('scheduleList'), '오늘 상담(내방/이동) 예약이 없습니다.');
+        })
+        .withFailureHandler(function (err) {
+          $('statusBar').textContent = '';
+          showToast(String(err), true);
+        })
+        .getSchedules(date);
+    }
+
+    function selectSchedule(item) {
+      state.selected = item;
+      $('selectedLabel').textContent = ((item.startLabel || '') + ' ' + item.title).trim();
+      $('place').value = item.place || '';
+      $('saveResult').hidden = true;
+      $('journalPreview').value = '';
+      $('memoPreview').value = '';
+      renderList(state.schedules, $('scheduleList'), '오늘 상담 예약이 없습니다.');
+      setButtons();
+      setLoading(true, '이전 회기 확인 중…');
+      google.script.run
+        .withSuccessHandler(function (ctx) {
+          setLoading(false);
+          if (!ctx || !ctx.ok) {
+            $('sessionLabel').value = '1회기';
+            $('contextChips').hidden = true;
+            showToast((ctx && ctx.error) || '컨텍스트 실패', true);
+            return;
+          }
+          $('sessionLabel').value = ctx.sessionLabel || '';
+          var chips = [];
+          if (ctx.sessionLabel) chips.push(ctx.sessionLabel);
+          if (ctx.current && ctx.current.caseNo) chips.push('사례 ' + ctx.current.caseNo);
+          if (ctx.current && ctx.current.type) chips.push(ctx.current.type);
+          if (ctx.current && ctx.current.timeRangeLabel) chips.push(ctx.current.timeRangeLabel);
+          if (ctx.current && ctx.current.durationMin != null) chips.push(ctx.current.durationMin + '분');
+          if (ctx.previousCount) chips.push('이전 ' + ctx.previousCount + '회');
+          $('contextChips').innerHTML = chips.map(function (c) {
+            return '<span class="chip">' + escapeHtml(c) + '</span>';
+          }).join('');
+          $('contextChips').hidden = chips.length === 0;
+        })
+        .withFailureHandler(function (err) {
+          setLoading(false);
+          showToast(String(err), true);
+        })
+        .getSessionContext(item.pageId);
+    }
+
+    function payload() {
+      if (!state.selected) throw new Error('학생(예약)을 선택하세요.');
+      return {
+        pageId: state.selected.pageId,
+        keywords: $('keywords').value.trim(),
+        sessionLabel: $('sessionLabel').value.trim(),
+        target: $('target').value,
+        gender: $('gender').value.trim(),
+        school: $('school').value.trim(),
+        gradeClass: $('gradeClass').value.trim(),
+        place: $('place').value.trim(),
+        extraInfo: $('extraInfo').value.trim()
+      };
+    }
+
+    function preview() {
+      var p;
+      try { p = payload(); } catch (e) { showToast(e.message, true); return; }
+      setLoading(true, 'AI가 상담일지·메모를 작성 중…');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          setLoading(false);
+          if (!data || !data.ok) {
+            showToast((data && data.error) || '미리보기 실패', true);
+            return;
+          }
+          $('journalPreview').value = data.journal || '';
+          $('memoPreview').value = data.memo || '';
+          showTab('journal');
+          showToast('미리보기 완료 — 수정 후 저장하세요');
+        })
+        .withFailureHandler(function (err) {
+          setLoading(false);
+          showToast(String(err), true);
+        })
+        .previewRecords(p);
+    }
+
+    function save() {
+      var p;
+      try { p = payload(); } catch (e) { showToast(e.message, true); return; }
+      var journal = $('journalPreview').value.trim();
+      var memo = $('memoPreview').value.trim();
+      if (journal && memo) {
+        p.journal = journal;
+        p.memo = memo;
+      }
+      setLoading(true, journal && memo ? '노션 예약 페이지 업데이트 중…' : 'AI 작성 후 노션 업데이트 중…');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          setLoading(false);
+          if (!data || !data.ok) {
+            showToast((data && data.error) || '저장 실패', true);
+            return;
+          }
+          $('journalPreview').value = data.journal || $('journalPreview').value;
+          $('memoPreview').value = data.memo || $('memoPreview').value;
+          $('saveResult').hidden = false;
+          $('saveResult').innerHTML = data.notionUrl
+            ? '저장 완료 · <a href="' + escapeHtml(data.notionUrl) + '" target="_blank">노션 예약 페이지 열기</a>'
+            : '저장 완료 — 기존 예약 페이지가 업데이트되었습니다.';
+          showToast('기존 예약 페이지에 반영되었습니다');
+        })
+        .withFailureHandler(function (err) {
+          setLoading(false);
+          showToast(String(err), true);
+        })
+        .saveRecords(p);
+    }
+
+    function searchStudents() {
+      var q = $('studentSearch').value.trim();
+      if (!q) {
+        $('searchResults').hidden = true;
+        $('scheduleList').hidden = false;
+        return;
+      }
+      $('statusBar').textContent = '검색 중…';
+      google.script.run
+        .withSuccessHandler(function (data) {
+          if (!data || !data.ok) {
+            showToast((data && data.error) || '검색 실패', true);
+            return;
+          }
+          var students = data.students || [];
+          $('statusBar').textContent = '검색 결과 ' + students.length + '명';
+          $('scheduleList').hidden = true;
+          $('searchResults').hidden = false;
+          var items = students.map(function (s) {
+            return {
+              pageId: s.latestPageId,
+              title: s.title,
+              caseNo: s.caseNo,
+              type: s.type,
+              category: s.latestCategory || '상담',
+              startLabel: (s.latestDate || '').substring(0, 10),
+              timeRangeLabel: '',
+              place: '',
+              startISO: s.latestDate
+            };
+          });
+          renderList(items, $('searchResults'), '검색 결과가 없습니다.');
+        })
+        .withFailureHandler(function (err) { showToast(String(err), true); })
+        .searchStudents(q);
+    }
+
+    function showTab(name) {
+      var tabs = document.querySelectorAll('.tab');
+      for (var i = 0; i < tabs.length; i++) {
+        var active = tabs[i].getAttribute('data-tab') === name;
+        tabs[i].className = 'tab' + (active ? ' active' : '');
+      }
+      $('journalPreview').hidden = name !== 'journal';
+      $('memoPreview').hidden = name !== 'memo';
+    }
+
+    function setupVoice() {
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { $('voiceBtn').style.display = 'none'; return; }
+      var rec = new SR();
+      rec.lang = 'ko-KR';
+      rec.continuous = true;
+      rec.interimResults = true;
+      var base = '';
+      rec.onstart = function () {
+        state.listening = true;
+        base = $('keywords').value;
+        $('voiceBtn').textContent = '⏹ 중지';
+      };
+      rec.onend = function () {
+        state.listening = false;
+        $('voiceBtn').textContent = '🎤 음성';
+      };
+      rec.onresult = function (event) {
+        var interim = '';
+        var finalChunk = '';
+        for (var i = event.resultIndex; i < event.results.length; i++) {
+          var t = event.results[i][0].transcript;
+          if (event.results[i].isFinal) finalChunk += t;
+          else interim += t;
+        }
+        if (finalChunk) {
+          var sep = base && base.slice(-1) !== '\n' ? '\n' : '';
+          base = base + sep + finalChunk.trim();
+          $('keywords').value = base;
+        } else {
+          $('keywords').value = base + (base && interim ? '\n' : '') + interim;
+        }
+        setButtons();
+      };
+      $('voiceBtn').onclick = function () {
+        if (state.listening) rec.stop();
+        else rec.start();
+      };
+    }
+
+    function boot() {
+      $('dateInput').value = todaySeoul();
+      $('refreshBtn').onclick = loadSchedules;
+      $('dateInput').onchange = loadSchedules;
+      $('searchBtn').onclick = searchStudents;
+      $('studentSearch').onkeydown = function (e) {
+        if (e.key === 'Enter') searchStudents();
+      };
+      $('keywords').oninput = setButtons;
+      $('previewBtn').onclick = preview;
+      $('saveBtn').onclick = save;
+      var tabs = document.querySelectorAll('.tab');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].onclick = (function (tab) {
+          return function () { showTab(tab.getAttribute('data-tab')); };
+        })(tabs[i]);
+      }
+      setupVoice();
+
+      google.script.run
+        .withSuccessHandler(function (h) {
+          if (h && h.missing && h.missing.length) {
+            $('statusBar').textContent = '스크립트 속성 필요: ' + h.missing.join(', ');
+            showToast('설정 필요: ' + h.missing.join(', '), true);
+          }
+          loadSchedules();
+        })
+        .withFailureHandler(function () { loadSchedules(); })
+        .getHealth();
+    }
+
+    boot();
+  </script>
+</body>
+</html>

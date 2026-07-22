@@ -3,92 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sailing · Wee센터 상담기록</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet" />
+  <meta http-equiv="refresh" content="0; url=README.md" />
+  <title>Sailing · 웹앱 안내</title>
   <style>
-    :root {
-      --teal: #0f6e7a;
-      --teal-deep: #0a5058;
-      --ink: #1c2a33;
-      --muted: #7a8d99;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      min-height: 100vh;
-      font-family: "IBM Plex Sans KR", sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(900px 500px at 10% -10%, rgba(15, 110, 122, 0.18), transparent 55%),
-        linear-gradient(165deg, #e4eef2, #f2f6f4 50%, #e8eef1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 20px;
+      font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      max-width: 480px; margin: 48px auto; padding: 0 20px;
+      color: #1c2a33; line-height: 1.6;
     }
-    .card {
-      max-width: 480px;
-      width: 100%;
-      background: rgba(255,255,255,0.78);
-      border: 1px solid rgba(28,56,72,0.12);
-      border-radius: 20px;
-      padding: 36px 28px;
-      box-shadow: 0 16px 40px rgba(20,50,60,0.08);
-    }
-    .mark {
-      width: 48px; height: 48px; border-radius: 50%;
-      background: linear-gradient(135deg, #0f6e7a, #1a8f9c 45%, #c9b896);
-      margin-bottom: 18px;
-    }
-    h1 {
-      font-family: "Outfit", sans-serif;
-      font-size: 1.8rem;
-      color: var(--teal-deep);
-      letter-spacing: -0.03em;
-    }
-    .sub { color: var(--muted); margin: 6px 0 20px; font-size: 0.92rem; }
-    p { line-height: 1.6; margin-bottom: 14px; font-size: 0.95rem; }
-    code {
-      display: block;
-      background: #1c2a33;
-      color: #e8f4f6;
-      padding: 14px 16px;
-      border-radius: 12px;
-      font-size: 0.85rem;
-      line-height: 1.7;
-      margin: 14px 0 18px;
-      overflow-x: auto;
-    }
-    a {
-      color: var(--teal);
-      font-weight: 600;
-      text-decoration: none;
-    }
-    a:hover { text-decoration: underline; }
-    .note {
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-top: 18px;
-    }
+    a { color: #0f6e7a; font-weight: 700; }
+    code { background: #eef4f6; padding: 2px 6px; border-radius: 6px; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="mark" aria-hidden="true"></div>
-    <h1>Sailing</h1>
-    <p class="sub">Wee센터 상담기록 자동화 시스템 v1.0</p>
-    <p>
-      OpenAI·Notion API 키가 필요해 <strong>로컬(또는 서버)에서 실행</strong>합니다.
-      기존 노션 캘린더 예약 페이지만 업데이트하며, 새 DB·새 페이지는 만들지 않습니다.
-    </p>
-    <code>cd sailing
-cp .env.example .env
-npm install
-npm start</code>
-    <p>실행 후 <strong>http://localhost:3847</strong> 을 여세요.</p>
-    <p><a href="README.md">설치·사용 가이드 보기 →</a></p>
-    <p class="note">원칙: 상담일지 전용 DB 금지 · 기존 예약 페이지만 업데이트</p>
-  </div>
+  <h1>Sailing</h1>
+  <p>이 프로젝트는 <strong>Google Apps Script 웹앱</strong>입니다. GitHub Pages에서 바로 실행되지 않습니다.</p>
+  <p>설치·배포: <a href="README.md">README.md</a> · <a href="DEPLOY.md">DEPLOY.md</a></p>
+  <p>필요 파일: <code>Code.gs</code>, <code>Index.html</code> → script.google.com에 붙여넣고 웹앱 배포</p>
 </body>
 </html>
