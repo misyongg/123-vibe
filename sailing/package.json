@@ -1,0 +1,21 @@
+{
+  "name": "sailing-counseling-record",
+  "version": "1.0.0",
+  "description": "Wee센터 상담기록 자동화 시스템 — 기존 노션 캘린더 예약 페이지를 AI로 업데이트",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "private": true,
+  "dependencies": {
+    "@notionhq/client": "^2.2.15",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "openai": "^4.77.0"
+  }
+}
