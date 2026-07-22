@@ -7,7 +7,7 @@ OpenAI가 **상담일지·상담자 메모**를 작성하고,
 > **Apps Script 웹앱**입니다. PC에서 `npm` 실행이 필요 없습니다.  
 > 배포 URL을 폰·PC 브라우저에서 바로 사용합니다.
 
-**바로가기:** [Sailing 웹앱 열기](https://script.google.com/macros/s/AKfycbx3yxWa6uGiBFGaUuzgFn7_hcjc-K5-ibvQnZPz_lRebcKnaoCNL-f0wl20QISScSdfPg/exec)
+**바로가기:** [Sailing 웹앱 열기](https://script.google.com/macros/s/AKfycbx1jGE-pybjBTUGC6tuqUBYB1KKZ_UVPVF4B99aipnKGRgwlrIpyefAm2MK1dJL0DeLIA/exec)
 
 ## 원칙
 
@@ -42,18 +42,28 @@ OpenAI가 **상담일지·상담자 메모**를 작성하고,
 | 속성 | 값 |
 |------|-----|
 | `NOTION_TOKEN` | Notion Integration 토큰 (`ntn_...`) |
-| `NOTION_DATABASE_ID` | 현재 쓰는 캘린더 DB ID |
+| `NOTION_DATABASE_ID` | **상담 타이머와 같은** 예약 캘린더 DB ID (아래 참고) |
 | `OPENAI_API_KEY` | OpenAI API 키 |
 | `OPENAI_MODEL` | (선택) 기본 `gpt-4o-mini` |
 
 > 키는 GitHub·채팅에 올리지 마세요. 스크립트 속성에만 둡니다.
 
-**노션 연결:** 상담 타이머용 Integration을 이미 캘린더에 연결해 두었다면 **그대로 재사용**하면 됩니다.  
-새로 만들었다면 캘린더 DB → `···` → Connections → 해당 Integration 연결.
+**노션 연결:** 상담 타이머용 Integration·캘린더를 **그대로** 씁니다.  
+`NOTION_DATABASE_ID`는 타이머와 동일하게:
+
+```
+1ad1b959-3ca0-8187-bc50-e94e057f408d
+```
+
+> ⚠️ 「상담기록」처럼 **연결 DB(linked database)** URL의 ID는 API에서 안 됩니다.  
+> 예약을 만드는 **원본 일정표** ID를 쓰세요.  
+> 스크립트 속성에 잘못된 ID가 있으면 `Code.gs` 기본값보다 **속성 값이 우선**됩니다. 속성을 비우거나 위 ID로 맞추세요.
+
+새 Integration이면 캘린더 DB → `···` → Connections → 해당 Integration 연결.
 
 ### 3. 연결 테스트 (선택)
 
-Apps Script에서 함수 `testNotionConnection` 선택 → **실행** → 로그 확인.
+Apps Script에서 함수 **`testNotionConnectionLog`** 선택 → **실행** → **보기 → 로그**에서 `ok: true` 확인.
 
 ### 4. 웹앱 배포
 
