@@ -550,10 +550,12 @@ function getNotionToken_() {
 }
 
 function getDatabaseId_() {
-  var fromConfig = CONFIG.NOTION_DATABASE_ID || '';
-  var fromProps = PropertiesService.getScriptProperties().getProperty('NOTION_DATABASE_ID') || '';
-  // 스크립트 속성이 있으면 우선 (비우면 CONFIG 기본값)
-  var raw = String(fromProps || fromConfig || '').trim();
+  // Code.gs CONFIG 기본값 우선 (잘못된 스크립트 속성 linked DB ID로 덮이지 않게)
+  var raw = String(
+    CONFIG.NOTION_DATABASE_ID ||
+    PropertiesService.getScriptProperties().getProperty('NOTION_DATABASE_ID') ||
+    ''
+  ).trim();
   return normalizeNotionId_(raw);
 }
 
