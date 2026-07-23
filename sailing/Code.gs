@@ -600,7 +600,7 @@ function normalizeNotionId_(raw) {
 
 function notionFetch_(endpoint, method, payload) {
   var options = {
-    method: method || 'get',
+    method: (method || 'get').toLowerCase(),
     headers: {
       Authorization: 'Bearer ' + getNotionToken_(),
       'Notion-Version': CONFIG.NOTION_VERSION,
@@ -824,15 +824,17 @@ function updateReservationPage_(pageId, journalText, memoText) {
   children.push(heading2_('상담자 메모'));
   children = children.concat(textToParagraphBlocks_(memoText));
 
+  // Notion API: Append block children = PATCH /v1/blocks/{id}/children
   var chunks = chunk_(children, 90);
   for (var i = 0; i < chunks.length; i++) {
-    var res = notionFetch_('blocks/' + pageId + '/children', 'post', { children: chunks[i] });
+    var res = notionFetch_('blocks/' + pageId + '/children', 'patch', { children: chunks[i] });
     var code = res.getResponseCode();
     if (code < 200 || code >= 300) {
-      var body = JSON.parse(res.getContentText());
-      var msg = body.message || ('페이지 업데이트 실패 (' + code + ')');
+      var body = {};
+      try { body = JSON.parse(res.getContentText()); } catch (e) {}
+      var msg = body.message || res.getContentText() || ('페이지 업데이트 실패 (' + code + ')');
       if (String(msg).toLowerCase().indexOf('invalid request url') !== -1) {
-        msg += ' (pageId=' + pageId + ') — 예약 페이지 ID가 올바른지, Integration이 해당 페이지/DB에 연결됐는지 확인하세요.';
+        msg += ' (pageId=' + pageId + ') — 예약 페이지 ID·Integration 연결을 확인하세요.';
       }
       throw new Error(msg);
     }
