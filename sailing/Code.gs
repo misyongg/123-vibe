@@ -7,10 +7,10 @@
  * - 기존 캘린더(Database) 예약 페이지만 업데이트
  *
  * 스크립트 속성 (프로젝트 설정 → 스크립트 속성):
- *   NOTION_TOKEN
- *   NOTION_DATABASE_ID
- *   OPENAI_API_KEY
- *   OPENAI_MODEL (선택, 기본 gpt-4o-mini)
+ *   NOTION_TOKEN          ← 필수
+ *   OPENAI_API_KEY        ← 필수
+ *   OPENAI_MODEL          ← 선택 (기본 gpt-4o-mini)
+ *   NOTION_DATABASE_ID    ← 선택 (비우면 아래 CONFIG 값 사용)
  */
 
 var CONFIG = {
@@ -41,11 +41,14 @@ function doGet() {
 function getHealth() {
   var missing = [];
   if (!getNotionToken_()) missing.push('NOTION_TOKEN');
-  if (!getDatabaseId_()) missing.push('NOTION_DATABASE_ID');
   if (!getOpenAiKey_()) missing.push('OPENAI_API_KEY');
+  // DB ID는 CONFIG 기본값이 있으면 OK (스크립트 속성 없어도 됨)
+  var dbId = getDatabaseId_();
+  if (!dbId) missing.push('NOTION_DATABASE_ID(Code.gs CONFIG 또는 스크립트 속성)');
   return {
     ok: missing.length === 0,
     missing: missing,
+    databaseId: dbId ? (dbId.substring(0, 8) + '…') : '',
     version: '1.0.0',
     name: 'Wee센터 상담기록 자동화 시스템'
   };
