@@ -57,7 +57,7 @@ OpenAI가 **상담일지·상담자 메모**를 작성하고,
 
 > ⚠️ 「상담기록」처럼 **연결 DB(linked database)** URL의 ID는 API에서 안 됩니다.  
 > 예약을 만드는 **원본 일정표** ID를 쓰세요.  
-> 스크립트 속성에 잘못된 ID가 있으면 `Code.gs` 기본값보다 **속성 값이 우선**됩니다. 속성을 비우거나 위 ID로 맞추세요.
+> `Code.gs`의 `CONFIG.NOTION_DATABASE_ID`가 있으면 그걸 씁니다. 스크립트 속성에 잘못된 ID가 있어도 CONFIG가 우선입니다.
 
 새 Integration이면 캘린더 DB → `···` → Connections → 해당 Integration 연결.
 

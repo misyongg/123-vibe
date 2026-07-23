@@ -546,20 +546,51 @@ function ensureNotion_() {
 }
 
 function getNotionToken_() {
-  return PropertiesService.getScriptProperties().getProperty('NOTION_TOKEN') || '';
+  return String(PropertiesService.getScriptProperties().getProperty('NOTION_TOKEN') || '').trim();
 }
 
 function getDatabaseId_() {
-  return CONFIG.NOTION_DATABASE_ID ||
-    PropertiesService.getScriptProperties().getProperty('NOTION_DATABASE_ID') || '';
+  var fromConfig = CONFIG.NOTION_DATABASE_ID || '';
+  var fromProps = PropertiesService.getScriptProperties().getProperty('NOTION_DATABASE_ID') || '';
+  // 스크립트 속성이 있으면 우선 (비우면 CONFIG 기본값)
+  var raw = String(fromProps || fromConfig || '').trim();
+  return normalizeNotionId_(raw);
 }
 
 function getOpenAiKey_() {
-  return PropertiesService.getScriptProperties().getProperty('OPENAI_API_KEY') || '';
+  return String(PropertiesService.getScriptProperties().getProperty('OPENAI_API_KEY') || '').trim();
 }
 
 function getOpenAiModel_() {
-  return PropertiesService.getScriptProperties().getProperty('OPENAI_MODEL') || CONFIG.OPENAI_MODEL;
+  var m = String(PropertiesService.getScriptProperties().getProperty('OPENAI_MODEL') || CONFIG.OPENAI_MODEL || 'gpt-4o-mini').trim();
+  return m || 'gpt-4o-mini';
+}
+
+/**
+ * Notion ID/URL → API용 UUID (하이픈 포함)
+ * Invalid request URL 은 ID가 깨졌을 때 자주 발생
+ */
+function normalizeNotionId_(raw) {
+  if (!raw) return '';
+  var s = String(raw).trim();
+
+  // 전체 URL이 들어온 경우: 마지막 path의 32자 hex 추출
+  var urlMatch = s.match(/([0-9a-fA-F]{32})/);
+  if (urlMatch) {
+    s = urlMatch[1];
+  }
+
+  s = s.replace(/-/g, '').toLowerCase();
+  if (!/^[0-9a-f]{32}$/.test(s)) {
+    return String(raw).trim(); // 그대로 두고 API가 에러 내게 (디버깅용)
+  }
+  return (
+    s.substring(0, 8) + '-' +
+    s.substring(8, 12) + '-' +
+    s.substring(12, 16) + '-' +
+    s.substring(16, 20) + '-' +
+    s.substring(20)
+  );
 }
 
 function notionFetch_(endpoint, method, payload) {
@@ -613,10 +644,14 @@ function getTitlePropertyName_() {
 }
 
 function getPageById_(pageId) {
+  pageId = normalizeNotionId_(pageId);
+  if (!pageId) throw new Error('pageId가 비어 있습니다.');
   var res = notionFetch_('pages/' + pageId);
   var code = res.getResponseCode();
   var body = JSON.parse(res.getContentText());
-  if (code !== 200) throw new Error(body.message || '페이지 조회 실패');
+  if (code !== 200) {
+    throw new Error('페이지 조회 실패: ' + (body.message || res.getContentText()));
+  }
   return parsePage_(body);
 }
 
@@ -726,6 +761,7 @@ function getPreviousSessions_(caseNo, title, beforeISO, excludePageId) {
 }
 
 function getPagePlainText_(pageId) {
+  pageId = normalizeNotionId_(pageId);
   var lines = [];
   var cursor = null;
   do {
@@ -772,6 +808,9 @@ function estimateSessionNumber_(previousSessions) {
 }
 
 function updateReservationPage_(pageId, journalText, memoText) {
+  pageId = normalizeNotionId_(pageId);
+  if (!pageId) throw new Error('pageId가 비어 있습니다.');
+
   var children = [];
   children.push({ object: 'block', type: 'divider', divider: {} });
   children.push(heading2_('상담일지'));
@@ -786,7 +825,11 @@ function updateReservationPage_(pageId, journalText, memoText) {
     var code = res.getResponseCode();
     if (code < 200 || code >= 300) {
       var body = JSON.parse(res.getContentText());
-      throw new Error(body.message || '페이지 업데이트 실패 (' + code + ')');
+      var msg = body.message || ('페이지 업데이트 실패 (' + code + ')');
+      if (String(msg).toLowerCase().indexOf('invalid request url') !== -1) {
+        msg += ' (pageId=' + pageId + ') — 예약 페이지 ID가 올바른지, Integration이 해당 페이지/DB에 연결됐는지 확인하세요.';
+      }
+      throw new Error(msg);
     }
   }
 
