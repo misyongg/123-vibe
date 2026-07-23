@@ -63,7 +63,9 @@ OpenAI가 **상담일지·상담자 메모**를 작성하고,
 
 ### 3. 연결 테스트 (선택)
 
-Apps Script에서 함수 **`testNotionConnectionLog`** 선택 → **실행** → **보기 → 로그**에서 `ok: true` 확인.
+Apps Script에서 함수 **`testNotionConnectionLog`** / **`testOpenAIConnectionLog`** 선택 → **실행** → **보기 → 로그**에서 `ok: true` 확인.
+
+저장 시 「API 키」 오류가 나면 `OPENAI_API_KEY`가 스크립트 속성에 없거나 잘못된 것입니다.
 
 ### 4. 웹앱 배포
 

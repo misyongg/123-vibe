@@ -430,7 +430,11 @@ function buildUserPrompt_(ctx) {
 
 function generateWithOpenAI_(ctx) {
   var key = getOpenAiKey_();
-  if (!key) throw new Error('OPENAI_API_KEY가 설정되지 않았습니다.');
+  if (!key) {
+    throw new Error(
+      'OPENAI_API_KEY가 설정되지 않았습니다. Apps Script → 프로젝트 설정 → 스크립트 속성에 OPENAI_API_KEY를 추가하세요.'
+    );
+  }
   var model = getOpenAiModel_();
 
   var payload = {
@@ -454,7 +458,8 @@ function generateWithOpenAI_(ctx) {
   var code = res.getResponseCode();
   var body = JSON.parse(res.getContentText());
   if (code < 200 || code >= 300) {
-    throw new Error('OpenAI 오류 (' + code + '): ' + (body.error && body.error.message ? body.error.message : res.getContentText()));
+    var apiMsg = body.error && body.error.message ? body.error.message : res.getContentText();
+    throw new Error('OpenAI 오류 (' + code + '): ' + apiMsg);
   }
 
   var raw = (body.choices && body.choices[0] && body.choices[0].message)
@@ -472,6 +477,65 @@ function generateWithOpenAI_(ctx) {
   if (!journal || !memo) throw new Error('OpenAI 응답에 journal 또는 memo가 비어 있습니다.');
 
   return { journal: journal, memo: memo, model: model };
+}
+
+/**
+ * OpenAI 키 연결 테스트 (저장/미리보기 전 확인용)
+ * 실행 후 보기 → 로그 또는 반환값 확인
+ */
+function testOpenAIConnection() {
+  var key = getOpenAiKey_();
+  if (!key) {
+    return {
+      ok: false,
+      message: '스크립트 속성에 OPENAI_API_KEY가 없습니다. 프로젝트 설정 → 스크립트 속성에 추가하세요.'
+    };
+  }
+  var model = getOpenAiModel_();
+  var payload = {
+    model: model,
+    temperature: 0,
+    max_tokens: 16,
+    messages: [
+      { role: 'user', content: 'Reply with exactly: OK' }
+    ]
+  };
+
+  try {
+    var res = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + key },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    var code = res.getResponseCode();
+    var body = JSON.parse(res.getContentText());
+    if (code < 200 || code >= 300) {
+      var apiMsg = body.error && body.error.message ? body.error.message : res.getContentText();
+      return {
+        ok: false,
+        message: 'OpenAI 연결 실패 (' + code + '): ' + apiMsg,
+        hint: '키 오타, 만료, 결제/크레딧, 또는 속성 이름 오타(OPENAI_API_KEY)를 확인하세요.',
+        keyPrefix: String(key).substring(0, 7) + '…',
+        model: model
+      };
+    }
+    return {
+      ok: true,
+      message: 'OpenAI 연결 성공!',
+      model: model,
+      keyPrefix: String(key).substring(0, 7) + '…'
+    };
+  } catch (e) {
+    return { ok: false, message: 'OpenAI 테스트 오류: ' + String(e.message || e) };
+  }
+}
+
+function testOpenAIConnectionLog() {
+  var r = testOpenAIConnection();
+  Logger.log(JSON.stringify(r, null, 2));
+  return r;
 }
 
 // ── Notion ──
