@@ -47,7 +47,7 @@ npx @google/clasp push
 |------|------|
 | linked database 오류 | 「상담기록」연결 DB ID X → **타이머 예약 캘린더** 원본 ID 사용 |
 | 일정이 안 보임 | `NOTION_DATABASE_ID`, Connections, `Date` / `일정 구분` 속성명 |
-| OpenAI 오류 | `OPENAI_API_KEY`, 결제/크레딧 |
+| OpenAI 오류 / API 키 연결 안 됨 | 스크립트 속성 `OPENAI_API_KEY` 확인 → `testOpenAIConnectionLog` 실행 |
 | 저장 후 노션에 안 보임 | Integration이 해당 DB에 연결됐는지 |
 | 폰에서 예전 화면 | **새 버전 배포** 했는지 |
 | HTML을 못 찾음 | HTML 파일 이름이 정확히 `Index`인지 |

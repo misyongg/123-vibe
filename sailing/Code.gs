@@ -7,10 +7,10 @@
  * - 기존 캘린더(Database) 예약 페이지만 업데이트
  *
  * 스크립트 속성 (프로젝트 설정 → 스크립트 속성):
- *   NOTION_TOKEN
- *   NOTION_DATABASE_ID
- *   OPENAI_API_KEY
- *   OPENAI_MODEL (선택, 기본 gpt-4o-mini)
+ *   NOTION_TOKEN          ← 필수
+ *   OPENAI_API_KEY        ← 필수
+ *   OPENAI_MODEL          ← 선택 (기본 gpt-4o-mini)
+ *   NOTION_DATABASE_ID    ← 선택 (비우면 아래 CONFIG 값 사용)
  */
 
 var CONFIG = {
@@ -41,11 +41,14 @@ function doGet() {
 function getHealth() {
   var missing = [];
   if (!getNotionToken_()) missing.push('NOTION_TOKEN');
-  if (!getDatabaseId_()) missing.push('NOTION_DATABASE_ID');
   if (!getOpenAiKey_()) missing.push('OPENAI_API_KEY');
+  // DB ID는 CONFIG 기본값이 있으면 OK (스크립트 속성 없어도 됨)
+  var dbId = getDatabaseId_();
+  if (!dbId) missing.push('NOTION_DATABASE_ID(Code.gs CONFIG 또는 스크립트 속성)');
   return {
     ok: missing.length === 0,
     missing: missing,
+    databaseId: dbId ? (dbId.substring(0, 8) + '…') : '',
     version: '1.0.0',
     name: 'Wee센터 상담기록 자동화 시스템'
   };
@@ -430,7 +433,11 @@ function buildUserPrompt_(ctx) {
 
 function generateWithOpenAI_(ctx) {
   var key = getOpenAiKey_();
-  if (!key) throw new Error('OPENAI_API_KEY가 설정되지 않았습니다.');
+  if (!key) {
+    throw new Error(
+      'OPENAI_API_KEY가 설정되지 않았습니다. Apps Script → 프로젝트 설정 → 스크립트 속성에 OPENAI_API_KEY를 추가하세요.'
+    );
+  }
   var model = getOpenAiModel_();
 
   var payload = {
@@ -454,7 +461,8 @@ function generateWithOpenAI_(ctx) {
   var code = res.getResponseCode();
   var body = JSON.parse(res.getContentText());
   if (code < 200 || code >= 300) {
-    throw new Error('OpenAI 오류 (' + code + '): ' + (body.error && body.error.message ? body.error.message : res.getContentText()));
+    var apiMsg = body.error && body.error.message ? body.error.message : res.getContentText();
+    throw new Error('OpenAI 오류 (' + code + '): ' + apiMsg);
   }
 
   var raw = (body.choices && body.choices[0] && body.choices[0].message)
@@ -474,6 +482,65 @@ function generateWithOpenAI_(ctx) {
   return { journal: journal, memo: memo, model: model };
 }
 
+/**
+ * OpenAI 키 연결 테스트 (저장/미리보기 전 확인용)
+ * 실행 후 보기 → 로그 또는 반환값 확인
+ */
+function testOpenAIConnection() {
+  var key = getOpenAiKey_();
+  if (!key) {
+    return {
+      ok: false,
+      message: '스크립트 속성에 OPENAI_API_KEY가 없습니다. 프로젝트 설정 → 스크립트 속성에 추가하세요.'
+    };
+  }
+  var model = getOpenAiModel_();
+  var payload = {
+    model: model,
+    temperature: 0,
+    max_tokens: 16,
+    messages: [
+      { role: 'user', content: 'Reply with exactly: OK' }
+    ]
+  };
+
+  try {
+    var res = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + key },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    var code = res.getResponseCode();
+    var body = JSON.parse(res.getContentText());
+    if (code < 200 || code >= 300) {
+      var apiMsg = body.error && body.error.message ? body.error.message : res.getContentText();
+      return {
+        ok: false,
+        message: 'OpenAI 연결 실패 (' + code + '): ' + apiMsg,
+        hint: '키 오타, 만료, 결제/크레딧, 또는 속성 이름 오타(OPENAI_API_KEY)를 확인하세요.',
+        keyPrefix: String(key).substring(0, 7) + '…',
+        model: model
+      };
+    }
+    return {
+      ok: true,
+      message: 'OpenAI 연결 성공!',
+      model: model,
+      keyPrefix: String(key).substring(0, 7) + '…'
+    };
+  } catch (e) {
+    return { ok: false, message: 'OpenAI 테스트 오류: ' + String(e.message || e) };
+  }
+}
+
+function testOpenAIConnectionLog() {
+  var r = testOpenAIConnection();
+  Logger.log(JSON.stringify(r, null, 2));
+  return r;
+}
+
 // ── Notion ──
 
 function ensureNotion_() {
@@ -482,25 +549,58 @@ function ensureNotion_() {
 }
 
 function getNotionToken_() {
-  return PropertiesService.getScriptProperties().getProperty('NOTION_TOKEN') || '';
+  return String(PropertiesService.getScriptProperties().getProperty('NOTION_TOKEN') || '').trim();
 }
 
 function getDatabaseId_() {
-  return CONFIG.NOTION_DATABASE_ID ||
-    PropertiesService.getScriptProperties().getProperty('NOTION_DATABASE_ID') || '';
+  // Code.gs CONFIG 기본값 우선 (잘못된 스크립트 속성 linked DB ID로 덮이지 않게)
+  var raw = String(
+    CONFIG.NOTION_DATABASE_ID ||
+    PropertiesService.getScriptProperties().getProperty('NOTION_DATABASE_ID') ||
+    ''
+  ).trim();
+  return normalizeNotionId_(raw);
 }
 
 function getOpenAiKey_() {
-  return PropertiesService.getScriptProperties().getProperty('OPENAI_API_KEY') || '';
+  return String(PropertiesService.getScriptProperties().getProperty('OPENAI_API_KEY') || '').trim();
 }
 
 function getOpenAiModel_() {
-  return PropertiesService.getScriptProperties().getProperty('OPENAI_MODEL') || CONFIG.OPENAI_MODEL;
+  var m = String(PropertiesService.getScriptProperties().getProperty('OPENAI_MODEL') || CONFIG.OPENAI_MODEL || 'gpt-4o-mini').trim();
+  return m || 'gpt-4o-mini';
+}
+
+/**
+ * Notion ID/URL → API용 UUID (하이픈 포함)
+ * Invalid request URL 은 ID가 깨졌을 때 자주 발생
+ */
+function normalizeNotionId_(raw) {
+  if (!raw) return '';
+  var s = String(raw).trim();
+
+  // 전체 URL이 들어온 경우: 마지막 path의 32자 hex 추출
+  var urlMatch = s.match(/([0-9a-fA-F]{32})/);
+  if (urlMatch) {
+    s = urlMatch[1];
+  }
+
+  s = s.replace(/-/g, '').toLowerCase();
+  if (!/^[0-9a-f]{32}$/.test(s)) {
+    return String(raw).trim(); // 그대로 두고 API가 에러 내게 (디버깅용)
+  }
+  return (
+    s.substring(0, 8) + '-' +
+    s.substring(8, 12) + '-' +
+    s.substring(12, 16) + '-' +
+    s.substring(16, 20) + '-' +
+    s.substring(20)
+  );
 }
 
 function notionFetch_(endpoint, method, payload) {
   var options = {
-    method: method || 'get',
+    method: (method || 'get').toLowerCase(),
     headers: {
       Authorization: 'Bearer ' + getNotionToken_(),
       'Notion-Version': CONFIG.NOTION_VERSION,
@@ -549,10 +649,14 @@ function getTitlePropertyName_() {
 }
 
 function getPageById_(pageId) {
+  pageId = normalizeNotionId_(pageId);
+  if (!pageId) throw new Error('pageId가 비어 있습니다.');
   var res = notionFetch_('pages/' + pageId);
   var code = res.getResponseCode();
   var body = JSON.parse(res.getContentText());
-  if (code !== 200) throw new Error(body.message || '페이지 조회 실패');
+  if (code !== 200) {
+    throw new Error('페이지 조회 실패: ' + (body.message || res.getContentText()));
+  }
   return parsePage_(body);
 }
 
@@ -662,6 +766,7 @@ function getPreviousSessions_(caseNo, title, beforeISO, excludePageId) {
 }
 
 function getPagePlainText_(pageId) {
+  pageId = normalizeNotionId_(pageId);
   var lines = [];
   var cursor = null;
   do {
@@ -708,6 +813,9 @@ function estimateSessionNumber_(previousSessions) {
 }
 
 function updateReservationPage_(pageId, journalText, memoText) {
+  pageId = normalizeNotionId_(pageId);
+  if (!pageId) throw new Error('pageId가 비어 있습니다.');
+
   var children = [];
   children.push({ object: 'block', type: 'divider', divider: {} });
   children.push(heading2_('상담일지'));
@@ -716,13 +824,19 @@ function updateReservationPage_(pageId, journalText, memoText) {
   children.push(heading2_('상담자 메모'));
   children = children.concat(textToParagraphBlocks_(memoText));
 
+  // Notion API: Append block children = PATCH /v1/blocks/{id}/children
   var chunks = chunk_(children, 90);
   for (var i = 0; i < chunks.length; i++) {
-    var res = notionFetch_('blocks/' + pageId + '/children', 'post', { children: chunks[i] });
+    var res = notionFetch_('blocks/' + pageId + '/children', 'patch', { children: chunks[i] });
     var code = res.getResponseCode();
     if (code < 200 || code >= 300) {
-      var body = JSON.parse(res.getContentText());
-      throw new Error(body.message || '페이지 업데이트 실패 (' + code + ')');
+      var body = {};
+      try { body = JSON.parse(res.getContentText()); } catch (e) {}
+      var msg = body.message || res.getContentText() || ('페이지 업데이트 실패 (' + code + ')');
+      if (String(msg).toLowerCase().indexOf('invalid request url') !== -1) {
+        msg += ' (pageId=' + pageId + ') — 예약 페이지 ID·Integration 연결을 확인하세요.';
+      }
+      throw new Error(msg);
     }
   }
 
