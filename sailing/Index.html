@@ -176,6 +176,7 @@
 
       <div class="field-grid">
         <label class="field"><span>회기</span><input type="text" id="sessionLabel" placeholder="예: 1회기"></label>
+        <label class="field"><span>교시</span><input type="text" id="period" placeholder="예: 5교시"></label>
         <label class="field"><span>대상</span>
           <select id="target">
             <option value="학생">학생</option>
@@ -356,6 +357,7 @@
         pageId: state.selected.pageId,
         keywords: $('keywords').value.trim(),
         sessionLabel: $('sessionLabel').value.trim(),
+        period: $('period').value.trim(),
         target: $('target').value,
         gender: $('gender').value.trim(),
         school: $('school').value.trim(),
