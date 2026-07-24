@@ -64,9 +64,42 @@
     }
     .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; font-size: 0.78rem; color: var(--ink-soft); }
     .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .inline-unit { display: flex; align-items: center; gap: 6px; }
+    .field-grid.meta-compact {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .field-grid.meta-compact .field {
+      margin-bottom: 0;
+      gap: 3px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .field-grid.meta-compact input,
+    .field-grid.meta-compact select {
+      padding: 7px 8px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+    }
+    .field-grid.meta-wide {
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .field-grid.meta-wide .field {
+      margin-bottom: 0;
+      gap: 3px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .field-grid.meta-wide input {
+      padding: 7px 8px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+    }
+    .inline-unit { display: flex; align-items: center; gap: 4px; }
     .inline-unit input { flex: 1; min-width: 0; }
-    .inline-unit .unit { flex-shrink: 0; font-size: 0.8rem; color: var(--ink-soft); white-space: nowrap; }
+    .inline-unit .unit { flex-shrink: 0; font-size: 0.68rem; color: var(--muted); white-space: nowrap; }
     textarea { min-height: 130px; resize: vertical; line-height: 1.5; }
     #draftKeywords { min-height: 280px; }
     #chunkInput { min-height: 110px; }
@@ -188,14 +221,13 @@
       <p class="hint" id="selectedLabel">학생을 선택하세요</p>
       <div id="contextChips" class="chips" hidden></div>
 
-      <div class="field-grid">
+      <div class="field-grid meta-compact">
         <label class="field"><span>회기</span>
-          <div class="inline-unit">
-            <input type="number" id="sessionNumber" min="1" step="1" inputmode="numeric" placeholder="예: 5">
-            <span class="unit">회기</span>
-          </div>
+          <input type="number" id="sessionNumber" min="1" step="1" inputmode="numeric" placeholder="5">
         </label>
-        <label class="field"><span>교시</span><input type="text" id="period" placeholder="예: 5교시"></label>
+        <label class="field"><span>교시</span>
+          <input type="text" id="period" placeholder="5교시">
+        </label>
         <label class="field"><span>대상</span>
           <select id="target">
             <option value="학생">학생</option>
@@ -210,20 +242,16 @@
             <option value="여">여</option>
           </select>
         </label>
-        <label class="field"><span>학교명</span><input type="text" id="school"></label>
         <label class="field"><span>학년</span>
-          <div class="inline-unit">
-            <input type="number" id="grade" min="1" max="6" step="1" inputmode="numeric" placeholder="예: 1">
-            <span class="unit">학년</span>
-          </div>
+          <input type="number" id="grade" min="1" max="6" step="1" inputmode="numeric" placeholder="1">
         </label>
         <label class="field"><span>반</span>
-          <div class="inline-unit">
-            <input type="number" id="classNo" min="1" step="1" inputmode="numeric" placeholder="예: 3">
-            <span class="unit">반</span>
-          </div>
+          <input type="number" id="classNo" min="1" step="1" inputmode="numeric" placeholder="3">
         </label>
-        <label class="field"><span>장소 (일정 구분)</span><input type="text" id="place" placeholder="캘린더 일정 구분"></label>
+      </div>
+      <div class="field-grid meta-wide">
+        <label class="field"><span>학교명</span><input type="text" id="school" placeholder="학교명"></label>
+        <label class="field"><span>장소</span><input type="text" id="place" placeholder="일정 구분"></label>
       </div>
 
       <label class="field">
