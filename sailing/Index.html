@@ -196,7 +196,7 @@
         <label class="field"><span>성별</span><input type="text" id="gender" placeholder="남 / 여"></label>
         <label class="field"><span>학교명</span><input type="text" id="school"></label>
         <label class="field"><span>학년/반</span><input type="text" id="gradeClass"></label>
-        <label class="field"><span>장소</span><input type="text" id="place"></label>
+        <label class="field"><span>장소 (일정 구분)</span><input type="text" id="place" placeholder="캘린더 일정 구분"></label>
       </div>
 
       <label class="field">
@@ -383,7 +383,7 @@
       var switching = state.selected && state.selected.pageId !== item.pageId;
       state.selected = item;
       $('selectedLabel').textContent = ((item.startLabel || '') + ' ' + item.title).trim();
-      $('place').value = item.place || '';
+      $('place').value = item.category || item.place || '';
       $('saveResult').hidden = true;
       $('journalPreview').value = '';
       $('memoPreview').value = '';
