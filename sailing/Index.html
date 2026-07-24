@@ -204,18 +204,19 @@
           <span>키워드 추가</span>
           <button type="button" class="btn tiny" id="voiceBtn">🎤 음성</button>
         </span>
-        <textarea id="chunkInput" style="min-height:88px" placeholder="지금 생각난 키워드만 적고 [추가]&#10;&#10;예) 모래놀이·클레이&#10;토리·토토 만들기"></textarea>
+        <textarea id="chunkInput" style="min-height:88px" placeholder="지금 생각난 키워드만 적고 [저장]&#10;&#10;예) 모래놀이·클레이&#10;토리·토토 만들기"></textarea>
       </label>
       <div class="actions" style="margin-top:0;margin-bottom:10px">
-        <button type="button" class="btn secondary" id="addChunkBtn" disabled>추가 (누적)</button>
+        <button type="button" class="btn secondary" id="addChunkBtn" disabled>저장</button>
         <button type="button" class="btn ghost" id="clearDraftBtn" disabled>모은 내용 비우기</button>
       </div>
+      <p class="hint" style="margin-top:0;margin-bottom:10px">[저장] = 키워드만 누적 (노션 반영 안 함)</p>
 
       <label class="field">
         <span class="memo-label">
           <span>모은 키워드 <em id="draftCount">(0)</em></span>
         </span>
-        <textarea id="draftKeywords" placeholder="여기에 키워드가 쌓입니다. 직접 수정도 가능합니다.&#10;출력 버튼을 누르기 전에는 노션·AI에 반영되지 않습니다."></textarea>
+        <textarea id="draftKeywords" placeholder="여기에 키워드가 쌓입니다. 직접 수정도 가능합니다.&#10;[출력] 전에는 노션·AI에 반영되지 않습니다."></textarea>
       </label>
       <label class="field">
         <span>추가 정보 (선택)</span>
@@ -223,20 +224,20 @@
       </label>
       <div class="actions">
         <button type="button" class="btn secondary" id="previewBtn" disabled>미리보기</button>
-        <button type="button" class="btn primary" id="saveBtn" disabled>출력 · 저장</button>
+        <button type="button" class="btn primary" id="saveBtn" disabled>출력</button>
       </div>
-      <p class="hint" style="margin-top:8px">키워드는 여러 번 [추가]로 모은 뒤, 마지막에 [출력 · 저장] 한 번만 누르면 됩니다.</p>
+      <p class="hint" style="margin-top:8px">[저장]으로 여러 번 모은 뒤, 마지막에 [출력] 한 번 → AI 작성 + 노션 반영</p>
     </section>
 
     <section class="panel">
       <div class="panel-title">미리보기</div>
-      <p class="hint">출력 전 수정 가능 · 출력 시에만 노션 예약 페이지 업데이트</p>
+      <p class="hint">출력 전 수정 가능 · [출력] 시에만 노션 예약 페이지 업데이트</p>
       <div class="tabs">
         <button type="button" class="tab active" data-tab="journal">상담일지</button>
         <button type="button" class="tab" data-tab="memo">상담자 메모</button>
       </div>
-      <textarea id="journalPreview" class="preview-text" placeholder="미리보기 또는 저장 시 AI가 작성합니다"></textarea>
-      <textarea id="memoPreview" class="preview-text" hidden placeholder="미리보기 또는 저장 시 AI가 작성합니다"></textarea>
+      <textarea id="journalPreview" class="preview-text" placeholder="미리보기 또는 출력 시 AI가 작성합니다"></textarea>
+      <textarea id="memoPreview" class="preview-text" hidden placeholder="미리보기 또는 출력 시 AI가 작성합니다"></textarea>
       <div id="saveResult" class="save-result" hidden></div>
     </section>
   </div>
@@ -300,7 +301,7 @@
       }
       var chunk = ($('chunkInput').value || '').trim();
       if (!chunk) {
-        showToast('추가할 키워드를 입력하세요', true);
+        showToast('저장할 키워드를 입력하세요', true);
         return;
       }
       var prev = ($('draftKeywords').value || '').replace(/\s+$/, '');
@@ -310,7 +311,7 @@
       $('memoPreview').value = '';
       $('saveResult').hidden = true;
       setButtons();
-      showToast('키워드를 모았습니다 · 아직 노션에 저장되지 않았습니다');
+      showToast('저장 완료 · 키워드 누적됨 (노션 미반영)');
       $('chunkInput').focus();
     }
 
@@ -456,7 +457,7 @@
           $('journalPreview').value = data.journal || '';
           $('memoPreview').value = data.memo || '';
           showTab('journal');
-          showToast('미리보기 완료 — 수정 후 [출력 · 저장] 하세요');
+          showToast('미리보기 완료 — 수정 후 [출력] 하세요');
         })
         .withFailureHandler(function (err) {
           setLoading(false);
@@ -474,7 +475,7 @@
         p.journal = journal;
         p.memo = memo;
       }
-      setLoading(true, journal && memo ? '노션에 출력(저장) 중…' : 'AI 작성 후 노션에 출력 중…');
+      setLoading(true, journal && memo ? '노션에 출력 중…' : 'AI 작성 후 노션에 출력 중…');
       google.script.run
         .withSuccessHandler(function (data) {
           setLoading(false);
