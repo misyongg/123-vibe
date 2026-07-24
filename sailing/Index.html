@@ -68,6 +68,8 @@
     .inline-unit input { flex: 1; min-width: 0; }
     .inline-unit .unit { flex-shrink: 0; font-size: 0.8rem; color: var(--ink-soft); white-space: nowrap; }
     textarea { min-height: 130px; resize: vertical; line-height: 1.5; }
+    #draftKeywords { min-height: 280px; }
+    #chunkInput { min-height: 110px; }
     .preview-text { min-height: 220px; font-size: 0.86rem; line-height: 1.55; }
 
     .btn {
@@ -229,7 +231,7 @@
           <span>키워드 추가</span>
           <button type="button" class="btn tiny" id="voiceBtn">🎤 음성</button>
         </span>
-        <textarea id="chunkInput" style="min-height:88px" placeholder="지금 생각난 키워드만 적고 [저장]&#10;&#10;예) 모래놀이·클레이&#10;토리·토토 만들기"></textarea>
+        <textarea id="chunkInput" placeholder="지금 생각난 키워드만 적고 [저장]&#10;&#10;예) 모래놀이·클레이&#10;토리·토토 만들기&#10;차회일시 8/6 13:30"></textarea>
       </label>
       <div class="actions" style="margin-top:0;margin-bottom:10px">
         <button type="button" class="btn secondary" id="addChunkBtn" disabled>저장</button>
@@ -241,11 +243,7 @@
         <span class="memo-label">
           <span>모은 키워드 <em id="draftCount">(0)</em></span>
         </span>
-        <textarea id="draftKeywords" placeholder="여기에 키워드가 쌓입니다. 직접 수정도 가능합니다.&#10;[출력] 전에는 노션·AI에 반영되지 않습니다."></textarea>
-      </label>
-      <label class="field">
-        <span>추가 정보 (선택)</span>
-        <textarea id="extraInfo" style="min-height:64px" placeholder="차회일시, 과제 등"></textarea>
+        <textarea id="draftKeywords" placeholder="상담 중 키워드 + 차회일시·과제 등도 여기에 적습니다.&#10;직접 수정도 가능합니다.&#10;[출력] 전에는 노션·AI에 반영되지 않습니다."></textarea>
       </label>
       <div class="actions">
         <button type="button" class="btn secondary" id="previewBtn" disabled>미리보기</button>
@@ -542,8 +540,7 @@
         grade: /^\d+$/.test(grade) ? grade : '',
         classNo: /^\d+$/.test(classNo) ? classNo : '',
         gradeClass: formatGradeClassClient(grade, classNo),
-        place: $('place').value.trim(),
-        extraInfo: $('extraInfo').value.trim()
+        place: $('place').value.trim()
       };
     }
 
