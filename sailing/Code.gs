@@ -367,7 +367,8 @@ var SYSTEM_PROMPT_ = [
   '- 상담일지에서 “~한 것으로 보임”, “~로 추측됨”, “~한 듯함”, “~로 여겨짐” 금지.',
   '',
   'JSON:',
-  '{ "journal": "상담일지 전체 텍스트", "memo": "상담자 메모 전체 텍스트" }',
+  '{ "journal": "상담일지 전체 텍스트(하나의 문자열. 줄바꿈은 \\n)", "memo": "상담자 메모 전체 텍스트(하나의 문자열. 줄바꿈은 \\n)" }',
+  '※ journal·memo 값은 반드시 string. 객체·배열·중첩 JSON 금지.',
   '',
   '【상담일지 양식 — 아래 형식만 사용. 사례번호·이름·학교 등 인적사항 헤더는 넣지 말 것】',
   '※ 노션에는 「상담일지: n회기」 토글 제목으로 들어가므로, journal 본문 첫 줄에 「상담일지: n회기」를 또 쓰지 말고 아래부터 시작한다.',
@@ -487,6 +488,7 @@ function buildUserPrompt_(ctx) {
     '- memo 「상담활동 요약」: 구체 불릿 3~8개 (책 제목·인물·전개 핵심·질문·답 포함).',
     '- memo 「상담자 견해」·「차회 계획」: 근거/정보 없으면 제목까지 생략. “계속 이어갈 예정” 금지.',
     '- 인물명 혼동 금지. 빈 “-” 금지.',
+    '- journal·memo는 반드시 하나의 문자열(string). 객체/배열로 주지 말 것.',
     '- journal과 memo를 JSON으로 작성.'
   ];
   if (ctx.extraInfo) {
@@ -547,11 +549,71 @@ function generateWithOpenAI_(ctx) {
     throw new Error('OpenAI 응답을 JSON으로 파싱하지 못했습니다.');
   }
 
-  var journal = String(parsed.journal || '').trim();
-  var memo = String(parsed.memo || '').trim();
-  if (!journal || !memo) throw new Error('OpenAI 응답에 journal 또는 memo가 비어 있습니다.');
+  // 모델이 memo/journal을 객체로 줄 때가 있어 평문 문자열로 정규화
+  var journal = asPlainRecordText_(parsed.journal);
+  var memo = asPlainRecordText_(parsed.memo);
+  if (!journal || !memo || journal === '[object Object]' || memo === '[object Object]') {
+    throw new Error('OpenAI 응답에 journal 또는 memo 텍스트가 비어 있거나 형식이 올바르지 않습니다.');
+  }
 
   return { journal: journal, memo: memo, model: model };
+}
+
+/**
+ * AI가 string 대신 object/array로 준 journal·memo를 평문 기록 텍스트로 변환
+ */
+function asPlainRecordText_(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') {
+    var s = value.replace(/\r\n/g, '\n').trim();
+    return s === '[object Object]' ? '' : s;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Object.prototype.toString.call(value) === '[object Array]') {
+    var arrLines = [];
+    for (var i = 0; i < value.length; i++) {
+      var item = asPlainRecordText_(value[i]);
+      if (!item) continue;
+      if (item.indexOf('\n') === -1 && item.charAt(0) !== '-') arrLines.push('- ' + item);
+      else arrLines.push(item);
+    }
+    return arrLines.join('\n').trim();
+  }
+  if (typeof value === 'object') {
+    var lines = [];
+    var keys = [];
+    for (var k in value) {
+      if (Object.prototype.hasOwnProperty.call(value, k)) keys.push(k);
+    }
+    for (var ki = 0; ki < keys.length; ki++) {
+      var key = keys[ki];
+      var v = value[key];
+      if (v == null || v === '') continue;
+      if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
+        var text = String(v).replace(/\r\n/g, '\n').trim();
+        if (!text || text === '[object Object]') continue;
+        if (key === '사례번호' || key === '이름') {
+          lines.push('- ' + key + ': ' + text);
+        } else if (/^일정/.test(key)) {
+          lines.push('일정- ' + text.replace(/^일정-\s*/, ''));
+        } else {
+          lines.push(String(key).replace(/[:：]\s*$/, ''));
+          var parts = text.split('\n');
+          for (var pi = 0; pi < parts.length; pi++) {
+            var line = parts[pi].trim();
+            if (!line) continue;
+            lines.push(line.charAt(0) === '-' ? line : '- ' + line);
+          }
+        }
+      } else {
+        lines.push(String(key).replace(/[:：]\s*$/, ''));
+        var nested = asPlainRecordText_(v);
+        if (nested) lines.push(nested);
+      }
+    }
+    return lines.join('\n').trim();
+  }
+  return '';
 }
 
 /**
