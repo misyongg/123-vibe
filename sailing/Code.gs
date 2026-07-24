@@ -242,10 +242,10 @@ function saveRecords(payload) {
       memo = memo || generated.memo;
     }
 
-    var updated = updateReservationPage_(pageId, journal, memo);
+    var updated = updateReservationPage_(pageId, journal, memo, built.meta.sessionLabel || payload.sessionLabel);
     return {
       ok: true,
-      message: '기존 예약 페이지에 상담일지·상담자 메모를 추가했습니다.',
+      message: '기존 예약 페이지에 상담일지·상담자 메모 토글을 추가했습니다.',
       current: built.meta.current,
       sessionNumber: built.meta.sessionNumber,
       sessionLabel: built.meta.sessionLabel,
@@ -345,7 +345,7 @@ var SYSTEM_PROMPT_ = [
   '{ "journal": "상담일지 전체 텍스트", "memo": "상담자 메모 전체 텍스트" }',
   '',
   '【상담일지 양식 — 아래 형식만 사용. 사례번호·이름·학교 등 인적사항 헤더는 넣지 말 것】',
-  '상담일지: n회기',
+  '※ 노션에는 「상담일지: n회기」 토글 제목으로 들어가므로, journal 본문 첫 줄에 「상담일지: n회기」를 또 쓰지 말고 아래부터 시작한다.',
   '',
   '일시- YYYY.MM.DD.(요일) n교시(소요시간 ○○분)',
   '※ 교시 정보가 없으면: YYYY.MM.DD.(요일) HH:MM~HH:MM(소요시간 ○○분)',
@@ -374,7 +374,7 @@ var SYSTEM_PROMPT_ = [
   '※ 활동 위주 키워드면 상담활동에 집중하고, 관찰·행동은 근거 있을 때만.',
   '',
   '【상담자 메모 양식 — 값 없는 선택 항목 생략】',
-  '○회기',
+  '※ 노션에는 「상담자 메모: n회기」 토글 제목으로 들어가므로, memo 본문 첫 줄에 회기 제목만 또 쓰지 말고 본문부터 시작한다.',
   '',
   '사례번호 :',
   '이름 :',
@@ -823,37 +823,100 @@ function estimateSessionNumber_(previousSessions) {
   return Math.max(previousSessions.length + 1, maxFromText + 1, 1);
 }
 
-function updateReservationPage_(pageId, journalText, memoText) {
+function updateReservationPage_(pageId, journalText, memoText, sessionLabel) {
   pageId = normalizeNotionId_(pageId);
   if (!pageId) throw new Error('pageId가 비어 있습니다.');
 
-  var children = [];
-  children.push({ object: 'block', type: 'divider', divider: {} });
-  children.push(heading2_('상담일지'));
-  children = children.concat(textToParagraphBlocks_(journalText));
-  children.push({ object: 'block', type: 'divider', divider: {} });
-  children.push(heading2_('상담자 메모'));
-  children = children.concat(textToParagraphBlocks_(memoText));
+  var label = formatSessionLabel_(sessionLabel);
+  var journalTitle = '상담일지: ' + label;
+  var memoTitle = '상담자 메모: ' + label;
 
-  // Notion API: Append block children = PATCH /v1/blocks/{id}/children
-  var chunks = chunk_(children, 90);
+  // 토글 제목과 본문 첫 줄 중복 방지
+  var journalBody = stripLeadingTitleLine_(journalText, ['상담일지:']);
+  var memoBody = stripLeadingTitleLine_(memoText, ['상담자 메모:', '상담자메모:']);
+
+  // 1) 토글 껍데기만 추가 → 2) 각 토글 안에 본문 append (중첩·100블록 한도 안전)
+  var shellRes = notionFetch_('blocks/' + pageId + '/children', 'patch', {
+    children: [
+      { object: 'block', type: 'divider', divider: {} },
+      toggleBlock_(journalTitle),
+      toggleBlock_(memoTitle)
+    ]
+  });
+  var shellCode = shellRes.getResponseCode();
+  if (shellCode < 200 || shellCode >= 300) {
+    var shellBody = {};
+    try { shellBody = JSON.parse(shellRes.getContentText()); } catch (e1) {}
+    var shellMsg = shellBody.message || shellRes.getContentText() || ('토글 생성 실패 (' + shellCode + ')');
+    if (String(shellMsg).toLowerCase().indexOf('invalid request url') !== -1) {
+      shellMsg += ' (pageId=' + pageId + ') — 예약 페이지 ID·Integration 연결을 확인하세요.';
+    }
+    throw new Error(shellMsg);
+  }
+
+  var created = [];
+  try { created = JSON.parse(shellRes.getContentText()).results || []; } catch (e2) {}
+  var toggles = [];
+  for (var i = 0; i < created.length; i++) {
+    if (created[i].type === 'toggle') toggles.push(created[i]);
+  }
+  if (toggles.length < 2) {
+    throw new Error('상담일지/상담자 메모 토글을 만들지 못했습니다.');
+  }
+
+  appendBlocksInChunks_(toggles[0].id, textToParagraphBlocks_(journalBody));
+  appendBlocksInChunks_(toggles[1].id, textToParagraphBlocks_(memoBody));
+
+  var pageRes = notionFetch_('pages/' + pageId);
+  var page = JSON.parse(pageRes.getContentText());
+  return { pageId: pageId, url: page.url, journalToggleId: toggles[0].id, memoToggleId: toggles[1].id };
+}
+
+function formatSessionLabel_(sessionLabel) {
+  var s = String(sessionLabel || '').trim();
+  if (!s) return '1회기';
+  if (/회기/.test(s)) return s;
+  if (/^\d+$/.test(s)) return s + '회기';
+  return s;
+}
+
+function stripLeadingTitleLine_(text, prefixes) {
+  var lines = String(text || '').replace(/\r\n/g, '\n').split('\n');
+  while (lines.length && !String(lines[0]).trim()) lines.shift();
+  if (!lines.length) return '';
+  var first = String(lines[0]).trim();
+  for (var i = 0; i < prefixes.length; i++) {
+    if (first.indexOf(prefixes[i]) === 0) {
+      lines.shift();
+      while (lines.length && !String(lines[0]).trim()) lines.shift();
+      break;
+    }
+  }
+  return lines.join('\n');
+}
+
+function toggleBlock_(title) {
+  return {
+    object: 'block',
+    type: 'toggle',
+    toggle: {
+      rich_text: [{ type: 'text', text: { content: String(title || '').substring(0, 2000) } }]
+    }
+  };
+}
+
+function appendBlocksInChunks_(parentId, blocks) {
+  parentId = normalizeNotionId_(parentId);
+  var chunks = chunk_(blocks, 90);
   for (var i = 0; i < chunks.length; i++) {
-    var res = notionFetch_('blocks/' + pageId + '/children', 'patch', { children: chunks[i] });
+    var res = notionFetch_('blocks/' + parentId + '/children', 'patch', { children: chunks[i] });
     var code = res.getResponseCode();
     if (code < 200 || code >= 300) {
       var body = {};
       try { body = JSON.parse(res.getContentText()); } catch (e) {}
-      var msg = body.message || res.getContentText() || ('페이지 업데이트 실패 (' + code + ')');
-      if (String(msg).toLowerCase().indexOf('invalid request url') !== -1) {
-        msg += ' (pageId=' + pageId + ') — 예약 페이지 ID·Integration 연결을 확인하세요.';
-      }
-      throw new Error(msg);
+      throw new Error(body.message || res.getContentText() || ('블록 추가 실패 (' + code + ')'));
     }
   }
-
-  var pageRes = notionFetch_('pages/' + pageId);
-  var page = JSON.parse(pageRes.getContentText());
-  return { pageId: pageId, url: page.url };
 }
 
 function heading2_(text) {
