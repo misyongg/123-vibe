@@ -355,7 +355,8 @@
           if (typeof child === 'string' || typeof child === 'number' || typeof child === 'boolean') {
             var s = String(child).trim();
             if (!s || s === '[object Object]') continue;
-            if (key === '사례번호' || key === '이름') lines.push('- ' + key + ': ' + s);
+            if (key === '사례번호') lines.push('- ' + key + ': ' + s);
+            else if (key === '이름') continue;
             else if (/^일정/.test(key)) lines.push('일정- ' + s.replace(/^일정-\s*/, ''));
             else {
               lines.push(String(key).replace(/[:：]\s*$/, ''));
