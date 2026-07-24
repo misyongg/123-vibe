@@ -274,8 +274,13 @@ function buildGenerationContext_(body) {
   if (!current) throw new Error('예약을 파싱할 수 없습니다.');
 
   var previous = getPreviousSessions_(current.caseNo, current.title, current.startISO, pageId);
-  var estimated = body.sessionNumber || estimateSessionNumber_(previous);
-  var label = body.sessionLabel || (estimated + '회기');
+  var sessionNum = body.sessionNumber;
+  if (!sessionNum && body.sessionLabel) {
+    var sm = String(body.sessionLabel).match(/(\d+)/);
+    if (sm) sessionNum = Number(sm[1]);
+  }
+  var estimated = sessionNum || estimateSessionNumber_(previous);
+  var label = formatSessionLabel_(estimated);
 
   var previousSummary = '';
   if (previous.length > 0) {
@@ -293,6 +298,14 @@ function buildGenerationContext_(body) {
       : current.dateLabel
   );
 
+  var gradeClass = String(body.gradeClass || '').trim();
+  if (!gradeClass) {
+    var gParts = [];
+    if (body.grade && /^\d+$/.test(String(body.grade))) gParts.push(String(body.grade) + '학년');
+    if (body.classNo && /^\d+$/.test(String(body.classNo))) gParts.push(String(body.classNo) + '반');
+    gradeClass = gParts.join(' ');
+  }
+
   return {
     ctx: {
       sessionLabel: label,
@@ -300,7 +313,7 @@ function buildGenerationContext_(body) {
       name: body.name || current.title,
       gender: body.gender || '',
       school: body.school || '',
-      gradeClass: body.gradeClass || '',
+      gradeClass: gradeClass,
       target: body.target || '학생',
       datetimeLabel: autoDatetime,
       period: body.period || '',
