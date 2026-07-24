@@ -64,35 +64,27 @@
     }
     .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; font-size: 0.78rem; color: var(--ink-soft); }
     .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .field-grid.meta-compact {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+    .field-grid.meta-row1 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 6px;
       margin-bottom: 6px;
     }
-    .field-grid.meta-compact .field {
-      margin-bottom: 0;
-      gap: 3px;
-      font-size: 0.7rem;
-      font-weight: 600;
-    }
-    .field-grid.meta-compact input,
-    .field-grid.meta-compact select {
-      padding: 7px 8px;
-      border-radius: 8px;
-      font-size: 0.84rem;
-    }
-    .field-grid.meta-wide {
-      grid-template-columns: 1fr 1fr;
+    .field-grid.meta-row2 {
+      grid-template-columns: 1.4fr 0.8fr 0.8fr 0.8fr;
       gap: 6px;
       margin-bottom: 8px;
     }
-    .field-grid.meta-wide .field {
+    .field-grid.meta-row1 .field,
+    .field-grid.meta-row2 .field {
       margin-bottom: 0;
       gap: 3px;
       font-size: 0.7rem;
       font-weight: 600;
     }
-    .field-grid.meta-wide input {
+    .field-grid.meta-row1 input,
+    .field-grid.meta-row1 select,
+    .field-grid.meta-row2 input,
+    .field-grid.meta-row2 select {
       padding: 7px 8px;
       border-radius: 8px;
       font-size: 0.84rem;
@@ -221,12 +213,15 @@
       <p class="hint" id="selectedLabel">학생을 선택하세요</p>
       <div id="contextChips" class="chips" hidden></div>
 
-      <div class="field-grid meta-compact">
+      <div class="field-grid meta-row1">
         <label class="field"><span>회기</span>
           <input type="number" id="sessionNumber" min="1" step="1" inputmode="numeric" placeholder="5">
         </label>
         <label class="field"><span>교시</span>
           <input type="text" id="period" placeholder="5교시">
+        </label>
+        <label class="field"><span>장소</span>
+          <input type="text" id="place" placeholder="일정 구분">
         </label>
         <label class="field"><span>대상</span>
           <select id="target">
@@ -235,12 +230,10 @@
             <option value="교사">교사</option>
           </select>
         </label>
-        <label class="field"><span>성별</span>
-          <select id="gender">
-            <option value="">선택</option>
-            <option value="남">남</option>
-            <option value="여">여</option>
-          </select>
+      </div>
+      <div class="field-grid meta-row2">
+        <label class="field"><span>학교명</span>
+          <input type="text" id="school" placeholder="학교명">
         </label>
         <label class="field"><span>학년</span>
           <input type="number" id="grade" min="1" max="6" step="1" inputmode="numeric" placeholder="1">
@@ -248,10 +241,13 @@
         <label class="field"><span>반</span>
           <input type="number" id="classNo" min="1" step="1" inputmode="numeric" placeholder="3">
         </label>
-      </div>
-      <div class="field-grid meta-wide">
-        <label class="field"><span>학교명</span><input type="text" id="school" placeholder="학교명"></label>
-        <label class="field"><span>장소</span><input type="text" id="place" placeholder="일정 구분"></label>
+        <label class="field"><span>성별</span>
+          <select id="gender">
+            <option value="">선택</option>
+            <option value="남">남</option>
+            <option value="여">여</option>
+          </select>
+        </label>
       </div>
 
       <label class="field">
@@ -338,7 +334,8 @@
       var hasStudent = !!state.selected;
       var chunk = ($('chunkInput').value || '').trim();
       var draft = draftText();
-      $('addChunkBtn').disabled = !hasStudent || !chunk;
+      // 키워드만 있으면 저장 버튼 활성화 (학생 미선택 시 클릭하면 안내)
+      $('addChunkBtn').disabled = !chunk;
       $('clearDraftBtn').disabled = !draft;
       $('previewBtn').disabled = !hasStudent || !draft;
       $('saveBtn').disabled = !hasStudent || !draft;
@@ -346,13 +343,13 @@
     }
 
     function addChunk() {
-      if (!state.selected) {
-        showToast('학생(예약)을 먼저 선택하세요', true);
-        return;
-      }
       var chunk = ($('chunkInput').value || '').trim();
       if (!chunk) {
         showToast('저장할 키워드를 입력하세요', true);
+        return;
+      }
+      if (!state.selected) {
+        showToast('학생(예약)을 먼저 선택하세요', true);
         return;
       }
       var prev = ($('draftKeywords').value || '').replace(/\s+$/, '');
@@ -363,7 +360,7 @@
       $('saveResult').hidden = true;
       setButtons();
       showToast('저장 완료 · 키워드 누적됨 (노션 미반영)');
-      $('chunkInput').focus();
+      try { $('chunkInput').focus(); } catch (e) {}
     }
 
     function clearDraft() {
@@ -725,9 +722,16 @@
         if (e.key === 'Enter') searchStudents();
       };
       $('chunkInput').oninput = setButtons;
+      $('chunkInput').onchange = setButtons;
       $('draftKeywords').oninput = setButtons;
-      $('addChunkBtn').onclick = addChunk;
-      $('clearDraftBtn').onclick = clearDraft;
+      $('addChunkBtn').onclick = function (e) {
+        if (e) e.preventDefault();
+        addChunk();
+      };
+      $('clearDraftBtn').onclick = function (e) {
+        if (e) e.preventDefault();
+        clearDraft();
+      };
       $('chunkInput').onkeydown = function (e) {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
           e.preventDefault();
