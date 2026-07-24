@@ -332,6 +332,50 @@
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    /** 서버/AI가 객체를 줄 때 textarea에 [object Object]가 나오지 않게 */
+    function asPreviewText(v) {
+      if (v == null) return '';
+      if (typeof v === 'string') {
+        return v === '[object Object]' ? '' : v;
+      }
+      if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+      if (Object.prototype.toString.call(v) === '[object Array]') {
+        return v.map(function (item) {
+          var t = asPreviewText(item);
+          if (!t) return '';
+          return (t.indexOf('\n') === -1 && t.charAt(0) !== '-') ? ('- ' + t) : t;
+        }).filter(Boolean).join('\n');
+      }
+      if (typeof v === 'object') {
+        var lines = [];
+        for (var key in v) {
+          if (!Object.prototype.hasOwnProperty.call(v, key)) continue;
+          var child = v[key];
+          if (child == null || child === '') continue;
+          if (typeof child === 'string' || typeof child === 'number' || typeof child === 'boolean') {
+            var s = String(child).trim();
+            if (!s || s === '[object Object]') continue;
+            if (key === '사례번호' || key === '이름') lines.push('- ' + key + ': ' + s);
+            else if (/^일정/.test(key)) lines.push('일정- ' + s.replace(/^일정-\s*/, ''));
+            else {
+              lines.push(String(key).replace(/[:：]\s*$/, ''));
+              s.split('\n').forEach(function (line) {
+                line = line.trim();
+                if (!line) return;
+                lines.push(line.charAt(0) === '-' ? line : '- ' + line);
+              });
+            }
+          } else {
+            lines.push(String(key).replace(/[:：]\s*$/, ''));
+            var nested = asPreviewText(child);
+            if (nested) lines.push(nested);
+          }
+        }
+        return lines.join('\n');
+      }
+      return '';
+    }
+
     function renderList(list, container, emptyText) {
       container.innerHTML = '';
       if (!list.length) {
@@ -454,8 +498,8 @@
             showToast((data && data.error) || '미리보기 실패', true);
             return;
           }
-          $('journalPreview').value = data.journal || '';
-          $('memoPreview').value = data.memo || '';
+          $('journalPreview').value = asPreviewText(data.journal);
+          $('memoPreview').value = asPreviewText(data.memo);
           showTab('journal');
           showToast('미리보기 완료 — 수정 후 [출력] 하세요');
         })
@@ -483,8 +527,10 @@
             showToast((data && data.error) || '출력 실패', true);
             return;
           }
-          $('journalPreview').value = data.journal || $('journalPreview').value;
-          $('memoPreview').value = data.memo || $('memoPreview').value;
+          var jText = asPreviewText(data.journal);
+          var mText = asPreviewText(data.memo);
+          if (jText) $('journalPreview').value = jText;
+          if (mText) $('memoPreview').value = mText;
           $('saveResult').hidden = false;
           $('saveResult').innerHTML = data.notionUrl
             ? '출력 완료 · <a href="' + escapeHtml(data.notionUrl) + '" target="_blank">노션 예약 페이지 열기</a>'
