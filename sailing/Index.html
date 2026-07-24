@@ -123,7 +123,16 @@
       pointer-events: none;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .toast.error { background: var(--danger); }
+    .field em {
+      font-style: normal;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .actions .btn.ghost {
+      flex: 0 0 auto;
+      border-radius: 12px;
+      padding: 11px 12px;
+    }
     .loading {
       position: fixed; inset: 0; background: rgba(232,240,243,0.55);
       display: none; place-content: center; gap: 10px; z-index: 30; text-align: center; color: var(--teal-deep);
@@ -176,6 +185,7 @@
 
       <div class="field-grid">
         <label class="field"><span>회기</span><input type="text" id="sessionLabel" placeholder="예: 1회기"></label>
+        <label class="field"><span>교시</span><input type="text" id="period" placeholder="예: 5교시"></label>
         <label class="field"><span>대상</span>
           <select id="target">
             <option value="학생">학생</option>
@@ -186,15 +196,26 @@
         <label class="field"><span>성별</span><input type="text" id="gender" placeholder="남 / 여"></label>
         <label class="field"><span>학교명</span><input type="text" id="school"></label>
         <label class="field"><span>학년/반</span><input type="text" id="gradeClass"></label>
-        <label class="field"><span>장소</span><input type="text" id="place"></label>
+        <label class="field"><span>장소 (일정 구분)</span><input type="text" id="place" placeholder="캘린더 일정 구분"></label>
       </div>
 
       <label class="field">
         <span class="memo-label">
-          <span>키워드 메모</span>
+          <span>키워드 추가</span>
           <button type="button" class="btn tiny" id="voiceBtn">🎤 음성</button>
         </span>
-        <textarea id="keywords" placeholder="한 줄에 키워드씩&#10;&#10;친구와 다툼&#10;욕 인정&#10;감정온도계 실시&#10;다음시간 감정조절"></textarea>
+        <textarea id="chunkInput" style="min-height:88px" placeholder="지금 생각난 키워드만 적고 [추가]&#10;&#10;예) 모래놀이·클레이&#10;토리·토토 만들기"></textarea>
+      </label>
+      <div class="actions" style="margin-top:0;margin-bottom:10px">
+        <button type="button" class="btn secondary" id="addChunkBtn" disabled>추가 (누적)</button>
+        <button type="button" class="btn ghost" id="clearDraftBtn" disabled>모은 내용 비우기</button>
+      </div>
+
+      <label class="field">
+        <span class="memo-label">
+          <span>모은 키워드 <em id="draftCount">(0)</em></span>
+        </span>
+        <textarea id="draftKeywords" placeholder="여기에 키워드가 쌓입니다. 직접 수정도 가능합니다.&#10;출력 버튼을 누르기 전에는 노션·AI에 반영되지 않습니다."></textarea>
       </label>
       <label class="field">
         <span>추가 정보 (선택)</span>
@@ -202,13 +223,14 @@
       </label>
       <div class="actions">
         <button type="button" class="btn secondary" id="previewBtn" disabled>미리보기</button>
-        <button type="button" class="btn primary" id="saveBtn" disabled>저장</button>
+        <button type="button" class="btn primary" id="saveBtn" disabled>출력 · 저장</button>
       </div>
+      <p class="hint" style="margin-top:8px">키워드는 여러 번 [추가]로 모은 뒤, 마지막에 [출력 · 저장] 한 번만 누르면 됩니다.</p>
     </section>
 
     <section class="panel">
       <div class="panel-title">미리보기</div>
-      <p class="hint">저장 전 수정 가능 · 기존 예약 페이지만 업데이트</p>
+      <p class="hint">출력 전 수정 가능 · 출력 시에만 노션 예약 페이지 업데이트</p>
       <div class="tabs">
         <button type="button" class="tab active" data-tab="journal">상담일지</button>
         <button type="button" class="tab" data-tab="memo">상담자 메모</button>
@@ -251,10 +273,56 @@
       $('loadingText').textContent = text || '처리 중…';
     }
 
+    function draftText() {
+      return ($('draftKeywords').value || '').trim();
+    }
+
+    function updateDraftCount() {
+      var n = draftText() ? draftText().split(/\n+/).filter(function (l) { return l.trim(); }).length : 0;
+      $('draftCount').textContent = '(' + n + '줄)';
+    }
+
     function setButtons() {
-      var ok = !!(state.selected && $('keywords').value.trim());
-      $('previewBtn').disabled = !ok;
-      $('saveBtn').disabled = !ok;
+      var hasStudent = !!state.selected;
+      var chunk = ($('chunkInput').value || '').trim();
+      var draft = draftText();
+      $('addChunkBtn').disabled = !hasStudent || !chunk;
+      $('clearDraftBtn').disabled = !draft;
+      $('previewBtn').disabled = !hasStudent || !draft;
+      $('saveBtn').disabled = !hasStudent || !draft;
+      updateDraftCount();
+    }
+
+    function addChunk() {
+      if (!state.selected) {
+        showToast('학생(예약)을 먼저 선택하세요', true);
+        return;
+      }
+      var chunk = ($('chunkInput').value || '').trim();
+      if (!chunk) {
+        showToast('추가할 키워드를 입력하세요', true);
+        return;
+      }
+      var prev = ($('draftKeywords').value || '').replace(/\s+$/, '');
+      $('draftKeywords').value = prev ? (prev + '\n' + chunk) : chunk;
+      $('chunkInput').value = '';
+      $('journalPreview').value = '';
+      $('memoPreview').value = '';
+      $('saveResult').hidden = true;
+      setButtons();
+      showToast('키워드를 모았습니다 · 아직 노션에 저장되지 않았습니다');
+      $('chunkInput').focus();
+    }
+
+    function clearDraft() {
+      if (!draftText()) return;
+      if (!confirm('모은 키워드를 모두 비울까요?')) return;
+      $('draftKeywords').value = '';
+      $('journalPreview').value = '';
+      $('memoPreview').value = '';
+      $('saveResult').hidden = true;
+      setButtons();
+      showToast('모은 내용을 비웠습니다');
     }
 
     function escapeHtml(s) {
@@ -312,12 +380,18 @@
     }
 
     function selectSchedule(item) {
+      var switching = state.selected && state.selected.pageId !== item.pageId;
       state.selected = item;
       $('selectedLabel').textContent = ((item.startLabel || '') + ' ' + item.title).trim();
-      $('place').value = item.place || '';
+      $('place').value = item.category || item.place || '';
       $('saveResult').hidden = true;
       $('journalPreview').value = '';
       $('memoPreview').value = '';
+      if (switching) {
+        $('chunkInput').value = '';
+        // 다른 학생으로 바꾸면 모은 키워드는 비움
+        $('draftKeywords').value = '';
+      }
       renderList(state.schedules, $('scheduleList'), '오늘 상담 예약이 없습니다.');
       setButtons();
       setLoading(true, '이전 회기 확인 중…');
@@ -352,10 +426,13 @@
 
     function payload() {
       if (!state.selected) throw new Error('학생(예약)을 선택하세요.');
+      var keywords = draftText();
+      if (!keywords) throw new Error('모은 키워드가 없습니다. [추가]로 먼저 모아 주세요.');
       return {
         pageId: state.selected.pageId,
-        keywords: $('keywords').value.trim(),
+        keywords: keywords,
         sessionLabel: $('sessionLabel').value.trim(),
+        period: $('period').value.trim(),
         target: $('target').value,
         gender: $('gender').value.trim(),
         school: $('school').value.trim(),
@@ -379,7 +456,7 @@
           $('journalPreview').value = data.journal || '';
           $('memoPreview').value = data.memo || '';
           showTab('journal');
-          showToast('미리보기 완료 — 수정 후 저장하세요');
+          showToast('미리보기 완료 — 수정 후 [출력 · 저장] 하세요');
         })
         .withFailureHandler(function (err) {
           setLoading(false);
@@ -397,21 +474,21 @@
         p.journal = journal;
         p.memo = memo;
       }
-      setLoading(true, journal && memo ? '노션 예약 페이지 업데이트 중…' : 'AI 작성 후 노션 업데이트 중…');
+      setLoading(true, journal && memo ? '노션에 출력(저장) 중…' : 'AI 작성 후 노션에 출력 중…');
       google.script.run
         .withSuccessHandler(function (data) {
           setLoading(false);
           if (!data || !data.ok) {
-            showToast((data && data.error) || '저장 실패', true);
+            showToast((data && data.error) || '출력 실패', true);
             return;
           }
           $('journalPreview').value = data.journal || $('journalPreview').value;
           $('memoPreview').value = data.memo || $('memoPreview').value;
           $('saveResult').hidden = false;
           $('saveResult').innerHTML = data.notionUrl
-            ? '저장 완료 · <a href="' + escapeHtml(data.notionUrl) + '" target="_blank">노션 예약 페이지 열기</a>'
-            : '저장 완료 — 기존 예약 페이지가 업데이트되었습니다.';
-          showToast('기존 예약 페이지에 반영되었습니다');
+            ? '출력 완료 · <a href="' + escapeHtml(data.notionUrl) + '" target="_blank">노션 예약 페이지 열기</a>'
+            : '출력 완료 — 기존 예약 페이지가 업데이트되었습니다.';
+          showToast('노션에 출력되었습니다');
         })
         .withFailureHandler(function (err) {
           setLoading(false);
@@ -477,7 +554,7 @@
       var base = '';
       rec.onstart = function () {
         state.listening = true;
-        base = $('keywords').value;
+        base = $('chunkInput').value;
         $('voiceBtn').textContent = '⏹ 중지';
       };
       rec.onend = function () {
@@ -495,9 +572,9 @@
         if (finalChunk) {
           var sep = base && base.slice(-1) !== '\n' ? '\n' : '';
           base = base + sep + finalChunk.trim();
-          $('keywords').value = base;
+          $('chunkInput').value = base;
         } else {
-          $('keywords').value = base + (base && interim ? '\n' : '') + interim;
+          $('chunkInput').value = base + (base && interim ? '\n' : '') + interim;
         }
         setButtons();
       };
@@ -515,7 +592,16 @@
       $('studentSearch').onkeydown = function (e) {
         if (e.key === 'Enter') searchStudents();
       };
-      $('keywords').oninput = setButtons;
+      $('chunkInput').oninput = setButtons;
+      $('draftKeywords').oninput = setButtons;
+      $('addChunkBtn').onclick = addChunk;
+      $('clearDraftBtn').onclick = clearDraft;
+      $('chunkInput').onkeydown = function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          addChunk();
+        }
+      };
       $('previewBtn').onclick = preview;
       $('saveBtn').onclick = save;
       var tabs = document.querySelectorAll('.tab');

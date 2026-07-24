@@ -7,13 +7,17 @@ OpenAI가 **상담일지·상담자 메모**를 작성하고,
 > **Apps Script 웹앱**입니다. PC에서 `npm` 실행이 필요 없습니다.  
 > 배포 URL을 폰·PC 브라우저에서 바로 사용합니다.
 
-**바로가기:** [Sailing 웹앱 열기](https://script.google.com/macros/s/AKfycby9jLp1hYs546JwQuXQyhiNxXOQGMtoNuonx6b7mV1Kld1meb40AkscjgJlGKnI3KRx-g/exec)
+**바로가기:** [Sailing 웹앱 열기](https://script.google.com/macros/s/AKfycby_89TyH92f9sZmms__J2FN0e3x5gzeAE5hQUv9izJKVzy_WdKLUCHybvbAngeiT7gbdw/exec)
 
 ## 원칙
 
 - 상담일지 전용 DB를 **만들지 않음**
 - 새 노션 페이지를 **만들지 않음**
 - 기존 속성만 사용: 제목, 사례번호, 유형, 일정 구분, Date, 장소, 비고, 연락처, URL
+- 일지·메모 요령: 공공기록물 기준, 객관·구체, 내담자 직접 표현, 사실/추정 구분, 6하원칙
+- 상담일지에는 **상담자 견해 없음** / 견해는 **상담자 메모에만**
+- 일지 본문: **관찰** / **행동** / **상담활동** · 장소는 캘린더 **일정 구분**
+- 상담자 메모: 사례번호·이름 → 일정 → 상담활동 요약 → 상담자 견해 → 차회 계획(목표·활동·유의사항·준비물·차회일시는 정보 있을 때만)
 
 ## 파일
 
@@ -84,7 +88,11 @@ Apps Script에서 함수 **`testNotionConnectionLog`** / **`testOpenAIConnection
 2. 학생 선택
 3. 키워드 메모 입력
 4. (선택) 미리보기에서 수정
-5. **저장** → 해당 노션 **기존 예약 페이지** 하단에 상담일지·상담자 메모 추가
+5. **출력 · 저장** → 모은 키워드로 AI 작성 후, 해당 노션 **기존 예약 페이지**에  
+   `상담일지: n회기` / `상담자 메모: n회기` **토글**로 추가
+
+키워드는 여러 번 **추가(누적)** 해 두고, 마지막에 **출력 · 저장** 한 번만 누르면 됩니다.  
+(추가만 할 때는 노션·AI에 반영되지 않습니다.)
 
 ## 워크플로우
 

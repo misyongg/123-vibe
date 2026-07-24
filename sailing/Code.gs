@@ -242,10 +242,10 @@ function saveRecords(payload) {
       memo = memo || generated.memo;
     }
 
-    var updated = updateReservationPage_(pageId, journal, memo);
+    var updated = updateReservationPage_(pageId, journal, memo, built.meta.sessionLabel || payload.sessionLabel);
     return {
       ok: true,
-      message: '기존 예약 페이지에 상담일지·상담자 메모를 추가했습니다.',
+      message: '기존 예약 페이지에 상담일지·상담자 메모 토글을 추가했습니다.',
       current: built.meta.current,
       sessionNumber: built.meta.sessionNumber,
       sessionLabel: built.meta.sessionLabel,
@@ -302,7 +302,9 @@ function buildGenerationContext_(body) {
       gradeClass: body.gradeClass || '',
       target: body.target || '학생',
       datetimeLabel: autoDatetime,
-      place: body.place || current.place || '',
+      period: body.period || '',
+      // 상담일지 「장소」는 캘린더 「일정 구분」을 사용
+      place: current.category || body.place || '',
       category: current.category,
       type: current.type,
       keywords: keywords,
@@ -321,113 +323,171 @@ function buildGenerationContext_(body) {
 // ── OpenAI ──
 
 var SYSTEM_PROMPT_ = [
-  '당신은 학교 Wee센터 전문상담교사를 돕는 상담기록 작성 보조 AI입니다.',
+  '당신은 학교 Wee센터 전문상담교사의 상담기록 작성 보조입니다.',
+  '목표는 “예쁘게 쓴 글”이 아니라, 상담자가 남긴 키워드를 사실 그대로 정리한 실무 기록입니다.',
   '',
-  '반드시 지킬 규칙:',
-  '1. 사용자가 입력한 키워드·메모만 바탕으로 작성한다. 추측하지 않는다.',
-  '2. 제공되지 않은 내용은 작성하지 않는다. 빈칸으로 두거나 해당 항목을 생략한다.',
-  '3. 상담자가 실제 수행한 활동만 기록한다.',
-  '4. 키워드를 자연스러운 문장으로 정리하되, 사실을 보태지 않는다.',
-  '5. 차회상담계획, 내담자 과제, 차회 상담목표, 차회활동, 유의사항, 준비물은 정보가 있을 때만 작성한다.',
-  '6. 이전 회기 본문이 주어지면 흐름을 이어 쓰되, 이전 내용을 그대로 복사하지 않는다.',
-  '7. 출력은 반드시 JSON 한 객체만. 설명문·마크다운 코드펜스 금지.',
+  '【일지와 메모 내용 작성 요령】',
+  '1. 상담일지는 공공기록물 기준에 맞게 작성한다.',
+  '2. 객관적·구체적으로 기록한다.',
+  '3. 내담자의 직접 표현을 가능한 한 그대로 사용한다. (키워드에 나온 말·표현을 바꾸거나 미화하지 않는다.)',
+  '4. 사실과 추정을 구분한다. 추정·해석은 상담일지에 넣지 않는다.',
+  '5. 가능한 한 6하원칙(누가·언제·어디서·무엇을·어떻게·왜)에 따라 기록한다. (키워드에 있는 범위만)',
+  '6. 상담일지에는 「상담자 견해」 항목이 없다. 상담자 견해·해석·평가는 상담일지에 넣지 않는다.',
+  '7. 상담자 견해는 상담자 메모(memo)에만 포함한다. (「상담자 견해」 및 하위 항목)',
+  '8. 상담자 메모의 목표·활동·유의사항·준비물·차회일시는 정보가 있을 때만 작성한다. 없으면 항목 전체 생략.',
+  '9. 상담일지 「장소-」에는 반드시 제공된 「일정 구분」 값을 쓴다.',
   '',
-  'JSON 스키마:',
+  '【절대 규칙】',
+  '1. 키워드·메타데이터·추가정보에 있는 사실만 쓴다. 추측·해석·감정 평가·일반론을 넣지 않는다.',
+  '2. 키워드에 없는 관찰(“적극적”, “주저함 없음”, “창의력”, “상상력”, “인상적” 등)을 만들어내지 않는다.',
+  '3. 정보가 없는 항목은 “(해당 내용 없음)” “없음” “-” 같은 문구로 채우지 말고, 그 항목 자체를 생략한다.',
+  '4. 문장은 짧게. 같은 내용을 상담일지와 상담자 메모에서 길게 반복하지 않는다.',
+  '5. 키워드를 자연스러운 문장으로 바꾸되, 사실·활동·말을 보태지 않는다. 키워드에 나온 고유명사·활동명·내담자 발언은 유지한다.',
+  '6. 차회 일정·목표·활동·유의사항·준비물·과제는 키워드/추가정보에 있을 때만 쓴다.',
+  '7. 이전 회기 참고가 있어도 복사하지 말고, 이번 키워드와 직접 이어지는 흐름만 한 줄 이내로 반영한다.',
+  '8. 출력은 JSON 한 객체만. 코드펜스·설명문 금지.',
+  '',
+  '【문체】',
+  '- 학교 상담일지체: 간결한 서술형, 과장·문학체·상담이론 용어 남발 금지.',
+  '- 초등 저학년 기록도 마찬가지. 활동·말·계획을 사실적으로.',
+  '- 상담일지에서 “~한 것으로 보임”, “~로 추측됨”, “~한 듯함”, “~로 여겨짐” 등 추정 표현 금지.',
+  '- 추정·견해가 필요하면 상담자 메모의 「상담자 견해」에만, 키워드 근거 범위에서 작성.',
+  '',
+  'JSON:',
   '{ "journal": "상담일지 전체 텍스트", "memo": "상담자 메모 전체 텍스트" }',
   '',
-  '상담일지 양식(항목 순서 유지):',
-  '회기 : …',
-  '사례번호 :',
-  '이름 :',
-  '성별 :',
+  '【상담일지 양식 — 아래 형식만 사용. 사례번호·이름·학교 등 인적사항 헤더는 넣지 말 것】',
+  '※ 노션에는 「상담일지: n회기」 토글 제목으로 들어가므로, journal 본문 첫 줄에 「상담일지: n회기」를 또 쓰지 말고 아래부터 시작한다.',
+  '※ 상담일지에는 관찰 사실·행동·활동·발언만. 「상담자 견해」 항목 없음. 해석·평가·소감·추정 금지.',
   '',
-  '학교명 :',
-  '학년/반 :',
+  '일시- YYYY.MM.DD.(요일) n교시(소요시간 ○○분)',
+  '※ 교시 정보가 없으면: YYYY.MM.DD.(요일) HH:MM~HH:MM(소요시간 ○○분)',
   '',
-  '대상 : (학생 / 보호자 / 교사)',
+  '장소- (일정 구분 값만. 없으면 이 줄 생략)',
   '',
-  '일시 :',
-  '(YYYY.MM.DD.(요일) HH:MM~HH:MM, 소요시간 ○○분)',
+  '내담자 관찰',
+  '- 외견, 표정, 말투, 태도 등 객관적 관찰 내용만 기술',
+  '- 키워드에 해당 단서가 있을 때만. 해석·평가 금지. 없으면 항목 전체 생략',
   '',
-  '장소 :',
+  '내담자 행동',
+  '- 내담자가 직접 언급한 내용 (가능한 한 직접 표현 유지)',
+  '- 상담 중 나타난 행동',
+  '- 사실 중심, 6하원칙(누가·언제·어디서·무엇을·어떻게·왜 — 키워드에 있는 범위만)에 따라 기술',
+  '- 키워드에 단서가 있을 때만. 없으면 항목 전체 생략',
   '',
-  '내용',
+  '상담활동',
+  '- 상담 중 실시한 활동',
+  '- 놀이, 활동지, 그림, 검사, 상담기법 등',
+  '- 키워드·추가정보에 사진·첨부 자료 언급이 있으면 반영 가능 (없으면 지어내지 말 것)',
+  '- 키워드에 활동 단서가 있을 때만. 없으면 항목 전체 생략',
   '',
-  '1. 내담자 관찰',
+  '차회상담계획',
+  '- ※ 제공된 경우에만 작성. 없으면 항목 전체 생략',
   '',
-  '2. 내담자 행동',
+  '내담자 과제',
+  '- ※ 제공된 경우에만 작성. 없으면 항목 전체 생략',
   '',
-  '3. 상담활동',
+  '기타사항',
+  '- ※ 제공된 경우에만 작성. 없으면 항목 전체 생략',
   '',
-  '4. 차회상담계획',
-  '(필요한 경우만 작성)',
+  '※ 각 본문 항목은 불릿(- )으로 쓴다. “(해당 내용 없음)” 금지.',
+  '※ 키워드를 위 세 항목(관찰/행동/활동)에 맞게 분류해 넣고, 근거 없는 항목은 생략.',
   '',
-  '5. 내담자 과제',
-  '(필요한 경우만 작성)',
+  '【상담자 메모 양식 — 아래 형식만 사용】',
+  '※ 노션에는 「상담자 메모: n회기」 토글 제목으로 들어가므로, memo 본문 첫 줄에 「상담자 메모: n회기」를 또 쓰지 말고 아래부터 시작한다.',
+  '※ 상담자 견해는 여기(memo)에만 작성. 상담일지에는 넣지 않는다. 일지 복붙 금지.',
+  '※ 목표·활동·유의사항·차회 준비물 체크리스트·차회일시는 정보가 있을 때만 작성.',
+  '※ “(해당 내용 없음)”·빈 “-”만 있는 줄 금지. 정보 없는 항목은 제목·내용 모두 생략.',
   '',
-  '6. 기타사항',
+  '- 사례번호: (제공값)',
+  '- 이름: (제공값)',
   '',
-  '상담자 메모 양식:',
-  '○회기',
+  '일정- YYYY.MM.DD.(요일) n교시(○○분)',
+  '※ 교시가 없으면: YYYY.MM.DD.(요일) HH:MM~HH:MM(○○분)',
   '',
-  '사례번호 :',
-  '이름 :',
-  '성별 :',
+  '상담활동 요약',
+  '- 금회기 주요 내용 요약 (짧게. 일지 전문 복사 금지)',
   '',
-  '학교명 :',
-  '학년/반 :',
+  '상담자 견해',
   '',
-  '일시',
-  'YYYY.MM.DD.(요일) ○교시 또는 HH:MM~HH:MM (○○분)',
+  '정서 상태',
+  '- (키워드에 근거 있을 때만)',
   '',
-  '상담내용',
+  '관계 특성',
+  '- (키워드에 근거 있을 때만)',
   '',
-  '상담자 의견',
+  '위험요인',
+  '- (키워드에 근거 있을 때만)',
   '',
-  '차회일시',
-  '○회기',
-  'YYYY.MM.DD.(요일)',
+  '보호요인',
+  '- (키워드에 근거 있을 때만)',
   '',
-  '차회 상담목표',
+  '현재 상담 초점',
+  '- (키워드에 근거 있을 때만)',
   '',
-  '차회활동',
+  '차회 계획',
+  '',
+  '목표',
+  '- (정보가 있을 때만 작성)',
+  '',
+  '활동',
+  '- (정보가 있을 때만 작성)',
   '',
   '유의사항',
+  '- (정보가 있을 때만 작성)',
   '',
-  '준비물',
+  '차회 준비물 체크리스트',
+  '- (정보가 있을 때만 작성)',
   '',
-  '※ 차회 정보가 없으면 해당 항목은 생략 가능'
+  '차회일시(n+1회기)',
+  '- (정보가 있을 때만 작성)'
 ].join('\n');
 
 function buildUserPrompt_(ctx) {
+  var journalPlace = ctx.place || ctx.category || '';
   var lines = [
-    '[메타데이터 — 사실로 사용]',
+    '[메타데이터]',
     '회기: ' + (ctx.sessionLabel || ''),
-    '사례번호: ' + (ctx.caseNo || ''),
-    '이름: ' + (ctx.name || ''),
-    '성별: ' + (ctx.gender || ''),
-    '학교명: ' + (ctx.school || ''),
-    '학년/반: ' + (ctx.gradeClass || ''),
+    '사례번호: ' + (ctx.caseNo || '') + ' (상담자 메모 「- 사례번호:」에만)',
+    '이름: ' + (ctx.name || '') + ' (상담자 메모 「- 이름:」에만)',
+    '성별: ' + (ctx.gender || '') + ' (메모 양식에 넣지 말 것)',
+    '학교명: ' + (ctx.school || '') + ' (메모 양식에 넣지 말 것)',
+    '학년/반: ' + (ctx.gradeClass || '') + ' (메모 양식에 넣지 말 것)',
     '대상: ' + (ctx.target || '학생'),
     '일시: ' + (ctx.datetimeLabel || ''),
-    '장소: ' + (ctx.place || ''),
+    '교시: ' + (ctx.period || '') + ' (있으면 일지·메모 일정에 n교시로 표기)',
     '일정 구분: ' + (ctx.category || ''),
+    '장소(상담일지용·일정 구분 값): ' + journalPlace,
     '유형: ' + (ctx.type || ''),
     '',
-    '[상담자 키워드 메모]',
-    ctx.keywords || '(없음)'
+    '[상담자 키워드 메모 — 이것만 사실 근거]',
+    ctx.keywords || '(없음)',
+    '',
+    '작성 지시:',
+    '- 일지·메모 공통: 공공기록물 기준, 객관·구체, 내담자 직접 표현 유지, 사실과 추정 구분, 가능하면 6하원칙.',
+    '- 상담일지 journal: 「상담자 견해」 항목 없음. 추정·해석 금지. 일시-/장소-/관찰·행동·활동만.',
+    '- 내담자 관찰: 외견·표정·말투·태도 등 객관 관찰만.',
+    '- 내담자 행동: 직접 언급(직접 표현 유지) + 상담 중 행동. 사실·6하원칙.',
+    '- 상담활동: 실시한 활동(놀이·활동지·그림·검사·기법 등). 사진·첨부 언급 있으면 반영.',
+    '- 상담일지 「장소-」에는 「장소(상담일지용·일정 구분 값)」만 사용.',
+    '- 상담일지 journal: 첫 줄에 「상담일지: n회기」를 쓰지 말 것(토글 제목으로 들어감).',
+    '- 상담자 메모 memo: 상담자 견해는 memo에만. 첫 줄에 「상담자 메모: n회기」를 쓰지 말 것(토글 제목으로 들어감).',
+    '- memo: 사례번호·이름 → 일정- → 상담활동 요약 → 상담자 견해 → 차회 계획.',
+    '- memo 목표·활동·유의사항·준비물·차회일시는 정보가 있을 때만. 빈 “-” 금지.',
+    '- 키워드에 없는 관찰·평가·감정을 추가하지 말 것.',
+    '- “(해당 내용 없음)”을 쓰지 말 것. 없는 항목은 아예 빼 것.',
+    '- journal과 memo를 JSON으로 작성.'
   ];
   if (ctx.extraInfo) {
-    lines.push('', '[추가 정보]', ctx.extraInfo);
+    lines.push('', '[추가 정보 — 사실로만 사용]', ctx.extraInfo);
   }
   if (ctx.previousSummary) {
-    lines.push('', '[이전 회기 참고 — 흐름만 이어쓰기]', ctx.previousSummary);
+    lines.push(
+      '',
+      '[이전 회기 참고 — 필요 시 흐름 1줄만. 복사 금지]',
+      ctx.previousSummary
+    );
   }
-  lines.push(
-    '',
-    '위 정보를 바탕으로 journal(상담일지)과 memo(상담자 메모)를 JSON으로 작성하세요.',
-    '메타데이터에 값이 비어 있으면 해당 칸은 비워 두세요. 임의로 채우지 마세요.'
-  );
   return lines.join('\n');
 }
 
@@ -442,7 +502,7 @@ function generateWithOpenAI_(ctx) {
 
   var payload = {
     model: model,
-    temperature: 0.3,
+    temperature: 0.15,
     response_format: { type: 'json_object' },
     messages: [
       { role: 'system', content: SYSTEM_PROMPT_ },
@@ -812,37 +872,100 @@ function estimateSessionNumber_(previousSessions) {
   return Math.max(previousSessions.length + 1, maxFromText + 1, 1);
 }
 
-function updateReservationPage_(pageId, journalText, memoText) {
+function updateReservationPage_(pageId, journalText, memoText, sessionLabel) {
   pageId = normalizeNotionId_(pageId);
   if (!pageId) throw new Error('pageId가 비어 있습니다.');
 
-  var children = [];
-  children.push({ object: 'block', type: 'divider', divider: {} });
-  children.push(heading2_('상담일지'));
-  children = children.concat(textToParagraphBlocks_(journalText));
-  children.push({ object: 'block', type: 'divider', divider: {} });
-  children.push(heading2_('상담자 메모'));
-  children = children.concat(textToParagraphBlocks_(memoText));
+  var label = formatSessionLabel_(sessionLabel);
+  var journalTitle = '상담일지: ' + label;
+  var memoTitle = '상담자 메모: ' + label;
 
-  // Notion API: Append block children = PATCH /v1/blocks/{id}/children
-  var chunks = chunk_(children, 90);
+  // 토글 제목과 본문 첫 줄 중복 방지
+  var journalBody = stripLeadingTitleLine_(journalText, ['상담일지:']);
+  var memoBody = stripLeadingTitleLine_(memoText, ['상담자 메모:', '상담자메모:']);
+
+  // 1) 토글 껍데기만 추가 → 2) 각 토글 안에 본문 append (중첩·100블록 한도 안전)
+  var shellRes = notionFetch_('blocks/' + pageId + '/children', 'patch', {
+    children: [
+      { object: 'block', type: 'divider', divider: {} },
+      toggleBlock_(journalTitle),
+      toggleBlock_(memoTitle)
+    ]
+  });
+  var shellCode = shellRes.getResponseCode();
+  if (shellCode < 200 || shellCode >= 300) {
+    var shellBody = {};
+    try { shellBody = JSON.parse(shellRes.getContentText()); } catch (e1) {}
+    var shellMsg = shellBody.message || shellRes.getContentText() || ('토글 생성 실패 (' + shellCode + ')');
+    if (String(shellMsg).toLowerCase().indexOf('invalid request url') !== -1) {
+      shellMsg += ' (pageId=' + pageId + ') — 예약 페이지 ID·Integration 연결을 확인하세요.';
+    }
+    throw new Error(shellMsg);
+  }
+
+  var created = [];
+  try { created = JSON.parse(shellRes.getContentText()).results || []; } catch (e2) {}
+  var toggles = [];
+  for (var i = 0; i < created.length; i++) {
+    if (created[i].type === 'toggle') toggles.push(created[i]);
+  }
+  if (toggles.length < 2) {
+    throw new Error('상담일지/상담자 메모 토글을 만들지 못했습니다.');
+  }
+
+  appendBlocksInChunks_(toggles[0].id, textToParagraphBlocks_(journalBody));
+  appendBlocksInChunks_(toggles[1].id, textToParagraphBlocks_(memoBody));
+
+  var pageRes = notionFetch_('pages/' + pageId);
+  var page = JSON.parse(pageRes.getContentText());
+  return { pageId: pageId, url: page.url, journalToggleId: toggles[0].id, memoToggleId: toggles[1].id };
+}
+
+function formatSessionLabel_(sessionLabel) {
+  var s = String(sessionLabel || '').trim();
+  if (!s) return '1회기';
+  if (/회기/.test(s)) return s;
+  if (/^\d+$/.test(s)) return s + '회기';
+  return s;
+}
+
+function stripLeadingTitleLine_(text, prefixes) {
+  var lines = String(text || '').replace(/\r\n/g, '\n').split('\n');
+  while (lines.length && !String(lines[0]).trim()) lines.shift();
+  if (!lines.length) return '';
+  var first = String(lines[0]).trim();
+  for (var i = 0; i < prefixes.length; i++) {
+    if (first.indexOf(prefixes[i]) === 0) {
+      lines.shift();
+      while (lines.length && !String(lines[0]).trim()) lines.shift();
+      break;
+    }
+  }
+  return lines.join('\n');
+}
+
+function toggleBlock_(title) {
+  return {
+    object: 'block',
+    type: 'toggle',
+    toggle: {
+      rich_text: [{ type: 'text', text: { content: String(title || '').substring(0, 2000) } }]
+    }
+  };
+}
+
+function appendBlocksInChunks_(parentId, blocks) {
+  parentId = normalizeNotionId_(parentId);
+  var chunks = chunk_(blocks, 90);
   for (var i = 0; i < chunks.length; i++) {
-    var res = notionFetch_('blocks/' + pageId + '/children', 'patch', { children: chunks[i] });
+    var res = notionFetch_('blocks/' + parentId + '/children', 'patch', { children: chunks[i] });
     var code = res.getResponseCode();
     if (code < 200 || code >= 300) {
       var body = {};
       try { body = JSON.parse(res.getContentText()); } catch (e) {}
-      var msg = body.message || res.getContentText() || ('페이지 업데이트 실패 (' + code + ')');
-      if (String(msg).toLowerCase().indexOf('invalid request url') !== -1) {
-        msg += ' (pageId=' + pageId + ') — 예약 페이지 ID·Integration 연결을 확인하세요.';
-      }
-      throw new Error(msg);
+      throw new Error(body.message || res.getContentText() || ('블록 추가 실패 (' + code + ')'));
     }
   }
-
-  var pageRes = notionFetch_('pages/' + pageId);
-  var page = JSON.parse(pageRes.getContentText());
-  return { pageId: pageId, url: page.url };
 }
 
 function heading2_(text) {
