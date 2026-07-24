@@ -14,6 +14,6 @@
 | **불안의 파도타기** (선생님) | [anxiety-cup/불안의파도타기.html](anxiety-cup/불안의파도타기.html) |
 | **감정호텔** | [emotion-hotel/emotion-hotel.html](emotion-hotel/emotion-hotel.html) |
 | 상담 타이머 v2 (로컬) | [consultation-timer-v2/](consultation-timer-v2/) |
-| **Sailing 상담기록** (노션·OpenAI 웹앱) | [바로가기](https://script.google.com/macros/s/AKfycby_89TyH92f9sZmms__J2FN0e3x5gzeAE5hQUv9izJKVzy_WdKLUCHybvbAngeiT7gbdw/exec) · [안내](sailing/) |
+| **Sailing 상담기록** (노션·OpenAI 웹앱) | [바로가기](https://script.google.com/macros/s/AKfycby5cv4ZgaWu2fQHDQXNqx3Ln-gnGvMVPjAegXcpDvehA1dPVlIO_ieST1VlC70QkAMV/exec) · [안내](sailing/) |
 
 GitHub Pages 홈: [index.html](index.html)
