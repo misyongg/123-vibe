@@ -64,6 +64,9 @@
     }
     .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; font-size: 0.78rem; color: var(--ink-soft); }
     .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .inline-unit { display: flex; align-items: center; gap: 6px; }
+    .inline-unit input { flex: 1; min-width: 0; }
+    .inline-unit .unit { flex-shrink: 0; font-size: 0.8rem; color: var(--ink-soft); white-space: nowrap; }
     textarea { min-height: 130px; resize: vertical; line-height: 1.5; }
     .preview-text { min-height: 220px; font-size: 0.86rem; line-height: 1.55; }
 
@@ -184,7 +187,12 @@
       <div id="contextChips" class="chips" hidden></div>
 
       <div class="field-grid">
-        <label class="field"><span>회기</span><input type="text" id="sessionLabel" placeholder="예: 1회기"></label>
+        <label class="field"><span>회기</span>
+          <div class="inline-unit">
+            <input type="number" id="sessionNumber" min="1" step="1" inputmode="numeric" placeholder="예: 5">
+            <span class="unit">회기</span>
+          </div>
+        </label>
         <label class="field"><span>교시</span><input type="text" id="period" placeholder="예: 5교시"></label>
         <label class="field"><span>대상</span>
           <select id="target">
@@ -193,9 +201,26 @@
             <option value="교사">교사</option>
           </select>
         </label>
-        <label class="field"><span>성별</span><input type="text" id="gender" placeholder="남 / 여"></label>
+        <label class="field"><span>성별</span>
+          <select id="gender">
+            <option value="">선택</option>
+            <option value="남">남</option>
+            <option value="여">여</option>
+          </select>
+        </label>
         <label class="field"><span>학교명</span><input type="text" id="school"></label>
-        <label class="field"><span>학년/반</span><input type="text" id="gradeClass"></label>
+        <label class="field"><span>학년</span>
+          <div class="inline-unit">
+            <input type="number" id="grade" min="1" max="6" step="1" inputmode="numeric" placeholder="예: 1">
+            <span class="unit">학년</span>
+          </div>
+        </label>
+        <label class="field"><span>반</span>
+          <div class="inline-unit">
+            <input type="number" id="classNo" min="1" step="1" inputmode="numeric" placeholder="예: 3">
+            <span class="unit">반</span>
+          </div>
+        </label>
         <label class="field"><span>장소 (일정 구분)</span><input type="text" id="place" placeholder="캘린더 일정 구분"></label>
       </div>
 
@@ -210,7 +235,7 @@
         <button type="button" class="btn secondary" id="addChunkBtn" disabled>저장</button>
         <button type="button" class="btn ghost" id="clearDraftBtn" disabled>모은 내용 비우기</button>
       </div>
-      <p class="hint" style="margin-top:0;margin-bottom:10px">[저장] = 키워드만 누적 (노션 반영 안 함)</p>
+      <p class="hint" style="margin-top:0;margin-bottom:10px">[저장] = 키워드만 누적 (노션 반영 안 함) · 새로고침·창을 나가면 모은 내용은 사라집니다</p>
 
       <label class="field">
         <span class="memo-label">
@@ -451,14 +476,15 @@
         .withSuccessHandler(function (ctx) {
           setLoading(false);
           if (!ctx || !ctx.ok) {
-            $('sessionLabel').value = '1회기';
+            $('sessionNumber').value = '1';
             $('contextChips').hidden = true;
             showToast((ctx && ctx.error) || '컨텍스트 실패', true);
             return;
           }
-          $('sessionLabel').value = ctx.sessionLabel || '';
+          $('sessionNumber').value = extractSessionNumber(ctx.sessionNumber || ctx.sessionLabel) || '';
           var chips = [];
-          if (ctx.sessionLabel) chips.push(ctx.sessionLabel);
+          var sessionChip = formatSessionLabelClient($('sessionNumber').value);
+          if (sessionChip) chips.push(sessionChip);
           if (ctx.current && ctx.current.caseNo) chips.push('사례 ' + ctx.current.caseNo);
           if (ctx.current && ctx.current.type) chips.push(ctx.current.type);
           if (ctx.current && ctx.current.timeRangeLabel) chips.push(ctx.current.timeRangeLabel);
@@ -476,19 +502,46 @@
         .getSessionContext(item.pageId);
     }
 
+    function extractSessionNumber(v) {
+      if (v == null || v === '') return '';
+      if (typeof v === 'number' && isFinite(v)) return String(Math.max(1, Math.round(v)));
+      var m = String(v).match(/(\d+)/);
+      return m ? m[1] : '';
+    }
+
+    function formatSessionLabelClient(num) {
+      var n = extractSessionNumber(num);
+      return n ? (n + '회기') : '';
+    }
+
+    function formatGradeClassClient(grade, classNo) {
+      var g = String(grade || '').trim();
+      var c = String(classNo || '').trim();
+      var parts = [];
+      if (/^\d+$/.test(g)) parts.push(g + '학년');
+      if (/^\d+$/.test(c)) parts.push(c + '반');
+      return parts.join(' ');
+    }
+
     function payload() {
       if (!state.selected) throw new Error('학생(예약)을 선택하세요.');
       var keywords = draftText();
-      if (!keywords) throw new Error('모은 키워드가 없습니다. [추가]로 먼저 모아 주세요.');
+      if (!keywords) throw new Error('모은 키워드가 없습니다. [저장]으로 먼저 모아 주세요.');
+      var sessionNum = extractSessionNumber($('sessionNumber').value);
+      var grade = String($('grade').value || '').trim();
+      var classNo = String($('classNo').value || '').trim();
       return {
         pageId: state.selected.pageId,
         keywords: keywords,
-        sessionLabel: $('sessionLabel').value.trim(),
+        sessionNumber: sessionNum ? Number(sessionNum) : undefined,
+        sessionLabel: formatSessionLabelClient(sessionNum),
         period: $('period').value.trim(),
         target: $('target').value,
-        gender: $('gender').value.trim(),
+        gender: $('gender').value,
         school: $('school').value.trim(),
-        gradeClass: $('gradeClass').value.trim(),
+        grade: /^\d+$/.test(grade) ? grade : '',
+        classNo: /^\d+$/.test(classNo) ? classNo : '',
+        gradeClass: formatGradeClassClient(grade, classNo),
         place: $('place').value.trim(),
         extraInfo: $('extraInfo').value.trim()
       };
