@@ -47,6 +47,12 @@
     }
     .panel-title { font-size: 0.95rem; font-weight: 700; color: var(--teal-deep); }
     .hint { font-size: 0.75rem; color: var(--muted); margin-top: 3px; margin-bottom: 10px; }
+    .save-gate-hint {
+      margin-top: 0;
+      margin-bottom: 8px;
+      color: #b45309;
+      font-weight: 600;
+    }
 
     .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
     .row input[type="date"],
@@ -257,10 +263,11 @@
         </span>
         <textarea id="chunkInput" placeholder="지금 생각난 키워드만 적고 [저장]&#10;&#10;예) 모래놀이·클레이&#10;토리·토토 만들기&#10;차회일시 8/6 13:30"></textarea>
       </label>
-      <div class="actions" style="margin-top:0;margin-bottom:10px">
+      <div class="actions" style="margin-top:0;margin-bottom:4px">
         <button type="button" class="btn secondary" id="addChunkBtn" disabled>저장</button>
         <button type="button" class="btn ghost" id="clearDraftBtn" disabled>모은 내용 비우기</button>
       </div>
+      <p class="hint save-gate-hint" id="saveGateHint" hidden>학생을 선택하세요</p>
       <p class="hint" style="margin-top:0;margin-bottom:10px">[저장] = 키워드만 누적 (노션 반영 안 함) · 새로고침·창을 나가면 모은 내용은 사라집니다</p>
 
       <label class="field">
@@ -334,22 +341,26 @@
       var hasStudent = !!state.selected;
       var chunk = ($('chunkInput').value || '').trim();
       var draft = draftText();
-      // 키워드만 있으면 저장 버튼 활성화 (학생 미선택 시 클릭하면 안내)
-      $('addChunkBtn').disabled = !chunk;
+      $('addChunkBtn').disabled = !hasStudent || !chunk;
       $('clearDraftBtn').disabled = !draft;
       $('previewBtn').disabled = !hasStudent || !draft;
       $('saveBtn').disabled = !hasStudent || !draft;
+      var gate = $('saveGateHint');
+      if (gate) {
+        // 저장이 꺼져 있고 원인이 학생 미선택일 때 안내
+        gate.hidden = !!hasStudent;
+      }
       updateDraftCount();
     }
 
     function addChunk() {
+      if (!state.selected) {
+        showToast('학생을 선택하세요', true);
+        return;
+      }
       var chunk = ($('chunkInput').value || '').trim();
       if (!chunk) {
         showToast('저장할 키워드를 입력하세요', true);
-        return;
-      }
-      if (!state.selected) {
-        showToast('학생(예약)을 먼저 선택하세요', true);
         return;
       }
       var prev = ($('draftKeywords').value || '').replace(/\s+$/, '');
