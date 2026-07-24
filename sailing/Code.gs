@@ -233,7 +233,7 @@ function saveRecords(payload) {
     if (!pageId) return { ok: false, error: 'pageId가 필요합니다.' };
 
     var journal = String(payload.journal || '').trim();
-    var memo = String(payload.memo || '').trim();
+    var memo = stripMemoNameLines_(String(payload.memo || '').trim());
     var built = buildGenerationContext_(payload);
 
     if (!journal || !memo) {
@@ -241,6 +241,7 @@ function saveRecords(payload) {
       journal = journal || generated.journal;
       memo = memo || generated.memo;
     }
+    memo = stripMemoNameLines_(memo);
 
     var updated = updateReservationPage_(pageId, journal, memo, built.meta.sessionLabel || payload.sessionLabel);
     return {
