@@ -333,6 +333,12 @@
     }
 
     /** 서버/AI가 객체를 줄 때 textarea에 [object Object]가 나오지 않게 */
+    function stripMemoNameClient(text) {
+      return String(text || '').split('\n')
+        .filter(function (line) { return !/^\s*-\s*이름\s*[:：]/.test(line); })
+        .join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    }
+
     function asPreviewText(v) {
       if (v == null) return '';
       if (typeof v === 'string') {
@@ -500,7 +506,7 @@
             return;
           }
           $('journalPreview').value = asPreviewText(data.journal);
-          $('memoPreview').value = asPreviewText(data.memo);
+          $('memoPreview').value = stripMemoNameClient(asPreviewText(data.memo));
           showTab('journal');
           showToast('미리보기 완료 — 수정 후 [출력] 하세요');
         })
@@ -529,7 +535,7 @@
             return;
           }
           var jText = asPreviewText(data.journal);
-          var mText = asPreviewText(data.memo);
+          var mText = stripMemoNameClient(asPreviewText(data.memo));
           if (jText) $('journalPreview').value = jText;
           if (mText) $('memoPreview').value = mText;
           $('saveResult').hidden = false;
