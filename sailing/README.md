@@ -7,7 +7,7 @@ OpenAI가 **상담일지·상담자 메모**를 작성하고,
 > **Apps Script 웹앱**입니다. PC에서 `npm` 실행이 필요 없습니다.  
 > 배포 URL을 폰·PC 브라우저에서 바로 사용합니다.
 
-**바로가기:** [Sailing 웹앱 열기](https://script.google.com/macros/s/AKfycbw4Edp0BVnXhlinR-9GWpCpTE4e5cQBkrTnHz7djTgTHyye5YjBmi7udB8-MIr4qqGddg/exec)
+**바로가기:** [Sailing 웹앱 열기](https://script.google.com/macros/s/AKfycbzV0FEPBhJqN1yPE3FPpWPlCpTfZmsjKOTN_GteR93-3QKSrwny9xUlz9HENspUGUJWmw/exec)
 
 ## 원칙
 
@@ -17,7 +17,7 @@ OpenAI가 **상담일지·상담자 메모**를 작성하고,
 - 일지·메모 요령: 공공기록물 기준, 객관·구체, 키워드 사실 빠짐없이(뭉개기 요약 금지), 직접 표현·6하원칙, 사실/추정 구분
 - 상담일지에는 **상담자 견해 없음** / 견해는 **상담자 메모에만**
 - 일지 본문: **관찰** / **행동** / **상담활동** · 장소는 캘린더 **일정 구분**
-- 상담자 메모: 사례번호·이름 → 일정 → 상담활동 요약 → 상담자 견해 → 차회 계획(목표·활동·유의사항·준비물·차회일시는 정보 있을 때만)
+- 상담자 메모: 사례번호 → 일정 → 상담활동 요약(구체 사실·장면 단계) → 상담자 견해 → 차회 계획(정보 있을 때만). **이름 항목 없음**
 
 ## 파일
 

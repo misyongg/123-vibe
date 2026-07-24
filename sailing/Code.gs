@@ -233,7 +233,7 @@ function saveRecords(payload) {
     if (!pageId) return { ok: false, error: 'pageId가 필요합니다.' };
 
     var journal = String(payload.journal || '').trim();
-    var memo = String(payload.memo || '').trim();
+    var memo = stripMemoNameLines_(String(payload.memo || '').trim());
     var built = buildGenerationContext_(payload);
 
     if (!journal || !memo) {
@@ -241,6 +241,7 @@ function saveRecords(payload) {
       journal = journal || generated.journal;
       memo = memo || generated.memo;
     }
+    memo = stripMemoNameLines_(memo);
 
     var updated = updateReservationPage_(pageId, journal, memo, built.meta.sessionLabel || payload.sessionLabel);
     return {
@@ -358,13 +359,15 @@ var SYSTEM_PROMPT_ = [
   '',
   '【역할 분담】',
   '- journal(상담일지): 관찰·발언·행동·활동·이야기 전개를 사실 중심으로 충분히 기록.',
-  '- memo(상담자 메모): 일지 복붙 금지. 상담활동 요약은 금회기 핵심을 구체적 불릿 3~8개로.',
+  '- memo(상담자 메모): 일지 문장을 통째로 복붙하지 말 것. 다만 「상담활동 요약」에는 키워드의 핵심 사실·발언·점수·이야기 단계를 빠짐없이 구체적으로 쓴다.',
+  '- memo 「상담활동 요약」은 짧게 뭉개지 말 것. 상한 개수에 맞추려 내용을 버리지 말 것(필요하면 8~15개 불릿).',
   '- memo 「상담자 견해」: 키워드에 견해·소감·초점·요인이 있을 때만 하위 항목별로. 없으면 「상담자 견해」 제목도 생략.',
-  '- memo에 없는 차회 정보를 지어내지 말 것.',
+  '- memo에 없는 차회 정보를 지어내지 말 것. memo에 「이름」 항목을 쓰지 말 것.',
   '',
   '【문체】',
   '- 학교 상담일지체: 서술형·사실형. 과장·문학체·상담이론 용어 남발 금지.',
   '- 상담일지에서 “~한 것으로 보임”, “~로 추측됨”, “~한 듯함”, “~로 여겨짐” 금지.',
+  '- memo 요약에서도 “흥미를 보임”, “생각을 이끌어냄”, “과정을 확인함”처럼 내용 없는 평가형 한 줄 요약 금지.',
   '',
   'JSON:',
   '{ "journal": "상담일지 전체 텍스트(하나의 문자열. 줄바꿈은 \\n)", "memo": "상담자 메모 전체 텍스트(하나의 문자열. 줄바꿈은 \\n)" }',
@@ -407,19 +410,20 @@ var SYSTEM_PROMPT_ = [
   '',
   '【상담자 메모 양식 — 아래 형식만 사용】',
   '※ 노션 토글 제목이 「상담자 메모: n회기」이므로 memo 본문에 그 제목을 다시 쓰지 않는다.',
-  '※ 일지 복붙 금지. 상담활동 요약은 구체적 핵심만.',
+  '※ 「이름」 줄은 쓰지 않는다. (사례번호만)',
   '※ 목표·활동·유의사항·준비물·차회일시는 정보가 있을 때만. 없으면 「차회 계획」 자체 생략.',
   '※ 빈 “-” 금지.',
   '',
   '- 사례번호: (제공값)',
-  '- 이름: (제공값)',
   '',
   '일정- YYYY.MM.DD.(요일) n교시(○○분)',
   '※ 교시가 없으면: YYYY.MM.DD.(요일) HH:MM~HH:MM(○○분)',
   '',
   '상담활동 요약',
-  '- 금회기 활동을 구체 불릿 3~8개 (책 제목·클레이 인물·모래놀이 전개 핵심·질문·답 등)',
-  '- “그림책을 읽고 활동을 하였다”처럼 뭉개지 말 것',
+  '- 일지만큼 자세할 필요는 없어도, 키워드의 구체 사실은 메모에도 반드시 남긴다.',
+  '- 포함할 것: 책 제목·회차, 그림책 줄거리 요지, 클레이 인물·발언, 점수, 모래놀이 전개(만남→제안→거절→싸움→장소·소품→결말), 상담자 질문·내담자 답.',
+  '- 각 장면·발언·점수는 별도 불릿. “이야기를 전개함/흥미를 보임/생각을 이끌어냄”만 쓰지 말 것.',
+  '- 불릿 개수 상한에 맞추려 내용을 버리지 말 것.',
   '',
   '상담자 견해',
   '※ 키워드에 견해·소감·요인·초점 근거가 있을 때만 제목과 해당 하위 항목 작성. 없으면 이 블록 전체 생략.',
@@ -464,7 +468,7 @@ function buildUserPrompt_(ctx) {
     '[메타데이터]',
     '회기: ' + (ctx.sessionLabel || ''),
     '사례번호: ' + (ctx.caseNo || '') + ' (상담자 메모 「- 사례번호:」에만)',
-    '이름: ' + (ctx.name || '') + ' (상담자 메모 「- 이름:」에만)',
+    '이름: ' + (ctx.name || '') + ' (참고용. 상담자 메모에 「이름」 항목을 넣지 말 것)',
     '성별: ' + (ctx.gender || '') + ' (메모 양식에 넣지 말 것)',
     '학교명: ' + (ctx.school || '') + ' (메모 양식에 넣지 말 것)',
     '학년/반: ' + (ctx.gradeClass || '') + ' (메모 양식에 넣지 말 것)',
@@ -475,7 +479,7 @@ function buildUserPrompt_(ctx) {
     '장소(상담일지용·일정 구분 값): ' + journalPlace,
     '유형: ' + (ctx.type || ''),
     '',
-    '[상담자 키워드 메모 — 이것만 사실 근거. 빠짐없이 반영]',
+    '[상담자 키워드 메모 — 이것만 사실 근거. journal·memo 모두 빠짐없이 반영]',
     ctx.keywords || '(없음)',
     '',
     '작성 지시(충실도 우선):',
@@ -485,7 +489,8 @@ function buildUserPrompt_(ctx) {
     '- journal에 「상담자 견해」 넣지 말 것. 추정 금지.',
     '- 장소- 는 「장소(상담일지용·일정 구분 값)」만.',
     '- journal/memo 첫 줄에 회기 토글 제목을 다시 쓰지 말 것.',
-    '- memo 「상담활동 요약」: 구체 불릿 3~8개 (책 제목·인물·전개 핵심·질문·답 포함).',
+    '- memo에는 「이름」 줄을 쓰지 말 것. 「- 사례번호:」만.',
+    '- memo 「상담활동 요약」: 일지처럼 구체 사실 유지. 발언·점수·이야기 단계·질문·답을 별도 불릿으로. 5줄로 뭉개지 말 것.',
     '- memo 「상담자 견해」·「차회 계획」: 근거/정보 없으면 제목까지 생략. “계속 이어갈 예정” 금지.',
     '- 인물명 혼동 금지. 빈 “-” 금지.',
     '- journal·memo는 반드시 하나의 문자열(string). 객체/배열로 주지 말 것.',
@@ -551,12 +556,23 @@ function generateWithOpenAI_(ctx) {
 
   // 모델이 memo/journal을 객체로 줄 때가 있어 평문 문자열로 정규화
   var journal = asPlainRecordText_(parsed.journal);
-  var memo = asPlainRecordText_(parsed.memo);
+  var memo = stripMemoNameLines_(asPlainRecordText_(parsed.memo));
   if (!journal || !memo || journal === '[object Object]' || memo === '[object Object]') {
     throw new Error('OpenAI 응답에 journal 또는 memo 텍스트가 비어 있거나 형식이 올바르지 않습니다.');
   }
 
   return { journal: journal, memo: memo, model: model };
+}
+
+/** 상담자 메모에서 「- 이름:」 줄 제거 */
+function stripMemoNameLines_(text) {
+  var lines = String(text || '').replace(/\r\n/g, '\n').split('\n');
+  var kept = [];
+  for (var i = 0; i < lines.length; i++) {
+    if (/^\s*-\s*이름\s*[:：]/.test(lines[i])) continue;
+    kept.push(lines[i]);
+  }
+  return kept.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 
 /**
@@ -592,8 +608,11 @@ function asPlainRecordText_(value) {
       if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
         var text = String(v).replace(/\r\n/g, '\n').trim();
         if (!text || text === '[object Object]') continue;
-        if (key === '사례번호' || key === '이름') {
+        if (key === '사례번호') {
           lines.push('- ' + key + ': ' + text);
+        } else if (key === '이름') {
+          // 상담자 메모에서 이름 항목 미사용
+          continue;
         } else if (/^일정/.test(key)) {
           lines.push('일정- ' + text.replace(/^일정-\s*/, ''));
         } else {
