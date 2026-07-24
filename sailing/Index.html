@@ -554,7 +554,7 @@
       var base = '';
       rec.onstart = function () {
         state.listening = true;
-        base = $('keywords').value;
+        base = $('chunkInput').value;
         $('voiceBtn').textContent = '⏹ 중지';
       };
       rec.onend = function () {
@@ -572,9 +572,9 @@
         if (finalChunk) {
           var sep = base && base.slice(-1) !== '\n' ? '\n' : '';
           base = base + sep + finalChunk.trim();
-          $('keywords').value = base;
+          $('chunkInput').value = base;
         } else {
-          $('keywords').value = base + (base && interim ? '\n' : '') + interim;
+          $('chunkInput').value = base + (base && interim ? '\n' : '') + interim;
         }
         setButtons();
       };
@@ -592,7 +592,16 @@
       $('studentSearch').onkeydown = function (e) {
         if (e.key === 'Enter') searchStudents();
       };
-      $('keywords').oninput = setButtons;
+      $('chunkInput').oninput = setButtons;
+      $('draftKeywords').oninput = setButtons;
+      $('addChunkBtn').onclick = addChunk;
+      $('clearDraftBtn').onclick = clearDraft;
+      $('chunkInput').onkeydown = function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          addChunk();
+        }
+      };
       $('previewBtn').onclick = preview;
       $('saveBtn').onclick = save;
       var tabs = document.querySelectorAll('.tab');
