@@ -7,7 +7,7 @@ OpenAI가 **상담일지·상담자 메모**를 작성하고,
 > **Apps Script 웹앱**입니다. PC에서 `npm` 실행이 필요 없습니다.  
 > 배포 URL을 폰·PC 브라우저에서 바로 사용합니다.
 
-**바로가기:** [Sailing 웹앱 열기](https://script.google.com/macros/s/AKfycbw4Edp0BVnXhlinR-9GWpCpTE4e5cQBkrTnHz7djTgTHyye5YjBmi7udB8-MIr4qqGddg/exec)
+**바로가기:** [Sailing 웹앱 열기](https://script.google.com/macros/s/AKfycbzV0FEPBhJqN1yPE3FPpWPlCpTfZmsjKOTN_GteR93-3QKSrwny9xUlz9HENspUGUJWmw/exec)
 
 ## 원칙
 
