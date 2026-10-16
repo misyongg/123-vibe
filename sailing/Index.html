@@ -518,6 +518,14 @@
           }
           $('sessionNumber').value = extractSessionNumber(ctx.sessionNumber || ctx.sessionLabel) || '';
           fillStudentFields(ctx.current || item);
+          if (ctx.current && ctx.current.studentError) {
+            showToast(ctx.current.studentError, true);
+          } else if (ctx.current && !String(ctx.current.school || '').trim() && !String(ctx.current.grade || '').trim()) {
+            // 자동채움이 비면 짧게 안내 (해당학생 미연결/Integration 미연결)
+            if (!(ctx.current.studentName || '').trim()) {
+              showToast('학생 정보가 비어 있습니다. 노션 「해당학생」 연결과 Integration→학생 마스터 연결을 확인하세요.', true);
+            }
+          }
           var chips = [];
           var sessionChip = formatSessionLabelClient($('sessionNumber').value);
           if (sessionChip) chips.push(sessionChip);
@@ -794,9 +802,14 @@
 
       google.script.run
         .withSuccessHandler(function (h) {
+          if (h && h.version) {
+            document.title = 'Sailing · 상담기록 v' + h.version;
+          }
           if (h && h.missing && h.missing.length) {
             $('statusBar').textContent = '스크립트 속성 필요: ' + h.missing.join(', ');
             showToast('설정 필요: ' + h.missing.join(', '), true);
+          } else if (h && h.version) {
+            $('statusBar').textContent = '준비됨 · v' + h.version;
           }
           loadSchedules();
         })

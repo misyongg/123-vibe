@@ -35,8 +35,8 @@ var CONFIG = {
   PROP_CLASS: '학생 반',
   PROP_GENDER: '학생 성별',
   // 학생 마스터 DB 원본 속성 (Relation으로 직접 읽을 때). Rollup이 API에서 비어도 동작.
-  STUDENT_PROP_NAME: '이름',
-  STUDENT_PROP_CASE: '사례번호',
+  STUDENT_PROP_NAME: '표시 이름', // title. 비우면 getTitle_ 사용
+  STUDENT_PROP_CASE: '케이스번호',
   STUDENT_PROP_SCHOOL: '학교명',
   STUDENT_PROP_GRADE: '학년',
   STUDENT_PROP_CLASS: '반',
@@ -69,7 +69,7 @@ function getHealth() {
     ok: missing.length === 0,
     missing: missing,
     databaseId: dbId ? (dbId.substring(0, 8) + '…') : '',
-    version: '1.0.0',
+    version: '1.1.1',
     name: 'Wee센터 상담기록 자동화 시스템'
   };
 }
@@ -813,15 +813,18 @@ function parsePage_(page, options) {
   var classNo = getPropertyText_(props, CONFIG.PROP_CLASS);
   var gender = getPropertyText_(props, CONFIG.PROP_GENDER);
 
-  // Rollup이 query/page 응답에서 비는 경우가 있어, 해당학생 Relation으로 마스터를 직접 읽음.
-  var student = options.skipStudent ? null : fetchRelatedStudent_(props);
-  if (student) {
-    if (!studentName) studentName = student.name || '';
-    if (!caseNo) caseNo = student.caseNo || '';
-    if (!school) school = student.school || '';
-    if (!grade) grade = student.grade || '';
-    if (!classNo) classNo = student.classNo || '';
-    if (!gender) gender = student.gender || '';
+  // Rollup은 API에서 값이 비는 경우가 많아, 해당학생 Relation으로 마스터를 직접 읽음.
+  var studentFetch = options.skipStudent ? null : fetchRelatedStudent_(props);
+  var studentError = '';
+  if (studentFetch && studentFetch.ok) {
+    if (!studentName) studentName = studentFetch.name || '';
+    if (!caseNo) caseNo = studentFetch.caseNo || '';
+    if (!school) school = studentFetch.school || '';
+    if (!grade) grade = studentFetch.grade || '';
+    if (!classNo) classNo = studentFetch.classNo || '';
+    if (!gender) gender = studentFetch.gender || '';
+  } else if (studentFetch && studentFetch.error) {
+    studentError = studentFetch.error;
   }
 
   var displayName = studentName || title;
@@ -832,6 +835,7 @@ function parsePage_(page, options) {
     title: title,
     studentName: studentName,
     displayName: displayName,
+    studentError: studentError,
     caseNo: caseNo,
     type: getSelect_(props, CONFIG.PROP_TYPE),
     category: category,
@@ -864,14 +868,25 @@ function parsePage_(page, options) {
  */
 var studentPageCache_ = {};
 
+/**
+ * 일정 「해당학생」 Relation → 학생 마스터 페이지.
+ * 성공: { ok:true, school, grade, ... }
+ * 실패: { ok:false, error:'...' }  (Integration 미연결이 가장 흔함)
+ */
 function fetchRelatedStudent_(scheduleProps) {
   var relName = CONFIG.PROP_STUDENT_REL;
-  if (!relName) return null;
+  if (!relName) return { ok: false, error: 'CONFIG.PROP_STUDENT_REL이 비어 있습니다.' };
   var rel = scheduleProps[relName];
-  if (!rel || rel.type !== 'relation' || !rel.relation || !rel.relation.length) return null;
+  if (!rel) return { ok: false, error: '일정에 「' + relName + '」 속성이 없습니다.' };
+  if (rel.type !== 'relation') {
+    return { ok: false, error: '「' + relName + '」이 Relation이 아닙니다 (' + rel.type + ').' };
+  }
+  if (!rel.relation || !rel.relation.length) {
+    return { ok: false, error: '해당학생이 비어 있습니다. 노션 일정에서 학생을 연결하세요.' };
+  }
 
   var studentId = normalizeNotionId_(rel.relation[0].id);
-  if (!studentId) return null;
+  if (!studentId) return { ok: false, error: '해당학생 ID를 읽을 수 없습니다.' };
   if (studentPageCache_[studentId]) return studentPageCache_[studentId];
 
   try {
@@ -879,25 +894,79 @@ function fetchRelatedStudent_(scheduleProps) {
     var code = res.getResponseCode();
     var body = JSON.parse(res.getContentText());
     if (code !== 200) {
-      Logger.log('학생 마스터 조회 실패: ' + (body.message || code));
-      return null;
+      var msg = body.message || ('HTTP ' + code);
+      if (code === 404 || String(msg).indexOf('Could not find') !== -1) {
+        msg = '학생 마스터 페이지를 읽을 수 없습니다. Apps Script용 Notion Integration을 「학생 마스터」 DB Connections에 연결하세요. (' + msg + ')';
+      }
+      var fail = { ok: false, error: msg, studentId: studentId };
+      // 404는 캐시하지 않음(연결 후 재시도 가능)
+      return fail;
     }
     var sp = body.properties || {};
     var parsed = {
+      ok: true,
       pageId: body.id,
       name: getPropertyText_(sp, CONFIG.STUDENT_PROP_NAME) || getTitle_(sp),
       caseNo: getPropertyText_(sp, CONFIG.STUDENT_PROP_CASE),
       school: getPropertyText_(sp, CONFIG.STUDENT_PROP_SCHOOL),
       grade: getPropertyText_(sp, CONFIG.STUDENT_PROP_GRADE),
       classNo: getPropertyText_(sp, CONFIG.STUDENT_PROP_CLASS),
-      gender: getPropertyText_(sp, CONFIG.STUDENT_PROP_GENDER)
+      gender: getPropertyText_(sp, CONFIG.STUDENT_PROP_GENDER),
+      propertyKeys: Object.keys(sp)
     };
     studentPageCache_[studentId] = parsed;
     return parsed;
   } catch (e) {
-    Logger.log('학생 마스터 조회 오류: ' + String(e.message || e));
-    return null;
+    return { ok: false, error: '학생 마스터 조회 오류: ' + String(e.message || e) };
   }
+}
+
+/** Apps Script에서 실행: debugAutofillLog('페이지ID') */
+function debugAutofill(pageId) {
+  ensureNotion_();
+  pageId = normalizeNotionId_(pageId);
+  var res = notionFetch_('pages/' + pageId);
+  var code = res.getResponseCode();
+  var body = JSON.parse(res.getContentText());
+  if (code !== 200) {
+    return { ok: false, error: body.message || ('HTTP ' + code) };
+  }
+  var props = body.properties || {};
+  var rollups = {};
+  var keys = Object.keys(props);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var p = props[k];
+    rollups[k] = {
+      type: p.type,
+      text: getPropertyText_(props, k),
+      relationCount: (p.type === 'relation' && p.relation) ? p.relation.length : null,
+      rollupType: (p.type === 'rollup' && p.rollup) ? p.rollup.type : null
+    };
+  }
+  var student = fetchRelatedStudent_(props);
+  var parsed = parsePage_(body);
+  return {
+    ok: true,
+    version: '1.1.1',
+    schedulePropertyKeys: keys,
+    propertySnapshot: rollups,
+    studentFetch: student,
+    parsedFields: parsed ? {
+      school: parsed.school,
+      grade: parsed.grade,
+      classNo: parsed.classNo,
+      gender: parsed.gender,
+      studentName: parsed.studentName,
+      caseNo: parsed.caseNo
+    } : null
+  };
+}
+
+function debugAutofillLog(pageId) {
+  var r = debugAutofill(pageId);
+  Logger.log(JSON.stringify(r, null, 2));
+  return r;
 }
 
 function parseNotionDate_(dateProp) {

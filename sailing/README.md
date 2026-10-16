@@ -130,3 +130,10 @@ Apps Script에서 함수 **`testNotionConnectionLog`** / **`testOpenAIConnection
 
 이전 Node(`npm start`) 방식은 **웹앱으로 교체**되었습니다.  
 더 이상 `npm install` / `localhost`가 필요 없습니다.
+
+### 자동채움이 비어 있을 때
+
+1. 브라우저 제목/상태바에 **v1.1.1** 이 보이는지 확인 (안 보이면 Apps Script에 최신 `Code.gs`·`Index.html`을 붙여넣고 **새 버전 배포**).
+2. 노션 일정에 **해당학생**이 연결돼 있는지 확인.
+3. Apps Script용 Notion Integration → **학생 마스터** DB `···` → Connections에 같은 Integration 연결.
+4. Apps Script에서 `debugAutofillLog` 실행, 인자로 일정 페이지 ID를 넣으면 로그에 원인(`studentFetch.error`)이 찍힙니다.
