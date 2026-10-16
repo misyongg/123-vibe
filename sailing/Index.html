@@ -194,7 +194,7 @@
       <div class="mark"></div>
       <div>
         <h1>Sailing</h1>
-        <p>Wee센터 상담기록 · 웹앱 v1.1.3</p>
+        <p>Wee센터 상담기록 · 웹앱 v1.1.4</p>
       </div>
     </div>
 
@@ -239,13 +239,13 @@
       </div>
       <div class="field-grid meta-row2">
         <label class="field"><span>학교명</span>
-          <input type="text" id="school" placeholder="학교명">
+          <input type="text" id="school" placeholder="">
         </label>
         <label class="field"><span>학년</span>
-          <input type="number" id="grade" min="1" max="6" step="1" inputmode="numeric" placeholder="1">
+          <input type="number" id="grade" min="1" max="6" step="1" inputmode="numeric" placeholder="">
         </label>
         <label class="field"><span>반</span>
-          <input type="number" id="classNo" min="1" step="1" inputmode="numeric" placeholder="3">
+          <input type="number" id="classNo" min="1" step="1" inputmode="numeric" placeholder="">
         </label>
         <label class="field"><span>성별</span>
           <select id="gender">
@@ -517,13 +517,19 @@
           }
           $('sessionNumber').value = extractSessionNumber(ctx.sessionNumber || ctx.sessionLabel) || '';
           fillStudentFields(ctx.current || item);
-          if (ctx.current && ctx.current.studentError) {
-            showToast(ctx.current.studentError, true);
-          } else if (ctx.current && !String(ctx.current.school || '').trim() && !String(ctx.current.grade || '').trim()) {
-            // 자동채움이 비면 짧게 안내 (해당학생 미연결/Integration 미연결)
-            if (!(ctx.current.studentName || '').trim()) {
-              showToast('학생 정보가 비어 있습니다. 노션 「해당학생」 연결과 Integration→학생 마스터 연결을 확인하세요.', true);
-            }
+          var cur = ctx.current || {};
+          var missingStudent =
+            !String(cur.school || '').trim() ||
+            !String(cur.grade || '').trim() ||
+            !String(cur.classNo || '').trim() ||
+            !String(cur.gender || '').trim();
+          if (cur.studentError) {
+            showToast(cur.studentError, true);
+          } else if (missingStudent) {
+            showToast(
+              '학교/학년/반/성별이 비어 있습니다. ①웹앱 v1.1.4인지 확인 ②Notion Integration을 「학생 마스터」에 연결하세요.',
+              true
+            );
           }
           var chips = [];
           var sessionChip = formatSessionLabelClient($('sessionNumber').value);

@@ -16,6 +16,8 @@
 var CONFIG = {
   // 상담 타이머와 동일한 예약 캘린더 DB (원본). 연결 DB(linked) ID는 API 불가.
   NOTION_DATABASE_ID: '1ad1b959-3ca0-8187-bc50-e94e057f408d',
+  // 학생 마스터 DB (학교명·학년·반·성별 원본). Rollup은 API에서 자주 비므로 여기로 직접 조회.
+  STUDENT_DATABASE_ID: '06e2b1b5-b547-4554-9bba-5f8d514c315b',
   PROP_DATE: 'Date',
   // 일정 DB에 유지하는 사례번호(정확한 조회 키). 제목을 사례번호로 바꾸지 않음.
   PROP_CASE: '케이스번호', // DB 열 이름이 '사례번호'면 여기만 수정
@@ -70,7 +72,7 @@ function getHealth() {
     ok: missing.length === 0,
     missing: missing,
     databaseId: dbId ? (dbId.substring(0, 8) + '…') : '',
-    version: '1.1.3',
+    version: '1.1.4',
     name: 'Wee센터 상담기록 자동화 시스템'
   };
 }
@@ -814,18 +816,37 @@ function parsePage_(page, options) {
   var classNo = getPropertyText_(props, CONFIG.PROP_CLASS);
   var gender = getPropertyText_(props, CONFIG.PROP_GENDER);
 
-  // Rollup은 API에서 값이 비는 경우가 많아, 해당학생 Relation으로 마스터를 직접 읽음.
-  var studentFetch = options.skipStudent ? null : fetchRelatedStudent_(props);
+  // Rollup은 API에서 값이 비는 경우가 많음.
+  // 1) 해당학생 Relation → 학생 마스터 페이지
+  // 2) 케이스번호로 학생 마스터 DB 조회 (Relation 실패/미연결 대비)
   var studentError = '';
-  if (studentFetch && studentFetch.ok) {
-    if (!studentName) studentName = studentFetch.name || '';
-    if (!caseNo) caseNo = studentFetch.caseNo || '';
-    if (!school) school = studentFetch.school || '';
-    if (!grade) grade = studentFetch.grade || '';
-    if (!classNo) classNo = studentFetch.classNo || '';
-    if (!gender) gender = studentFetch.gender || '';
-  } else if (studentFetch && studentFetch.error) {
-    studentError = studentFetch.error;
+  if (!options.skipStudent) {
+    var studentFetch = fetchRelatedStudent_(props);
+    if (studentFetch && studentFetch.ok) {
+      if (!studentName) studentName = studentFetch.name || '';
+      if (!caseNo) caseNo = studentFetch.caseNo || '';
+      if (!school) school = studentFetch.school || '';
+      if (!grade) grade = studentFetch.grade || '';
+      if (!classNo) classNo = studentFetch.classNo || '';
+      if (!gender) gender = studentFetch.gender || '';
+    } else if (studentFetch && studentFetch.error) {
+      studentError = studentFetch.error;
+    }
+
+    if (!school || !grade || !classNo || !gender) {
+      var byCase = fetchStudentByCase_(caseNo);
+      if (byCase && byCase.ok) {
+        if (!studentName) studentName = byCase.name || '';
+        if (!caseNo) caseNo = byCase.caseNo || '';
+        if (!school) school = byCase.school || '';
+        if (!grade) grade = byCase.grade || '';
+        if (!classNo) classNo = byCase.classNo || '';
+        if (!gender) gender = byCase.gender || '';
+        if (studentError) studentError = ''; // 케이스번호로 복구됨
+      } else if (byCase && byCase.error && !school) {
+        studentError = studentError || byCase.error;
+      }
+    }
   }
 
   // 일정 「기타」에 학교명을 넣어 둔 경우(레거시) 보조
@@ -910,23 +931,100 @@ function fetchRelatedStudent_(scheduleProps) {
       // 404는 캐시하지 않음(연결 후 재시도 가능)
       return fail;
     }
-    var sp = body.properties || {};
-    var parsed = {
-      ok: true,
-      pageId: body.id,
-      name: getPropertyText_(sp, CONFIG.STUDENT_PROP_NAME) || getTitle_(sp),
-      caseNo: getPropertyText_(sp, CONFIG.STUDENT_PROP_CASE),
-      school: getPropertyText_(sp, CONFIG.STUDENT_PROP_SCHOOL),
-      grade: getPropertyText_(sp, CONFIG.STUDENT_PROP_GRADE),
-      classNo: getPropertyText_(sp, CONFIG.STUDENT_PROP_CLASS),
-      gender: getPropertyText_(sp, CONFIG.STUDENT_PROP_GENDER),
-      propertyKeys: Object.keys(sp)
-    };
+    var parsed = parseStudentProps_(body);
     studentPageCache_[studentId] = parsed;
     return parsed;
   } catch (e) {
     return { ok: false, error: '학생 마스터 조회 오류: ' + String(e.message || e) };
   }
+}
+
+function parseStudentProps_(page) {
+  var sp = (page && page.properties) || {};
+  return {
+    ok: true,
+    pageId: page.id,
+    name: getPropertyText_(sp, CONFIG.STUDENT_PROP_NAME) || getTitleFromProps_(sp),
+    caseNo: getPropertyText_(sp, CONFIG.STUDENT_PROP_CASE),
+    school: getPropertyText_(sp, CONFIG.STUDENT_PROP_SCHOOL),
+    grade: getPropertyText_(sp, CONFIG.STUDENT_PROP_GRADE),
+    classNo: getPropertyText_(sp, CONFIG.STUDENT_PROP_CLASS),
+    gender: getPropertyText_(sp, CONFIG.STUDENT_PROP_GENDER),
+    propertyKeys: Object.keys(sp)
+  };
+}
+
+function getTitleFromProps_(props) {
+  for (var name in props) {
+    if (props[name] && props[name].type === 'title') {
+      return (props[name].title || []).map(function (t) { return t.plain_text; }).join('');
+    }
+  }
+  return '';
+}
+
+var studentCaseCache_ = {};
+
+/**
+ * 케이스번호로 학생 마스터 DB를 조회 (Relation 실패 시 폴백).
+ * Integration이 「학생 마스터」에 연결되어 있어야 합니다.
+ */
+function fetchStudentByCase_(caseNo) {
+  caseNo = String(caseNo || '').trim();
+  if (!caseNo) return { ok: false, error: '케이스번호가 없어 학생 마스터를 조회할 수 없습니다.' };
+  if (studentCaseCache_[caseNo]) return studentCaseCache_[caseNo];
+
+  var studentDbId = normalizeNotionId_(CONFIG.STUDENT_DATABASE_ID);
+  if (!studentDbId) {
+    return { ok: false, error: 'CONFIG.STUDENT_DATABASE_ID가 비어 있습니다.' };
+  }
+
+  try {
+    var filter;
+    if (!isNaN(Number(caseNo))) {
+      filter = { property: CONFIG.STUDENT_PROP_CASE, number: { equals: Number(caseNo) } };
+    } else {
+      filter = { property: CONFIG.STUDENT_PROP_CASE, rich_text: { equals: caseNo } };
+    }
+
+    var pages = queryDatabaseById_(studentDbId, filter, []);
+    if (!pages.length) {
+      return {
+        ok: false,
+        error: '학생 마스터에서 케이스번호 ' + caseNo + ' 을(를) 찾지 못했습니다. Integration→학생 마스터 연결을 확인하세요.'
+      };
+    }
+    var parsed = parseStudentProps_(pages[0]);
+    studentCaseCache_[caseNo] = parsed;
+    if (parsed.pageId) studentPageCache_[normalizeNotionId_(parsed.pageId)] = parsed;
+    return parsed;
+  } catch (e) {
+    var msg = String(e.message || e);
+    if (msg.indexOf('Could not find') !== -1 || msg.indexOf('404') !== -1) {
+      msg = '학생 마스터 DB를 읽을 수 없습니다. Apps Script용 Notion Integration을 「학생 마스터」 Connections에 연결하세요. (' + msg + ')';
+    }
+    return { ok: false, error: msg };
+  }
+}
+
+function queryDatabaseById_(databaseId, filter, sorts) {
+  var results = [];
+  var cursor = null;
+  do {
+    var body = {
+      filter: filter,
+      sorts: sorts || [],
+      page_size: 100
+    };
+    if (cursor) body.start_cursor = cursor;
+    var res = notionFetch_('databases/' + databaseId + '/query', 'post', body);
+    var code = res.getResponseCode();
+    var data = JSON.parse(res.getContentText());
+    if (code !== 200) throw new Error(data.message || '노션 조회 실패 (' + code + ')');
+    results = results.concat(data.results || []);
+    cursor = data.has_more ? data.next_cursor : null;
+  } while (cursor);
+  return results;
 }
 
 /** Apps Script에서 실행: debugAutofillLog('페이지ID') */
@@ -956,7 +1054,7 @@ function debugAutofill(pageId) {
   var parsed = parsePage_(body);
   return {
     ok: true,
-    version: '1.1.3',
+    version: '1.1.4',
     schedulePropertyKeys: keys,
     propertySnapshot: rollups,
     studentFetch: student,
