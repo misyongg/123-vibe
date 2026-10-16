@@ -70,7 +70,7 @@ function getHealth() {
     ok: missing.length === 0,
     missing: missing,
     databaseId: dbId ? (dbId.substring(0, 8) + '…') : '',
-    version: '1.1.2',
+    version: '1.1.3',
     name: 'Wee센터 상담기록 자동화 시스템'
   };
 }
@@ -857,7 +857,7 @@ function parsePage_(page, options) {
     gender: gender,
     period: period,
     target: target,
-    sessionNo: sessionNo, CONFIG.PROP_SESSION),
+    sessionNo: sessionNo,
     startISO: dateInfo.startISO,
     endISO: dateInfo.endISO,
     startHasTime: dateInfo.startHasTime,
@@ -956,7 +956,7 @@ function debugAutofill(pageId) {
   var parsed = parsePage_(body);
   return {
     ok: true,
-    version: '1.1.2',
+    version: '1.1.3',
     schedulePropertyKeys: keys,
     propertySnapshot: rollups,
     studentFetch: student,
