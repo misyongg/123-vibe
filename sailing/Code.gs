@@ -24,6 +24,14 @@ var CONFIG = {
   PROP_NOTE: '비고',
   PROP_CONTACT: '연락처',
   PROP_URL: 'URL',
+  // 일정에 미리 입력해 두고 상담 일지 화면에 자동으로 채울 기본 정보입니다.
+  // 실제 Notion 속성명과 다르면 값만 바꾸면 됩니다. 비워 두면 해당 항목은 건너뜁니다.
+  PROP_SCHOOL: '학교',
+  PROP_GRADE: '학년',
+  PROP_CLASS: '반',
+  PROP_GENDER: '성별',
+  PROP_PERIOD: '교시',
+  PROP_TARGET: '대상',
   CATEGORY_FILTER: '상담', // 일정 구분에 '상담' 포함만
   OPENAI_MODEL: 'gpt-4o-mini',
   NOTION_VERSION: '2022-06-28'
@@ -298,11 +306,13 @@ function buildGenerationContext_(body) {
       : current.dateLabel
   );
 
+  var grade = String(body.grade || current.grade || '').trim();
+  var classNo = String(body.classNo || current.classNo || '').trim();
   var gradeClass = String(body.gradeClass || '').trim();
   if (!gradeClass) {
     var gParts = [];
-    if (body.grade && /^\d+$/.test(String(body.grade))) gParts.push(String(body.grade) + '학년');
-    if (body.classNo && /^\d+$/.test(String(body.classNo))) gParts.push(String(body.classNo) + '반');
+    if (grade) gParts.push(normalizeGradeClassPart_(grade, '학년'));
+    if (classNo) gParts.push(normalizeGradeClassPart_(classNo, '반'));
     gradeClass = gParts.join(' ');
   }
 
@@ -311,12 +321,12 @@ function buildGenerationContext_(body) {
       sessionLabel: label,
       caseNo: current.caseNo,
       name: body.name || current.title,
-      gender: body.gender || '',
-      school: body.school || '',
+      gender: body.gender || current.gender || '',
+      school: body.school || current.school || '',
       gradeClass: gradeClass,
-      target: body.target || '학생',
+      target: body.target || current.target || '학생',
       datetimeLabel: autoDatetime,
-      period: body.period || '',
+      period: body.period || current.period || '',
       // 상담일지 「장소」는 캘린더 「일정 구분」을 사용
       place: current.category || body.place || '',
       category: current.category,
@@ -332,6 +342,12 @@ function buildGenerationContext_(body) {
       previousCount: previous.length
     }
   };
+}
+
+function normalizeGradeClassPart_(value, suffix) {
+  var text = String(value || '').trim();
+  if (!text) return '';
+  return text.indexOf(suffix) === -1 ? text + suffix : text;
 }
 
 // ── OpenAI ──
@@ -785,6 +801,12 @@ function parsePage_(page) {
     note: getRichText_(props, CONFIG.PROP_NOTE),
     contact: getRichText_(props, CONFIG.PROP_CONTACT),
     externalUrl: getRichText_(props, CONFIG.PROP_URL),
+    school: getPropertyText_(props, CONFIG.PROP_SCHOOL),
+    grade: getPropertyText_(props, CONFIG.PROP_GRADE),
+    classNo: getPropertyText_(props, CONFIG.PROP_CLASS),
+    gender: getPropertyText_(props, CONFIG.PROP_GENDER),
+    period: getPropertyText_(props, CONFIG.PROP_PERIOD),
+    target: getPropertyText_(props, CONFIG.PROP_TARGET),
     startISO: dateInfo.startISO,
     endISO: dateInfo.endISO,
     startHasTime: dateInfo.startHasTime,
@@ -1089,6 +1111,43 @@ function getSelect_(props, name) {
   if (p.type === 'status' && p.status) return p.status.name;
   if (p.type === 'multi_select' && p.multi_select) {
     return p.multi_select.map(function (s) { return s.name; }).join(', ');
+  }
+  return '';
+}
+
+/**
+ * 노션 속성 유형과 관계없이 화면에 표시할 수 있는 값으로 바꿉니다.
+ * Relation의 원본 값을 바로 읽지는 못하므로, 일정 DB에는 Rollup/Formula로
+ * 학교·학년 등의 값을 표시해 두고 그 속성명을 CONFIG에 지정하면 됩니다.
+ */
+function getPropertyText_(props, name) {
+  if (!name) return '';
+  var p = props[name];
+  if (!p) return '';
+
+  if (p.type === 'title') return (p.title || []).map(function (t) { return t.plain_text; }).join('');
+  if (p.type === 'rich_text') return (p.rich_text || []).map(function (t) { return t.plain_text; }).join('');
+  if (p.type === 'number') return p.number != null ? String(p.number) : '';
+  if (p.type === 'select') return p.select ? p.select.name : '';
+  if (p.type === 'status') return p.status ? p.status.name : '';
+  if (p.type === 'multi_select') return (p.multi_select || []).map(function (s) { return s.name; }).join(', ');
+  if (p.type === 'url') return p.url || '';
+  if (p.type === 'phone_number') return p.phone_number || '';
+  if (p.type === 'email') return p.email || '';
+  if (p.type === 'formula' && p.formula) {
+    var f = p.formula;
+    if (f.type === 'string') return f.string || '';
+    if (f.type === 'number') return f.number != null ? String(f.number) : '';
+    if (f.type === 'boolean') return f.boolean ? '예' : '아니오';
+    if (f.type === 'date' && f.date) return f.date.start || '';
+  }
+  if (p.type === 'rollup' && p.rollup) {
+    var r = p.rollup;
+    if (r.type === 'number') return r.number != null ? String(r.number) : '';
+    if (r.type === 'date' && r.date) return r.date.start || '';
+    if (r.type === 'array') return r.array.map(function (item) {
+      return getPropertyText_({ value: item }, 'value');
+    }).filter(function (value) { return value; }).join(', ');
   }
   return '';
 }
