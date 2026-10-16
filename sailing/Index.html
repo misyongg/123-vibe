@@ -455,7 +455,7 @@
         btn.className = 'schedule-item' + (state.selected && state.selected.pageId === item.pageId ? ' selected' : '');
         btn.innerHTML =
           '<span class="time">' + escapeHtml(item.startLabel || '—') + '</span>' +
-          '<span><div class="title">' + escapeHtml(item.title) + '</div>' +
+          '<span><div class="title">' + escapeHtml(item.displayName || item.studentName || item.title) + '</div>' +
           '<div class="meta">' + escapeHtml([item.caseNo && ('사례 ' + item.caseNo), item.category, item.timeRangeLabel].filter(Boolean).join(' · ')) + '</div></span>' +
           '<span class="badge">' + escapeHtml(item.category || '상담') + '</span>';
         btn.onclick = function () { selectSchedule(item); };
@@ -493,7 +493,7 @@
     function selectSchedule(item) {
       var switching = state.selected && state.selected.pageId !== item.pageId;
       state.selected = item;
-      $('selectedLabel').textContent = ((item.startLabel || '') + ' ' + item.title).trim();
+      $('selectedLabel').textContent = ((item.startLabel || '') + ' ' + (item.displayName || item.studentName || item.title)).trim();
       $('place').value = item.place || item.category || '';
       fillStudentFields(item);
       $('saveResult').hidden = true;

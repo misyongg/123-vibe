@@ -17,6 +17,7 @@ var CONFIG = {
   // 상담 타이머와 동일한 예약 캘린더 DB (원본). 연결 DB(linked) ID는 API 불가.
   NOTION_DATABASE_ID: '1ad1b959-3ca0-8187-bc50-e94e057f408d',
   PROP_DATE: 'Date',
+  // 일정 DB에 유지하는 사례번호(정확한 조회 키). 제목을 사례번호로 바꾸지 않음.
   PROP_CASE: '케이스번호', // DB 열 이름이 '사례번호'면 여기만 수정
   PROP_TYPE: '유형',
   PROP_CATEGORY: '일정 구분',
@@ -24,8 +25,11 @@ var CONFIG = {
   PROP_NOTE: '비고',
   PROP_CONTACT: '연락처',
   PROP_URL: 'URL',
-  // 학생 마스터 DB의 해당학생 Relation → Rollup 속성명.
-  // 노션에서 속성명을 바꿨다면 여기 값도 동일하게 바꿉니다. 비워 두면 해당 항목은 건너뜁니다.
+  // 학생 마스터 DB ← 일정 DB 「해당학생」 Relation → Rollup.
+  // 노션 속성명을 바꿨다면 여기 값도 동일하게. 비워 두면 해당 항목은 건너뜀.
+  PROP_STUDENT_REL: '해당학생',
+  PROP_NAME: '학생 이름',
+  PROP_CASE_ROLLUP: '학생 사례번호', // 일정 사례번호가 비었을 때 보조
   PROP_SCHOOL: '학생 학교명',
   PROP_GRADE: '학생 학년',
   PROP_CLASS: '학생 반',
@@ -151,8 +155,9 @@ function searchStudents(query) {
       if (seen[key]) continue;
       seen[key] = true;
       students.push({
-        title: item.title,
+        title: item.displayName || item.title,
         caseNo: item.caseNo,
+        studentName: item.studentName || '',
         type: item.type,
         latestPageId: item.pageId,
         latestDate: item.startISO,
@@ -321,7 +326,8 @@ function buildGenerationContext_(body) {
     ctx: {
       sessionLabel: label,
       caseNo: current.caseNo,
-      name: body.name || current.title,
+      // 이름은 학생 마스터 Rollup 우선. 제목(표시명)은 사례번호 섞인 표시용으로만 둠.
+      name: body.name || current.studentName || current.title,
       gender: body.gender || current.gender || '',
       school: body.school || current.school || '',
       gradeClass: gradeClass,
@@ -791,11 +797,18 @@ function parsePage_(page) {
   var title = getTitle_(props);
   var place = getRichText_(props, CONFIG.PROP_PLACE) || getSelect_(props, CONFIG.PROP_PLACE);
 
+  var caseNo = getPropertyText_(props, CONFIG.PROP_CASE) ||
+    getPropertyText_(props, CONFIG.PROP_CASE_ROLLUP);
+  var studentName = getPropertyText_(props, CONFIG.PROP_NAME);
+  var displayName = studentName || title;
+
   return {
     pageId: page.id,
     url: page.url,
     title: title,
-    caseNo: getRichText_(props, CONFIG.PROP_CASE),
+    studentName: studentName,
+    displayName: displayName,
+    caseNo: caseNo,
     type: getSelect_(props, CONFIG.PROP_TYPE),
     category: category,
     place: place,
@@ -817,7 +830,7 @@ function parsePage_(page) {
     endLabel: dateInfo.endLabel,
     durationMin: dateInfo.durationMin,
     timeRangeLabel: dateInfo.timeRangeLabel,
-    displayLabel: (dateInfo.startLabel || '—') + ' ' + title
+    displayLabel: (dateInfo.startLabel || '—') + ' ' + displayName
   };
 }
 
