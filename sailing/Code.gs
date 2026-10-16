@@ -23,6 +23,7 @@ var CONFIG = {
   PROP_CATEGORY: '일정 구분',
   PROP_PLACE: '장소',
   PROP_NOTE: '비고',
+  PROP_ETC: '기타', // 일정에 학교명이 여기 들어간 경우 보조
   PROP_CONTACT: '연락처',
   PROP_URL: 'URL',
   // 학생 마스터 DB ← 일정 DB 「해당학생」 Relation → Rollup.
@@ -69,7 +70,7 @@ function getHealth() {
     ok: missing.length === 0,
     missing: missing,
     databaseId: dbId ? (dbId.substring(0, 8) + '…') : '',
-    version: '1.1.1',
+    version: '1.1.2',
     name: 'Wee센터 상담기록 자동화 시스템'
   };
 }
@@ -803,7 +804,7 @@ function parsePage_(page, options) {
 
   var category = getSelect_(props, CONFIG.PROP_CATEGORY);
   var title = getTitle_(props);
-  var place = getRichText_(props, CONFIG.PROP_PLACE) || getSelect_(props, CONFIG.PROP_PLACE);
+  var place = getPropertyText_(props, CONFIG.PROP_PLACE) || getSelect_(props, CONFIG.PROP_PLACE);
 
   var caseNo = getPropertyText_(props, CONFIG.PROP_CASE) ||
     getPropertyText_(props, CONFIG.PROP_CASE_ROLLUP);
@@ -827,6 +828,13 @@ function parsePage_(page, options) {
     studentError = studentFetch.error;
   }
 
+  // 일정 「기타」에 학교명을 넣어 둔 경우(레거시) 보조
+  if (!school) school = getPropertyText_(props, CONFIG.PROP_ETC);
+
+  var period = getPropertyText_(props, CONFIG.PROP_PERIOD);
+  var sessionNo = getPropertyText_(props, CONFIG.PROP_SESSION);
+  var target = getPropertyText_(props, CONFIG.PROP_TARGET);
+
   var displayName = studentName || title;
 
   return {
@@ -840,16 +848,16 @@ function parsePage_(page, options) {
     type: getSelect_(props, CONFIG.PROP_TYPE),
     category: category,
     place: place,
-    note: getRichText_(props, CONFIG.PROP_NOTE),
-    contact: getRichText_(props, CONFIG.PROP_CONTACT),
-    externalUrl: getRichText_(props, CONFIG.PROP_URL),
+    note: getPropertyText_(props, CONFIG.PROP_NOTE),
+    contact: getPropertyText_(props, CONFIG.PROP_CONTACT),
+    externalUrl: getPropertyText_(props, CONFIG.PROP_URL),
     school: school,
     grade: grade,
     classNo: classNo,
     gender: gender,
-    period: getPropertyText_(props, CONFIG.PROP_PERIOD),
-    target: getPropertyText_(props, CONFIG.PROP_TARGET),
-    sessionNo: getPropertyText_(props, CONFIG.PROP_SESSION),
+    period: period,
+    target: target,
+    sessionNo: sessionNo, CONFIG.PROP_SESSION),
     startISO: dateInfo.startISO,
     endISO: dateInfo.endISO,
     startHasTime: dateInfo.startHasTime,
@@ -948,7 +956,7 @@ function debugAutofill(pageId) {
   var parsed = parsePage_(body);
   return {
     ok: true,
-    version: '1.1.1',
+    version: '1.1.2',
     schedulePropertyKeys: keys,
     propertySnapshot: rollups,
     studentFetch: student,

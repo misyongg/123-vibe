@@ -194,7 +194,7 @@
       <div class="mark"></div>
       <div>
         <h1>Sailing</h1>
-        <p>Wee센터 상담기록 · 웹앱 v1.1.1</p>
+        <p>Wee센터 상담기록 · 웹앱 v1.1.2</p>
       </div>
     </div>
 
@@ -494,7 +494,6 @@
       var switching = state.selected && state.selected.pageId !== item.pageId;
       state.selected = item;
       $('selectedLabel').textContent = ((item.startLabel || '') + ' ' + (item.displayName || item.studentName || item.title)).trim();
-      $('place').value = item.place || item.category || '';
       fillStudentFields(item);
       $('saveResult').hidden = true;
       $('journalPreview').value = '';
@@ -553,7 +552,10 @@
       $('grade').value = extractNumber(item.grade);
       $('classNo').value = extractNumber(item.classNo);
       $('period').value = String(item.period || '').trim();
-      $('place').value = String(item.place || item.category || '').trim();
+      // 장소는 일정 「장소」 우선, 없으면 「일정 구분」
+      var placeVal = String(item.place || '').trim();
+      if (!placeVal) placeVal = String(item.category || '').trim();
+      $('place').value = placeVal;
 
       var sessionNo = extractNumber(item.sessionNo);
       if (sessionNo) $('sessionNumber').value = sessionNo;
