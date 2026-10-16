@@ -34,6 +34,13 @@ var CONFIG = {
   PROP_GRADE: '학생 학년',
   PROP_CLASS: '학생 반',
   PROP_GENDER: '학생 성별',
+  // 학생 마스터 DB 원본 속성 (Relation으로 직접 읽을 때). Rollup이 API에서 비어도 동작.
+  STUDENT_PROP_NAME: '이름',
+  STUDENT_PROP_CASE: '사례번호',
+  STUDENT_PROP_SCHOOL: '학교명',
+  STUDENT_PROP_GRADE: '학년',
+  STUDENT_PROP_CLASS: '반',
+  STUDENT_PROP_GENDER: '성별',
   PROP_PERIOD: '교시',
   PROP_TARGET: '대상',
   PROP_SESSION: '회기',
@@ -788,7 +795,8 @@ function getPageById_(pageId) {
   return parsePage_(body);
 }
 
-function parsePage_(page) {
+function parsePage_(page, options) {
+  options = options || {};
   var props = page.properties || {};
   var dateInfo = parseNotionDate_(props[CONFIG.PROP_DATE]);
   if (!dateInfo) return null;
@@ -800,6 +808,22 @@ function parsePage_(page) {
   var caseNo = getPropertyText_(props, CONFIG.PROP_CASE) ||
     getPropertyText_(props, CONFIG.PROP_CASE_ROLLUP);
   var studentName = getPropertyText_(props, CONFIG.PROP_NAME);
+  var school = getPropertyText_(props, CONFIG.PROP_SCHOOL);
+  var grade = getPropertyText_(props, CONFIG.PROP_GRADE);
+  var classNo = getPropertyText_(props, CONFIG.PROP_CLASS);
+  var gender = getPropertyText_(props, CONFIG.PROP_GENDER);
+
+  // Rollup이 query/page 응답에서 비는 경우가 있어, 해당학생 Relation으로 마스터를 직접 읽음.
+  var student = options.skipStudent ? null : fetchRelatedStudent_(props);
+  if (student) {
+    if (!studentName) studentName = student.name || '';
+    if (!caseNo) caseNo = student.caseNo || '';
+    if (!school) school = student.school || '';
+    if (!grade) grade = student.grade || '';
+    if (!classNo) classNo = student.classNo || '';
+    if (!gender) gender = student.gender || '';
+  }
+
   var displayName = studentName || title;
 
   return {
@@ -815,10 +839,10 @@ function parsePage_(page) {
     note: getRichText_(props, CONFIG.PROP_NOTE),
     contact: getRichText_(props, CONFIG.PROP_CONTACT),
     externalUrl: getRichText_(props, CONFIG.PROP_URL),
-    school: getPropertyText_(props, CONFIG.PROP_SCHOOL),
-    grade: getPropertyText_(props, CONFIG.PROP_GRADE),
-    classNo: getPropertyText_(props, CONFIG.PROP_CLASS),
-    gender: getPropertyText_(props, CONFIG.PROP_GENDER),
+    school: school,
+    grade: grade,
+    classNo: classNo,
+    gender: gender,
     period: getPropertyText_(props, CONFIG.PROP_PERIOD),
     target: getPropertyText_(props, CONFIG.PROP_TARGET),
     sessionNo: getPropertyText_(props, CONFIG.PROP_SESSION),
@@ -832,6 +856,48 @@ function parsePage_(page) {
     timeRangeLabel: dateInfo.timeRangeLabel,
     displayLabel: (dateInfo.startLabel || '—') + ' ' + displayName
   };
+}
+
+/**
+ * 일정 페이지의 「해당학생」 Relation → 학생 마스터 페이지 속성.
+ * Integration이 학생 마스터 DB에도 연결되어 있어야 합니다.
+ */
+var studentPageCache_ = {};
+
+function fetchRelatedStudent_(scheduleProps) {
+  var relName = CONFIG.PROP_STUDENT_REL;
+  if (!relName) return null;
+  var rel = scheduleProps[relName];
+  if (!rel || rel.type !== 'relation' || !rel.relation || !rel.relation.length) return null;
+
+  var studentId = normalizeNotionId_(rel.relation[0].id);
+  if (!studentId) return null;
+  if (studentPageCache_[studentId]) return studentPageCache_[studentId];
+
+  try {
+    var res = notionFetch_('pages/' + studentId);
+    var code = res.getResponseCode();
+    var body = JSON.parse(res.getContentText());
+    if (code !== 200) {
+      Logger.log('학생 마스터 조회 실패: ' + (body.message || code));
+      return null;
+    }
+    var sp = body.properties || {};
+    var parsed = {
+      pageId: body.id,
+      name: getPropertyText_(sp, CONFIG.STUDENT_PROP_NAME) || getTitle_(sp),
+      caseNo: getPropertyText_(sp, CONFIG.STUDENT_PROP_CASE),
+      school: getPropertyText_(sp, CONFIG.STUDENT_PROP_SCHOOL),
+      grade: getPropertyText_(sp, CONFIG.STUDENT_PROP_GRADE),
+      classNo: getPropertyText_(sp, CONFIG.STUDENT_PROP_CLASS),
+      gender: getPropertyText_(sp, CONFIG.STUDENT_PROP_GENDER)
+    };
+    studentPageCache_[studentId] = parsed;
+    return parsed;
+  } catch (e) {
+    Logger.log('학생 마스터 조회 오류: ' + String(e.message || e));
+    return null;
+  }
 }
 
 function parseNotionDate_(dateProp) {
@@ -899,7 +965,7 @@ function getPreviousSessions_(caseNo, title, beforeISO, excludePageId) {
   var sessions = [];
   for (var i = 0; i < pages.length; i++) {
     if (excludePageId && pages[i].id === excludePageId) continue;
-    var item = parsePage_(pages[i]);
+    var item = parsePage_(pages[i], { skipStudent: true });
     if (!item) continue;
     if (CONFIG.CATEGORY_FILTER && item.category.indexOf(CONFIG.CATEGORY_FILTER) === -1) continue;
     sessions.push(item);
@@ -1132,8 +1198,8 @@ function getSelect_(props, name) {
 
 /**
  * 노션 속성 유형과 관계없이 화면에 표시할 수 있는 값으로 바꿉니다.
- * Relation의 원본 값을 바로 읽지는 못하므로, 일정 DB에는 Rollup/Formula로
- * 학교·학년 등의 값을 표시해 두고 그 속성명을 CONFIG에 지정하면 됩니다.
+ * Rollup이 비면 parsePage_가 「해당학생」 Relation으로 학생 마스터를 직접 조회합니다.
+ * Integration을 학생 마스터 DB에도 연결해야 합니다.
  */
 function getPropertyText_(props, name) {
   if (!name) return '';
@@ -1158,11 +1224,16 @@ function getPropertyText_(props, name) {
   }
   if (p.type === 'rollup' && p.rollup) {
     var r = p.rollup;
+    if (r.type === 'incomplete' || r.type === 'unsupported') return '';
     if (r.type === 'number') return r.number != null ? String(r.number) : '';
     if (r.type === 'date' && r.date) return r.date.start || '';
-    if (r.type === 'array') return r.array.map(function (item) {
+    if (r.type === 'array') return (r.array || []).map(function (item) {
       return getPropertyText_({ value: item }, 'value');
     }).filter(function (value) { return value; }).join(', ');
+  }
+  if (p.type === 'relation' && p.relation) {
+    // Relation 자체는 ID만 있음. 표시 텍스트는 fetchRelatedStudent_에서 처리.
+    return '';
   }
   return '';
 }
