@@ -494,7 +494,8 @@
       var switching = state.selected && state.selected.pageId !== item.pageId;
       state.selected = item;
       $('selectedLabel').textContent = ((item.startLabel || '') + ' ' + item.title).trim();
-      $('place').value = item.category || item.place || '';
+      $('place').value = item.place || item.category || '';
+      fillStudentFields(item);
       $('saveResult').hidden = true;
       $('journalPreview').value = '';
       $('memoPreview').value = '';
@@ -516,6 +517,7 @@
             return;
           }
           $('sessionNumber').value = extractSessionNumber(ctx.sessionNumber || ctx.sessionLabel) || '';
+          fillStudentFields(ctx.current || item);
           var chips = [];
           var sessionChip = formatSessionLabelClient($('sessionNumber').value);
           if (sessionChip) chips.push(sessionChip);
@@ -534,6 +536,36 @@
           showToast(String(err), true);
         })
         .getSessionContext(item.pageId);
+    }
+
+    // 노션 일정의 기본 정보를 화면 입력칸에 즉시 채웁니다.
+    function fillStudentFields(item) {
+      item = item || {};
+      $('school').value = String(item.school || '').trim();
+      $('grade').value = extractNumber(item.grade);
+      $('classNo').value = extractNumber(item.classNo);
+      $('period').value = String(item.period || '').trim();
+      $('place').value = String(item.place || item.category || '').trim();
+
+      var sessionNo = extractNumber(item.sessionNo);
+      if (sessionNo) $('sessionNumber').value = sessionNo;
+
+      var gender = String(item.gender || '').trim();
+      if (gender.indexOf('남') === 0) $('gender').value = '남';
+      else if (gender.indexOf('여') === 0) $('gender').value = '여';
+      else $('gender').value = '';
+
+      var target = String(item.target || '').trim();
+      var targetSelect = $('target');
+      var targetExists = Array.prototype.some.call(targetSelect.options, function (option) {
+        return option.value === target;
+      });
+      targetSelect.value = targetExists ? target : '학생';
+    }
+
+    function extractNumber(value) {
+      var match = String(value || '').match(/\d+/);
+      return match ? match[0] : '';
     }
 
     function extractSessionNumber(v) {
