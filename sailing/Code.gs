@@ -26,12 +26,13 @@ var CONFIG = {
   PROP_URL: 'URL',
   // 일정에 미리 입력해 두고 상담 일지 화면에 자동으로 채울 기본 정보입니다.
   // 실제 Notion 속성명과 다르면 값만 바꾸면 됩니다. 비워 두면 해당 항목은 건너뜁니다.
-  PROP_SCHOOL: '학교',
+  PROP_SCHOOL: '학교명',
   PROP_GRADE: '학년',
   PROP_CLASS: '반',
   PROP_GENDER: '성별',
   PROP_PERIOD: '교시',
   PROP_TARGET: '대상',
+  PROP_SESSION: '회기',
   CATEGORY_FILTER: '상담', // 일정 구분에 '상담' 포함만
   OPENAI_MODEL: 'gpt-4o-mini',
   NOTION_VERSION: '2022-06-28'
@@ -173,7 +174,7 @@ function getSessionContext(pageId) {
     if (!current) return { ok: false, error: '예약을 파싱할 수 없습니다.' };
 
     var previous = getPreviousSessions_(current.caseNo, current.title, current.startISO, pageId);
-    var sessionNumber = estimateSessionNumber_(previous);
+    var sessionNumber = current.sessionNo || estimateSessionNumber_(previous);
 
     var previousSummary = '';
     if (previous.length > 0) {
@@ -328,7 +329,7 @@ function buildGenerationContext_(body) {
       datetimeLabel: autoDatetime,
       period: body.period || current.period || '',
       // 상담일지 「장소」는 캘린더 「일정 구분」을 사용
-      place: current.category || body.place || '',
+      place: body.place || current.place || current.category || '',
       category: current.category,
       type: current.type,
       keywords: keywords,
@@ -807,6 +808,7 @@ function parsePage_(page) {
     gender: getPropertyText_(props, CONFIG.PROP_GENDER),
     period: getPropertyText_(props, CONFIG.PROP_PERIOD),
     target: getPropertyText_(props, CONFIG.PROP_TARGET),
+    sessionNo: getPropertyText_(props, CONFIG.PROP_SESSION),
     startISO: dateInfo.startISO,
     endISO: dateInfo.endISO,
     startHasTime: dateInfo.startHasTime,
