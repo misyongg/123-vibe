@@ -1,25 +1,944 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="refresh" content="0; url=README.md" />
-  <title>Sailing · 웹앱 안내</title>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
-    body {
-      font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      max-width: 480px; margin: 48px auto; padding: 0 20px;
-      color: #1c2a33; line-height: 1.6;
+    :root {
+      --ink: #1c2a33;
+      --ink-soft: #4a5c68;
+      --muted: #7a8d99;
+      --line: rgba(28, 56, 72, 0.12);
+      --teal: #0f6e7a;
+      --teal-deep: #0a5058;
+      --teal-soft: #d7eef1;
+      --ok: #1f7a4c;
+      --danger: #b5433b;
+      --font: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
     }
-    a { color: #0f6e7a; font-weight: 700; }
-    code { background: #eef4f6; padding: 2px 6px; border-radius: 6px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      color: var(--ink);
+      background:
+        radial-gradient(900px 480px at 8% -10%, rgba(15,110,122,0.16), transparent 55%),
+        linear-gradient(165deg, #e4eef2 0%, #f2f6f4 50%, #e8eef1 100%);
+      min-height: 100vh; min-height: 100dvh;
+      padding: 18px 14px 40px;
+    }
+    .app { max-width: 520px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .mark {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, #0f6e7a, #1a8f9c 45%, #c9b896);
+      flex-shrink: 0;
+    }
+    .brand h1 { font-size: 1.35rem; color: var(--teal-deep); letter-spacing: -0.02em; }
+    .brand p { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+    .panel {
+      background: rgba(255,255,255,0.78);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 10px 28px rgba(20,50,60,0.06);
+    }
+    .panel-title { font-size: 0.95rem; font-weight: 700; color: var(--teal-deep); }
+    .hint { font-size: 0.75rem; color: var(--muted); margin-top: 3px; margin-bottom: 10px; }
+    .save-gate-hint {
+      margin-top: 0;
+      margin-bottom: 8px;
+      color: #b45309;
+      font-weight: 600;
+    }
+
+    .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .row input[type="date"],
+    .row input[type="search"],
+    .field input, .field select, .field textarea,
+    .preview-text {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font: inherit;
+      color: var(--ink);
+      background: #fff;
+      outline: none;
+    }
+    .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; font-size: 0.78rem; color: var(--ink-soft); }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .field-grid.meta-row1 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .field-grid.meta-row2 {
+      grid-template-columns: 1.4fr 0.8fr 0.8fr 0.8fr;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .field-grid.meta-row1 .field,
+    .field-grid.meta-row2 .field {
+      margin-bottom: 0;
+      gap: 3px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .field-grid.meta-row1 input,
+    .field-grid.meta-row1 select,
+    .field-grid.meta-row2 input,
+    .field-grid.meta-row2 select {
+      padding: 7px 8px;
+      border-radius: 8px;
+      font-size: 0.84rem;
+    }
+    .inline-unit { display: flex; align-items: center; gap: 4px; }
+    .inline-unit input { flex: 1; min-width: 0; }
+    .inline-unit .unit { flex-shrink: 0; font-size: 0.68rem; color: var(--muted); white-space: nowrap; }
+    textarea { min-height: 130px; resize: vertical; line-height: 1.5; }
+    #draftKeywords { min-height: 280px; }
+    #chunkInput { min-height: 110px; }
+    .preview-text { min-height: 220px; font-size: 0.86rem; line-height: 1.55; }
+
+    .btn {
+      border: none; font: inherit; font-weight: 700; cursor: pointer;
+      border-radius: 12px; padding: 11px 14px;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn.primary { background: var(--teal); color: #fff; flex: 1; }
+    .btn.secondary { background: #fff; color: var(--teal-deep); border: 1px solid rgba(15,110,122,0.25); flex: 1; }
+    .btn.ghost {
+      background: rgba(255,255,255,0.8); color: var(--ink-soft);
+      border: 1px solid var(--line); padding: 8px 12px; border-radius: 999px; font-size: 0.82rem;
+    }
+    .btn.tiny {
+      background: var(--teal-soft); color: var(--teal-deep);
+      padding: 4px 10px; border-radius: 999px; font-size: 0.72rem;
+    }
+    .actions { display: flex; gap: 8px; margin-top: 10px; }
+
+    .status { font-size: 0.8rem; color: var(--muted); min-height: 1.1em; margin-bottom: 6px; }
+    .schedule-list { list-style: none; display: flex; flex-direction: column; gap: 8px; max-height: 42vh; overflow: auto; }
+    .schedule-item {
+      display: grid; grid-template-columns: 52px 1fr auto; gap: 8px; align-items: center;
+      width: 100%; text-align: left; border: 1px solid transparent;
+      background: #fff; border-radius: 12px; padding: 11px; cursor: pointer; font: inherit; color: inherit;
+    }
+    .schedule-item.selected { background: var(--teal-soft); border-color: rgba(15,110,122,0.3); }
+    .schedule-item .time { font-weight: 700; color: var(--teal); font-size: 0.92rem; }
+    .schedule-item .title { font-weight: 600; font-size: 0.92rem; }
+    .schedule-item .meta { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+    .badge {
+      font-size: 0.68rem; color: var(--teal-deep); background: rgba(15,110,122,0.1);
+      padding: 3px 7px; border-radius: 999px; white-space: nowrap;
+    }
+    .empty { text-align: center; color: var(--muted); padding: 18px 8px; font-size: 0.88rem; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .chip {
+      font-size: 0.72rem; color: var(--ink-soft); background: #fff;
+      border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px;
+    }
+    .tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+    .tab {
+      border: 1px solid var(--line); background: #fff; color: var(--muted);
+      border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    }
+    .tab.active { background: var(--teal-soft); color: var(--teal-deep); border-color: rgba(15,110,122,0.28); }
+    .save-result {
+      margin-top: 10px; font-size: 0.84rem; color: var(--ok);
+      background: rgba(31,122,76,0.08); border-radius: 10px; padding: 10px;
+    }
+    .save-result a { color: var(--teal); font-weight: 700; }
+    .toast {
+      position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(8px);
+      background: var(--ink); color: #fff; padding: 11px 16px; border-radius: 999px;
+      font-size: 0.84rem; opacity: 0; transition: .2s; z-index: 20; max-width: 90vw; text-align: center;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .field em {
+      font-style: normal;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .actions .btn.ghost {
+      flex: 0 0 auto;
+      border-radius: 12px;
+      padding: 11px 12px;
+    }
+    .loading {
+      position: fixed; inset: 0; background: rgba(232,240,243,0.55);
+      display: none; place-content: center; gap: 10px; z-index: 30; text-align: center; color: var(--teal-deep);
+    }
+    .loading.on { display: grid; }
+    .spinner {
+      width: 34px; height: 34px; border-radius: 50%; margin: 0 auto;
+      border: 3px solid rgba(15,110,122,0.2); border-top-color: var(--teal);
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .memo-label { display: flex; justify-content: space-between; align-items: center; }
+    @media (max-width: 420px) {
+      .field-grid { grid-template-columns: 1fr; }
+      .schedule-item { grid-template-columns: 48px 1fr; }
+      .schedule-item .badge { grid-column: 2; justify-self: start; }
+    }
   </style>
 </head>
 <body>
-  <h1>Sailing</h1>
-  <p>이 프로젝트는 <strong>Google Apps Script 웹앱</strong>입니다. GitHub Pages에서 바로 실행되지 않습니다.</p>
-  <p><a href="https://script.google.com/macros/s/AKfycbwFytQWa_JOvzP9BYRLYmG2VkXdX62cmLnONbiVhCxWDSDAwgdSpZR6x1U1xS2JkThGrw/exec">▶ 웹앱 바로 열기</a></p>
-  <p>설치·배포: <a href="README.md">README.md</a> · <a href="DEPLOY.md">DEPLOY.md</a></p>
-  <p>필요 파일: <code>Code.gs</code>, <code>Index.html</code> → script.google.com에 붙여넣고 웹앱 배포</p>
+  <div id="lockScreen" style="position:fixed;inset:0;z-index:100;background:#e8f0f3;display:none;align-items:center;justify-content:center;padding:20px">
+    <form id="lockForm" style="background:#fff;border-radius:16px;padding:24px;max-width:340px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.08);font-family:inherit">
+      <h2 style="margin:0 0 8px">Sailing · 상담기록</h2>
+      <p style="margin:0 0 14px;color:#557">비밀번호를 입력하세요</p>
+      <input id="lockInput" type="password" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:1px solid #ccd;border-radius:10px">
+      <label style="display:flex;gap:6px;align-items:center;margin:12px 0;font-size:14px"><input type="checkbox" id="lockRemember"> 이 기기에서 기억하기</label>
+      <p id="lockMsg" style="color:#c0392b;min-height:1.2em;font-size:14px;margin:0 0 10px"></p>
+      <button type="submit" id="lockBtn" style="width:100%;padding:12px;font-size:16px;border:0;border-radius:10px;background:#0f6e7a;color:#fff;touch-action:manipulation">들어가기</button>
+    </form>
+  </div>
+  <button type="button" id="logoutBtn" title="잠금" style="position:fixed;top:10px;right:10px;z-index:50;padding:6px 10px;border:1px solid #ccd;border-radius:999px;background:#fff;font-size:13px;touch-action:manipulation">🔒 잠금</button>
+
+  <div class="app">
+    <div class="brand">
+      <div class="mark"></div>
+      <div>
+        <h1>Sailing</h1>
+        <p>Wee센터 상담기록 · 웹앱 v1.1.4</p>
+      </div>
+    </div>
+
+    <section class="panel">
+      <div class="panel-title">오늘 상담</div>
+      <p class="hint">노션 캘린더의 기존 예약만 표시합니다</p>
+      <div class="row">
+        <input type="date" id="dateInput" style="flex:1">
+        <button type="button" class="btn ghost" id="refreshBtn">새로고침</button>
+      </div>
+      <div class="row">
+        <input type="search" id="studentSearch" placeholder="학생·사례번호 검색" style="flex:1">
+        <button type="button" class="btn ghost" id="searchBtn">검색</button>
+      </div>
+      <div id="statusBar" class="status"></div>
+      <ul id="scheduleList" class="schedule-list"></ul>
+      <ul id="searchResults" class="schedule-list" hidden></ul>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">상담 기록</div>
+      <p class="hint" id="selectedLabel">학생을 선택하세요</p>
+      <div id="contextChips" class="chips" hidden></div>
+
+      <div class="field-grid meta-row1">
+        <label class="field"><span>회기</span>
+          <input type="number" id="sessionNumber" min="1" step="1" inputmode="numeric" placeholder="">
+        </label>
+        <label class="field"><span>교시</span>
+          <input type="text" id="period" placeholder="">
+        </label>
+        <label class="field"><span>장소</span>
+          <input type="text" id="place" placeholder="">
+        </label>
+        <label class="field"><span>대상</span>
+          <select id="target">
+            <option value="학생">학생</option>
+            <option value="보호자">보호자</option>
+            <option value="교사">교사</option>
+          </select>
+        </label>
+      </div>
+      <div class="field-grid meta-row2">
+        <label class="field"><span>학교명</span>
+          <input type="text" id="school" placeholder="">
+        </label>
+        <label class="field"><span>학년</span>
+          <input type="number" id="grade" min="1" max="6" step="1" inputmode="numeric" placeholder="">
+        </label>
+        <label class="field"><span>반</span>
+          <input type="number" id="classNo" min="1" step="1" inputmode="numeric" placeholder="">
+        </label>
+        <label class="field"><span>성별</span>
+          <select id="gender">
+            <option value="">선택</option>
+            <option value="남">남</option>
+            <option value="여">여</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="field">
+        <span class="memo-label">
+          <label for="chunkInput">키워드 추가</label>
+          <button type="button" class="btn tiny" id="voiceBtn" style="position:relative;z-index:2;touch-action:manipulation">🎤 음성</button>
+        </span>
+        <textarea id="chunkInput" placeholder="지금 생각난 키워드만 적고 [저장]&#10;&#10;예) 모래놀이·클레이&#10;토리·토토 만들기&#10;차회일시 8/6 13:30"></textarea>
+      </div>
+      <div class="actions" style="margin-top:0;margin-bottom:4px">
+        <button type="button" class="btn secondary" id="addChunkBtn" disabled>저장</button>
+        <button type="button" class="btn ghost" id="clearDraftBtn" disabled>모은 내용 비우기</button>
+      </div>
+      <p class="hint save-gate-hint" id="saveGateHint" hidden>학생을 선택하세요</p>
+      <p class="hint" style="margin-top:0;margin-bottom:10px">[저장] = 키워드만 누적 (노션 반영 안 함) · 새로고침·창을 나가면 모은 내용은 사라집니다</p>
+
+      <label class="field">
+        <span class="memo-label">
+          <span>모은 키워드 <em id="draftCount">(0)</em></span>
+        </span>
+        <textarea id="draftKeywords" placeholder="상담 중 키워드 + 차회일시·과제 등도 여기에 적습니다.&#10;직접 수정도 가능합니다.&#10;[출력] 전에는 노션·AI에 반영되지 않습니다."></textarea>
+      </label>
+      <div class="actions">
+        <button type="button" class="btn secondary" id="previewBtn" disabled>미리보기</button>
+        <button type="button" class="btn primary" id="saveBtn" disabled>출력</button>
+      </div>
+      <p class="hint" style="margin-top:8px">[저장]으로 여러 번 모은 뒤, 마지막에 [출력] 한 번 → AI 작성 + 노션 반영</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">미리보기</div>
+      <p class="hint">출력 전 수정 가능 · [출력] 시에만 노션 예약 페이지 업데이트</p>
+      <div class="tabs">
+        <button type="button" class="tab active" data-tab="journal">상담일지</button>
+        <button type="button" class="tab" data-tab="memo">상담자 메모</button>
+      </div>
+      <textarea id="journalPreview" class="preview-text" placeholder="미리보기 또는 출력 시 AI가 작성합니다"></textarea>
+      <textarea id="memoPreview" class="preview-text" hidden placeholder="미리보기 또는 출력 시 AI가 작성합니다"></textarea>
+      <div id="saveResult" class="save-result" hidden></div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <div id="loadingText">처리 중…</div>
+  </div>
+
+  <script>
+    // ▼ Apps Script 웹앱 주소 (새 배포 시 여기만 바꾸면 됩니다)
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwFytQWa_JOvzP9BYRLYmG2VkXdX62cmLnONbiVhCxWDSDAwgdSpZR6x1U1xS2JkThGrw/exec';
+    var PASS_KEY = 'sailing_passcode';
+    function getPass() { return sessionStorage.getItem(PASS_KEY) || localStorage.getItem(PASS_KEY) || ''; }
+    function clearPass() { sessionStorage.removeItem(PASS_KEY); localStorage.removeItem(PASS_KEY); }
+    function showLock(msg) {
+      var el = document.getElementById('lockScreen');
+      if (!el) return;
+      el.style.display = 'flex';
+      document.getElementById('lockMsg').textContent = msg || '';
+      document.getElementById('lockInput').value = '';
+      setTimeout(function () { document.getElementById('lockInput').focus(); }, 50);
+    }
+    function hideLock() { var el = document.getElementById('lockScreen'); if (el) el.style.display = 'none'; }
+    // google.script.run 대체: text/plain POST로 CORS preflight 회피
+    function callApi(action, args) {
+      return fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: action, args: args || [], passcode: getPass() }),
+        redirect: 'follow'
+      }).then(function (r) {
+        if (!r.ok) throw new Error('서버 응답 오류 (' + r.status + ')');
+        return r.text();
+      }).then(function (t) {
+        var j;
+        try { j = JSON.parse(t); } catch (e) { throw new Error('서버 응답을 읽을 수 없어요. 배포 접근 권한이 "모든 사용자"인지 확인하세요.'); }
+        if (!j.ok) {
+          if (j.code === 'BAD_PASSCODE' || j.code === 'LOCKED' || j.code === 'NO_PASSCODE') { clearPass(); showLock(j.error); }
+          var er = new Error(j.error || '서버 오류'); er.code = j.code; throw er;
+        }
+        return j.result;
+      });
+    }
+    window.google = window.google || {};
+    google.script = google.script || {};
+    Object.defineProperty(google.script, 'run', { get: function () {
+      function make(ok, fail) {
+        return new Proxy({}, { get: function (_, name) {
+          if (name === 'withSuccessHandler') return function (f) { return make(f, fail); };
+          if (name === 'withFailureHandler') return function (f) { return make(ok, f); };
+          return function () {
+            var args = Array.prototype.slice.call(arguments);
+            callApi(String(name), args).then(function (res) { if (ok) ok(res); })
+              .catch(function (err) { if (fail) fail(err); else console.error(err); });
+          };
+        } });
+      }
+      return make(null, null);
+    } });
+  </script>
+  <script>
+    var state = { schedules: [], selected: null, listening: false };
+
+    function $(id) { return document.getElementById(id); }
+
+    function todaySeoul() {
+      var d = new Date();
+      var y = d.getFullYear();
+      var m = ('0' + (d.getMonth() + 1)).slice(-2);
+      var day = ('0' + d.getDate()).slice(-2);
+      return y + '-' + m + '-' + day;
+    }
+
+    function showToast(msg, isError) {
+      var t = $('toast');
+      t.textContent = msg;
+      t.className = 'toast show' + (isError ? ' error' : '');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(function () { t.className = 'toast'; }, 3200);
+    }
+
+    function setLoading(on, text) {
+      $('loading').className = on ? 'loading on' : 'loading';
+      $('loadingText').textContent = text || '처리 중…';
+    }
+
+    function draftText() {
+      return ($('draftKeywords').value || '').trim();
+    }
+
+    function updateDraftCount() {
+      var n = draftText() ? draftText().split(/\n+/).filter(function (l) { return l.trim(); }).length : 0;
+      $('draftCount').textContent = '(' + n + '줄)';
+    }
+
+    function setButtons() {
+      var hasStudent = !!state.selected;
+      var chunk = ($('chunkInput').value || '').trim();
+      var draft = draftText();
+      $('addChunkBtn').disabled = !hasStudent || !chunk;
+      $('clearDraftBtn').disabled = !draft;
+      $('previewBtn').disabled = !hasStudent || !draft;
+      $('saveBtn').disabled = !hasStudent || !draft;
+      var gate = $('saveGateHint');
+      if (gate) {
+        // 저장이 꺼져 있고 원인이 학생 미선택일 때 안내
+        gate.hidden = !!hasStudent;
+      }
+      updateDraftCount();
+    }
+
+    function addChunk() {
+      if (!state.selected) {
+        showToast('학생을 선택하세요', true);
+        return;
+      }
+      var chunk = ($('chunkInput').value || '').trim();
+      if (!chunk) {
+        showToast('저장할 키워드를 입력하세요', true);
+        return;
+      }
+      var prev = ($('draftKeywords').value || '').replace(/\s+$/, '');
+      $('draftKeywords').value = prev ? (prev + '\n' + chunk) : chunk;
+      $('chunkInput').value = '';
+      $('journalPreview').value = '';
+      $('memoPreview').value = '';
+      $('saveResult').hidden = true;
+      setButtons();
+      showToast('저장 완료 · 키워드 누적됨 (노션 미반영)');
+      try { $('chunkInput').focus(); } catch (e) {}
+    }
+
+    function clearDraft() {
+      if (!draftText()) return;
+      if (!confirm('모은 키워드를 모두 비울까요?')) return;
+      $('draftKeywords').value = '';
+      $('journalPreview').value = '';
+      $('memoPreview').value = '';
+      $('saveResult').hidden = true;
+      setButtons();
+      showToast('모은 내용을 비웠습니다');
+    }
+
+    function escapeHtml(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /** 서버/AI가 객체를 줄 때 textarea에 [object Object]가 나오지 않게 */
+    function stripMemoNameClient(text) {
+      return String(text || '').split('\n')
+        .filter(function (line) { return !/^\s*-\s*이름\s*[:：]/.test(line); })
+        .join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    }
+
+    function asPreviewText(v) {
+      if (v == null) return '';
+      if (typeof v === 'string') {
+        return v === '[object Object]' ? '' : v;
+      }
+      if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+      if (Object.prototype.toString.call(v) === '[object Array]') {
+        return v.map(function (item) {
+          var t = asPreviewText(item);
+          if (!t) return '';
+          return (t.indexOf('\n') === -1 && t.charAt(0) !== '-') ? ('- ' + t) : t;
+        }).filter(Boolean).join('\n');
+      }
+      if (typeof v === 'object') {
+        var lines = [];
+        for (var key in v) {
+          if (!Object.prototype.hasOwnProperty.call(v, key)) continue;
+          var child = v[key];
+          if (child == null || child === '') continue;
+          if (typeof child === 'string' || typeof child === 'number' || typeof child === 'boolean') {
+            var s = String(child).trim();
+            if (!s || s === '[object Object]') continue;
+            if (key === '사례번호') lines.push('- ' + key + ': ' + s);
+            else if (key === '이름') continue;
+            else if (/^일정/.test(key)) lines.push('일정- ' + s.replace(/^일정-\s*/, ''));
+            else {
+              lines.push(String(key).replace(/[:：]\s*$/, ''));
+              s.split('\n').forEach(function (line) {
+                line = line.trim();
+                if (!line) return;
+                lines.push(line.charAt(0) === '-' ? line : '- ' + line);
+              });
+            }
+          } else {
+            lines.push(String(key).replace(/[:：]\s*$/, ''));
+            var nested = asPreviewText(child);
+            if (nested) lines.push(nested);
+          }
+        }
+        return lines.join('\n');
+      }
+      return '';
+    }
+
+    function renderList(list, container, emptyText) {
+      container.innerHTML = '';
+      if (!list.length) {
+        container.innerHTML = '<li class="empty">' + escapeHtml(emptyText) + '</li>';
+        return;
+      }
+      list.forEach(function (item) {
+        var li = document.createElement('li');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'schedule-item' + (state.selected && state.selected.pageId === item.pageId ? ' selected' : '');
+        btn.innerHTML =
+          '<span class="time">' + escapeHtml(item.startLabel || '—') + '</span>' +
+          '<span><div class="title">' + escapeHtml(item.displayName || item.studentName || item.title) + '</div>' +
+          '<div class="meta">' + escapeHtml([item.caseNo && ('사례 ' + item.caseNo), item.category, item.timeRangeLabel].filter(Boolean).join(' · ')) + '</div></span>' +
+          '<span class="badge">' + escapeHtml(item.category || '상담') + '</span>';
+        btn.onclick = function () { selectSchedule(item); };
+        li.appendChild(btn);
+        container.appendChild(li);
+      });
+    }
+
+    function loadSchedules() {
+      var date = $('dateInput').value || todaySeoul();
+      $('statusBar').textContent = '불러오는 중…';
+      $('searchResults').hidden = true;
+      $('scheduleList').hidden = false;
+      google.script.run
+        .withSuccessHandler(function (data) {
+          if (!data || !data.ok) {
+            $('statusBar').textContent = '';
+            renderList([], $('scheduleList'), (data && data.error) || '조회 실패');
+            showToast((data && data.error) || '조회 실패', true);
+            return;
+          }
+          state.schedules = data.schedules || [];
+          $('statusBar').textContent = state.schedules.length
+            ? (data.date + ' 상담 ' + state.schedules.length + '건')
+            : (data.date + ' 상담 예약 없음');
+          renderList(state.schedules, $('scheduleList'), '오늘 상담(내방/이동) 예약이 없습니다.');
+        })
+        .withFailureHandler(function (err) {
+          $('statusBar').textContent = '';
+          showToast(String(err), true);
+        })
+        .getSchedules(date);
+    }
+
+    function selectSchedule(item) {
+      var switching = state.selected && state.selected.pageId !== item.pageId;
+      state.selected = item;
+      $('selectedLabel').textContent = ((item.startLabel || '') + ' ' + (item.displayName || item.studentName || item.title)).trim();
+      fillStudentFields(item);
+      $('saveResult').hidden = true;
+      $('journalPreview').value = '';
+      $('memoPreview').value = '';
+      if (switching) {
+        $('chunkInput').value = '';
+        // 다른 학생으로 바꾸면 모은 키워드는 비움
+        $('draftKeywords').value = '';
+      }
+      renderList(state.schedules, $('scheduleList'), '오늘 상담 예약이 없습니다.');
+      setButtons();
+      setLoading(true, '이전 회기 확인 중…');
+      google.script.run
+        .withSuccessHandler(function (ctx) {
+          setLoading(false);
+          if (!ctx || !ctx.ok) {
+            $('sessionNumber').value = '1';
+            $('contextChips').hidden = true;
+            showToast((ctx && ctx.error) || '컨텍스트 실패', true);
+            return;
+          }
+          $('sessionNumber').value = extractSessionNumber(ctx.sessionNumber || ctx.sessionLabel) || '';
+          fillStudentFields(ctx.current || item);
+          var cur = ctx.current || {};
+          var missingStudent =
+            !String(cur.school || '').trim() ||
+            !String(cur.grade || '').trim() ||
+            !String(cur.classNo || '').trim() ||
+            !String(cur.gender || '').trim();
+          if (cur.studentError) {
+            showToast(cur.studentError, true);
+          } else if (missingStudent) {
+            showToast(
+              '학교/학년/반/성별이 비어 있습니다. ①웹앱 v1.1.4인지 확인 ②Notion Integration을 「학생 마스터」에 연결하세요.',
+              true
+            );
+          }
+          var chips = [];
+          var sessionChip = formatSessionLabelClient($('sessionNumber').value);
+          if (sessionChip) chips.push(sessionChip);
+          if (ctx.current && ctx.current.caseNo) chips.push('사례 ' + ctx.current.caseNo);
+          if (ctx.current && ctx.current.type) chips.push(ctx.current.type);
+          if (ctx.current && ctx.current.timeRangeLabel) chips.push(ctx.current.timeRangeLabel);
+          if (ctx.current && ctx.current.durationMin != null) chips.push(ctx.current.durationMin + '분');
+          if (ctx.previousCount) chips.push('이전 ' + ctx.previousCount + '회');
+          $('contextChips').innerHTML = chips.map(function (c) {
+            return '<span class="chip">' + escapeHtml(c) + '</span>';
+          }).join('');
+          $('contextChips').hidden = chips.length === 0;
+        })
+        .withFailureHandler(function (err) {
+          setLoading(false);
+          showToast(String(err), true);
+        })
+        .getSessionContext(item.pageId);
+    }
+
+    // 노션 일정의 기본 정보를 화면 입력칸에 즉시 채웁니다.
+    function fillStudentFields(item) {
+      item = item || {};
+      $('school').value = String(item.school || '').trim();
+      $('grade').value = extractNumber(item.grade);
+      $('classNo').value = extractNumber(item.classNo);
+      $('period').value = String(item.period || '').trim();
+      // 장소는 일정 「장소」 우선, 없으면 「일정 구분」
+      var placeVal = String(item.place || '').trim();
+      if (!placeVal) placeVal = String(item.category || '').trim();
+      $('place').value = placeVal;
+
+      var sessionNo = extractNumber(item.sessionNo);
+      if (sessionNo) $('sessionNumber').value = sessionNo;
+
+      var gender = String(item.gender || '').trim();
+      if (gender.indexOf('남') === 0) $('gender').value = '남';
+      else if (gender.indexOf('여') === 0) $('gender').value = '여';
+      else $('gender').value = '';
+
+      var target = String(item.target || '').trim();
+      var targetSelect = $('target');
+      var targetExists = Array.prototype.some.call(targetSelect.options, function (option) {
+        return option.value === target;
+      });
+      targetSelect.value = targetExists ? target : '학생';
+    }
+
+    function extractNumber(value) {
+      var match = String(value || '').match(/\d+/);
+      return match ? match[0] : '';
+    }
+
+    function extractSessionNumber(v) {
+      if (v == null || v === '') return '';
+      if (typeof v === 'number' && isFinite(v)) return String(Math.max(1, Math.round(v)));
+      var m = String(v).match(/(\d+)/);
+      return m ? m[1] : '';
+    }
+
+    function formatSessionLabelClient(num) {
+      var n = extractSessionNumber(num);
+      return n ? (n + '회기') : '';
+    }
+
+    function formatGradeClassClient(grade, classNo) {
+      var g = String(grade || '').trim();
+      var c = String(classNo || '').trim();
+      var parts = [];
+      if (/^\d+$/.test(g)) parts.push(g + '학년');
+      if (/^\d+$/.test(c)) parts.push(c + '반');
+      return parts.join(' ');
+    }
+
+    function payload() {
+      if (!state.selected) throw new Error('학생(예약)을 선택하세요.');
+      var keywords = draftText();
+      if (!keywords) throw new Error('모은 키워드가 없습니다. [저장]으로 먼저 모아 주세요.');
+      var sessionNum = extractSessionNumber($('sessionNumber').value);
+      var grade = String($('grade').value || '').trim();
+      var classNo = String($('classNo').value || '').trim();
+      return {
+        pageId: state.selected.pageId,
+        keywords: keywords,
+        sessionNumber: sessionNum ? Number(sessionNum) : undefined,
+        sessionLabel: formatSessionLabelClient(sessionNum),
+        period: $('period').value.trim(),
+        target: $('target').value,
+        gender: $('gender').value,
+        school: $('school').value.trim(),
+        grade: /^\d+$/.test(grade) ? grade : '',
+        classNo: /^\d+$/.test(classNo) ? classNo : '',
+        gradeClass: formatGradeClassClient(grade, classNo),
+        place: $('place').value.trim()
+      };
+    }
+
+    function preview() {
+      var p;
+      try { p = payload(); } catch (e) { showToast(e.message, true); return; }
+      setLoading(true, 'AI가 상담일지·메모를 작성 중…');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          setLoading(false);
+          if (!data || !data.ok) {
+            showToast((data && data.error) || '미리보기 실패', true);
+            return;
+          }
+          $('journalPreview').value = asPreviewText(data.journal);
+          $('memoPreview').value = stripMemoNameClient(asPreviewText(data.memo));
+          showTab('journal');
+          showToast('미리보기 완료 — 수정 후 [출력] 하세요');
+        })
+        .withFailureHandler(function (err) {
+          setLoading(false);
+          showToast(String(err), true);
+        })
+        .previewRecords(p);
+    }
+
+    function save() {
+      var p;
+      try { p = payload(); } catch (e) { showToast(e.message, true); return; }
+      var journal = $('journalPreview').value.trim();
+      var memo = $('memoPreview').value.trim();
+      if (journal && memo) {
+        p.journal = journal;
+        p.memo = memo;
+      }
+      setLoading(true, journal && memo ? '노션에 출력 중…' : 'AI 작성 후 노션에 출력 중…');
+      google.script.run
+        .withSuccessHandler(function (data) {
+          setLoading(false);
+          if (!data || !data.ok) {
+            showToast((data && data.error) || '출력 실패', true);
+            return;
+          }
+          var jText = asPreviewText(data.journal);
+          var mText = stripMemoNameClient(asPreviewText(data.memo));
+          if (jText) $('journalPreview').value = jText;
+          if (mText) $('memoPreview').value = mText;
+          $('saveResult').hidden = false;
+          $('saveResult').innerHTML = data.notionUrl
+            ? '출력 완료 · <a href="' + escapeHtml(data.notionUrl) + '" target="_blank">노션 예약 페이지 열기</a>'
+            : '출력 완료 — 기존 예약 페이지가 업데이트되었습니다.';
+          showToast('노션에 출력되었습니다');
+        })
+        .withFailureHandler(function (err) {
+          setLoading(false);
+          showToast(String(err), true);
+        })
+        .saveRecords(p);
+    }
+
+    function searchStudents() {
+      var q = $('studentSearch').value.trim();
+      if (!q) {
+        $('searchResults').hidden = true;
+        $('scheduleList').hidden = false;
+        return;
+      }
+      $('statusBar').textContent = '검색 중…';
+      google.script.run
+        .withSuccessHandler(function (data) {
+          if (!data || !data.ok) {
+            showToast((data && data.error) || '검색 실패', true);
+            return;
+          }
+          var students = data.students || [];
+          $('statusBar').textContent = '검색 결과 ' + students.length + '명';
+          $('scheduleList').hidden = true;
+          $('searchResults').hidden = false;
+          var items = students.map(function (s) {
+            return {
+              pageId: s.latestPageId,
+              title: s.title,
+              caseNo: s.caseNo,
+              type: s.type,
+              category: s.latestCategory || '상담',
+              startLabel: (s.latestDate || '').substring(0, 10),
+              timeRangeLabel: '',
+              place: '',
+              startISO: s.latestDate
+            };
+          });
+          renderList(items, $('searchResults'), '검색 결과가 없습니다.');
+        })
+        .withFailureHandler(function (err) { showToast(String(err), true); })
+        .searchStudents(q);
+    }
+
+    function showTab(name) {
+      var tabs = document.querySelectorAll('.tab');
+      for (var i = 0; i < tabs.length; i++) {
+        var active = tabs[i].getAttribute('data-tab') === name;
+        tabs[i].className = 'tab' + (active ? ' active' : '');
+      }
+      $('journalPreview').hidden = name !== 'journal';
+      $('memoPreview').hidden = name !== 'memo';
+    }
+
+    function setupVoice() {
+      var btn = $('voiceBtn');
+      var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      var dictationHint = '이 브라우저는 음성인식을 지원하지 않아요. 크롬(안드로이드/PC) 또는 사파리(iOS 14.5+)를 쓰거나, 키보드의 🎤 받아쓰기를 사용하세요.';
+      function fallback(msg) {
+        state.listening = false;
+        btn.textContent = '🎤 음성';
+        showToast(msg || dictationHint, true);
+        try { $('chunkInput').focus(); } catch (e) {}
+      }
+      if (!SR) {
+        btn.onclick = function () { fallback(); };
+        return;
+      }
+      var rec;
+      try { rec = new SR(); } catch (e) { btn.onclick = function () { fallback(); }; return; }
+      var blocked = false;
+      rec.lang = 'ko-KR';
+      rec.continuous = true;
+      rec.interimResults = true;
+      var base = '';
+      rec.onstart = function () {
+        state.listening = true;
+        base = $('chunkInput').value;
+        btn.textContent = '⏹ 중지';
+        showToast('듣는 중… 말씀하세요');
+      };
+      rec.onend = function () {
+        state.listening = false;
+        btn.textContent = '🎤 음성';
+      };
+      rec.onerror = function (event) {
+        var err = event && event.error;
+        if (err === 'not-allowed' || err === 'service-not-allowed') {
+          fallback('마이크 권한이 거부됐어요. 주소창 옆 🔒 → 마이크 "허용" 후 새로고침하세요. (iOS: 설정 > Safari > 마이크, 설정 > 개인정보 > 음성 인식)');
+        } else if (err === 'audio-capture') {
+          fallback('마이크를 찾을 수 없어요. 마이크 연결을 확인하세요.');
+        } else if (err === 'no-speech') {
+          showToast('소리가 들리지 않았어요. 다시 눌러 주세요.', true);
+        } else if (err === 'network') {
+          fallback('음성인식 서버에 연결하지 못했어요. 키보드의 🎤 받아쓰기를 사용하세요.');
+        } else if (err && err !== 'aborted') {
+          fallback('음성인식 오류(' + err + '). 키보드의 🎤 받아쓰기를 사용하세요.');
+        }
+      };
+      rec.onresult = function (event) {
+        var interim = '';
+        var finalChunk = '';
+        for (var i = event.resultIndex; i < event.results.length; i++) {
+          var t = event.results[i][0].transcript;
+          if (event.results[i].isFinal) finalChunk += t;
+          else interim += t;
+        }
+        if (finalChunk) {
+          var sep = base && base.slice(-1) !== '\n' ? '\n' : '';
+          base = base + sep + finalChunk.trim();
+          $('chunkInput').value = base;
+        } else {
+          $('chunkInput').value = base + (base && interim ? '\n' : '') + interim;
+        }
+        setButtons();
+      };
+      btn.onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        if (blocked) { fallback(); return; }
+        if (state.listening) { try { rec.stop(); } catch (err) {} return; }
+        try { rec.start(); } catch (err) { fallback(); }
+      };
+    }
+
+    function boot() {
+      $('dateInput').value = todaySeoul();
+      $('refreshBtn').onclick = loadSchedules;
+      $('dateInput').onchange = loadSchedules;
+      $('searchBtn').onclick = searchStudents;
+      $('studentSearch').onkeydown = function (e) {
+        if (e.key === 'Enter') searchStudents();
+      };
+      $('chunkInput').oninput = setButtons;
+      $('chunkInput').onchange = setButtons;
+      $('draftKeywords').oninput = setButtons;
+      $('addChunkBtn').onclick = function (e) {
+        if (e) e.preventDefault();
+        addChunk();
+      };
+      $('clearDraftBtn').onclick = function (e) {
+        if (e) e.preventDefault();
+        clearDraft();
+      };
+      $('chunkInput').onkeydown = function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault();
+          addChunk();
+        }
+      };
+      $('previewBtn').onclick = preview;
+      $('saveBtn').onclick = save;
+      var tabs = document.querySelectorAll('.tab');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].onclick = (function (tab) {
+          return function () { showTab(tab.getAttribute('data-tab')); };
+        })(tabs[i]);
+      }
+      setupVoice();
+      setButtons();
+
+      google.script.run
+        .withSuccessHandler(function (h) {
+          if (h && h.version) {
+            document.title = 'Sailing · 상담기록 v' + h.version;
+          }
+          if (h && h.missing && h.missing.length) {
+            $('statusBar').textContent = '스크립트 속성 필요: ' + h.missing.join(', ');
+            showToast('설정 필요: ' + h.missing.join(', '), true);
+          } else if (h && h.version) {
+            $('statusBar').textContent = '준비됨 · v' + h.version;
+          }
+          loadSchedules();
+        })
+        .withFailureHandler(function () { loadSchedules(); })
+        .getHealth();
+    }
+
+    (function gate() {
+      var booted = false;
+      function start() { hideLock(); if (!booted) { booted = true; boot(); } }
+      document.getElementById('logoutBtn').onclick = function () { clearPass(); showLock('잠금되었습니다'); };
+      document.getElementById('lockForm').onsubmit = function (e) {
+        e.preventDefault();
+        var v = document.getElementById('lockInput').value.trim();
+        if (!v) return;
+        var btn = document.getElementById('lockBtn');
+        btn.disabled = true; btn.textContent = '확인 중…';
+        clearPass();
+        (document.getElementById('lockRemember').checked ? localStorage : sessionStorage).setItem(PASS_KEY, v);
+        callApi('checkPasscode', []).then(start).catch(function (err) {
+          if (!err.code) { clearPass(); showLock(err.message); }
+        }).then(function () { btn.disabled = false; btn.textContent = '들어가기'; });
+      };
+      if (getPass()) {
+        callApi('checkPasscode', []).then(start).catch(function (err) { if (!err.code) showLock(err.message); });
+      } else { showLock(''); }
+    })();
+  </script>
 </body>
 </html>
