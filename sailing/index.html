@@ -797,119 +797,199 @@
       $('memoPreview').hidden = name !== 'memo';
     }
 
+    // ── 음성 텍스트 처리 (순수 함수) ──
+    function voiceBuild(results) {
+      // results: [{isFinal, transcript}] 형태(또는 SpeechRecognitionResultList). 매번 처음부터 다시 만든다.
+      var parts = [], interim = '';
+      for (var i = 0; i < results.length; i++) {
+        var r = results[i];
+        var t = String(r.transcript != null ? r.transcript : (r[0] && r[0].transcript) || '').trim();
+        if (!t) continue;
+        if (r.isFinal) {
+          var prev = parts.length ? parts[parts.length - 1] : '';
+          if (prev && t === prev) continue;                         // 같은 결과 반복
+          if (prev && t.indexOf(prev) === 0) { parts[parts.length - 1] = t; continue; } // 늘어나는 결과
+          if (prev && prev.indexOf(t) === 0) continue;               // 더 짧은 이전 버전
+          parts.push(t);
+        } else {
+          interim = t;                                               // 마지막 미확정만
+        }
+      }
+      return { final: parts.join(' '), interim: interim };
+    }
+    function voiceJoin(a, b) {
+      a = a || ''; b = (b || '').trim();
+      if (!b) return a;
+      if (!a) return b;
+      return a + (/\s$/.test(a) ? '' : ' ') + b;
+    }
+    function voiceCommit(base, chunk) {
+      chunk = (chunk || '').trim();
+      if (!chunk) return base;
+      var tail = (base || '').replace(/\s+$/, '');
+      if (tail.slice(-chunk.length) === chunk) return base;           // 이미 끝에 있음
+      return voiceJoin(base, chunk);
+    }
+
     function setupVoice() {
       var btn = $('voiceBtn');
       var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      var ua = navigator.userAgent || '';
+      var isAndroid = /Android/i.test(ua);
+      var isSamsung = /SamsungBrowser/i.test(ua);
       var LABEL_IDLE = '🎤 듣기 시작';
       var LABEL_ON = '🎤 듣는 중…(눌러서 종료)';
-      var dictationHint = '이 브라우저는 음성인식을 지원하지 않아요. 크롬(안드로이드/PC) 또는 사파리(iOS 14.5+)를 쓰거나, 키보드의 🎤 받아쓰기를 사용하세요.';
+      var DEBUG = /[?&]debug=1\b/.test(location.search);
+      var dbgEl = null;
+      if (DEBUG) {
+        dbgEl = document.createElement('pre');
+        dbgEl.id = 'voiceDebug';
+        dbgEl.style.cssText = 'font-size:11px;line-height:1.3;max-height:160px;overflow:auto;background:#111;color:#9f9;padding:6px;border-radius:8px;margin:6px 0;white-space:pre-wrap';
+        $('chunkInput').parentNode.appendChild(dbgEl);
+      }
+      function log(m) {
+        if (!dbgEl) return;
+        var t = new Date(); var ts = ('0' + t.getMinutes()).slice(-2) + ':' + ('0' + t.getSeconds()).slice(-2) + '.' + ('00' + t.getMilliseconds()).slice(-3);
+        dbgEl.textContent = ts + ' ' + m + '\n' + dbgEl.textContent.slice(0, 4000);
+      }
+      log('UA ' + ua);
+      log('SR=' + (!!SR) + ' android=' + isAndroid + ' samsung=' + isSamsung);
+
+      var status = document.createElement('div');
+      status.style.cssText = 'font-size:12px;color:#0f6e7a;min-height:1em;margin:4px 0';
+      $('chunkInput').parentNode.insertBefore(status, $('chunkInput').nextSibling);
+      function setStatus(t) { status.textContent = t || ''; }
+
       btn.textContent = LABEL_IDLE;
       if (!SR) {
-        btn.onclick = function () { showToast(dictationHint, true); try { $('chunkInput').focus(); } catch (e) {} };
+        btn.onclick = function () {
+          showToast(isSamsung
+            ? '삼성 인터넷에서는 음성 입력이 안 될 수 있어요. 이 주소를 크롬(Chrome)으로 열어 주세요. 또는 키보드의 🎤 받아쓰기를 사용하세요.'
+            : '이 브라우저는 음성인식을 지원하지 않아요. 크롬 또는 사파리(iOS 14.5+)를 쓰거나, 키보드의 🎤 받아쓰기를 사용하세요.', true);
+          try { $('chunkInput').focus(); } catch (e) {}
+        };
         return;
       }
-      var wanted = false;      // 사용자가 켜 둔 상태인지
-      var running = false;     // 인식기가 실제로 동작 중인지
-      var rec = null;
-      var base = '';           // 확정된 텍스트
-      var sessionFinals = {};  // 이번 세션에서 확정된 결과 (index -> text), 중복 방지
-      var restartTimes = [];
-      var restartTimer = null;
-      var fatal = false;
 
-      function render(interim) {
-        var finals = '';
-        Object.keys(sessionFinals).sort(function (x, y) { return x - y; }).forEach(function (k) {
-          var t = sessionFinals[k].trim();
-          if (t) finals += (finals ? ' ' : '') + t;
-        });
-        var text = base;
-        if (finals) text += (text && text.slice(-1) !== '\n' ? '\n' : '') + finals;
-        if (interim) text += (text ? (finals ? ' ' : '\n') : '') + interim;
-        $('chunkInput').value = text;
+      var wanted = false, running = false, starting = false, fatal = false;
+      var rec = null, base = '', restartTimer = null;
+      var failStreakSince = 0;   // 결과 없이 재시작만 반복된 시작 시각
+      var backoff = 250;
+      var wakeLock = null;
+
+      var sessionFinal = '';
+      function show(interim) {
+        $('chunkInput').value = voiceJoin(voiceJoin(base, sessionFinal), interim);   // 표시만
         setButtons();
       }
       function commitSession() {
-        render('');
-        base = $('chunkInput').value;
-        sessionFinals = {};
+        base = voiceCommit(base, sessionFinal);
+        sessionFinal = '';
+        $('chunkInput').value = base;
+        setButtons();
       }
       function setUi() {
         btn.textContent = wanted ? LABEL_ON : LABEL_IDLE;
         state.listening = wanted;
+        if (!wanted) setStatus('');
+      }
+      function keepAwake(on) {
+        try {
+          if (on && navigator.wakeLock && !wakeLock) {
+            navigator.wakeLock.request('screen').then(function (w) { wakeLock = w; log('wakeLock on'); }).catch(function (e) { log('wakeLock fail ' + e.name); });
+          } else if (!on && wakeLock) { wakeLock.release(); wakeLock = null; }
+        } catch (e) {}
       }
       function stopAll(silent) {
         wanted = false;
         clearTimeout(restartTimer);
-        if (rec && running) { try { rec.stop(); } catch (e) {} }
+        var old = rec; rec = null;                // 이후 onend 무시
+        if (old) { try { old.abort(); } catch (e) {} }
+        running = false; starting = false;
         commitSession();
+        keepAwake(false);
         setUi();
+        log('stopAll');
         if (!silent) showToast('음성 입력을 마쳤어요');
       }
-      function scheduleRestart() {
+      function scheduleRestart(delay) {
         if (!wanted) return;
-        var now = Date.now();
-        restartTimes = restartTimes.filter(function (t) { return now - t < 10000; });
-        if (restartTimes.length >= 8) {
+        if (!failStreakSince) failStreakSince = Date.now();
+        if (Date.now() - failStreakSince > 60000) {   // 1분 동안 아무것도 못 알아들으면 종료
           stopAll(true);
-          showToast('음성인식이 자꾸 끊겨서 멈췄어요. 다시 눌러 주세요.', true);
+          showToast('1분 동안 소리가 없어 음성 입력을 멈췄어요. 다시 눌러 주세요.');
           return;
         }
-        restartTimes.push(now);
         clearTimeout(restartTimer);
-        restartTimer = setTimeout(startRec, 300);
+        restartTimer = setTimeout(startRec, delay);
+        log('restart in ' + delay + 'ms');
       }
       function startRec() {
-        if (!wanted || running) return;
+        if (!wanted || running || starting) return;
+        starting = true;
         rec = new SR();
         rec.lang = 'ko-KR';
-        rec.continuous = true;
-        rec.interimResults = true;
+        rec.continuous = !isAndroid;   // 안드로이드는 continuous가 불안정 → 한 문장씩 + 자동 재시작
+        rec.interimResults = !isAndroid;   // 안드로이드: 부분 결과가 확정으로 반복되는 버그 회피
         rec.maxAlternatives = 1;
-        rec.onstart = function () { running = true; };
+        var thisRec = rec;
+        rec.onstart = function () { running = true; starting = false; setStatus('🔴 듣는 중…'); log('onstart'); };
         rec.onresult = function (event) {
-          var interim = '';
-          for (var i = event.resultIndex; i < event.results.length; i++) {
-            var r = event.results[i];
-            if (r.isFinal) sessionFinals[i] = r[0].transcript;   // 같은 index는 덮어써서 중복 방지
-            else interim += r[0].transcript;
-          }
-          render(interim.trim());
+          if (thisRec !== rec) return;
+          var built = voiceBuild(event.results);
+          sessionFinal = built.final;
+          failStreakSince = 0; backoff = 250;
+          log('result n=' + event.results.length + ' final="' + built.final + '" interim="' + built.interim + '"');
+          show(built.interim);
         };
         rec.onerror = function (event) {
           var err = event && event.error;
-          if (err === 'no-speech' || err === 'aborted') return; // onend에서 재시작
+          log('onerror ' + err);
           if (err === 'not-allowed' || err === 'service-not-allowed') {
             fatal = true;
-            showToast('마이크 권한이 거부됐어요. 주소창 옆 🔒 → 마이크 "허용" 후 새로고침하세요. (iOS: 설정 > Safari > 마이크, 설정 > 개인정보 > 음성 인식)', true);
+            showToast(isSamsung
+              ? '삼성 인터넷에서 마이크/음성인식이 막혔어요. 크롬(Chrome)으로 열어 주세요.'
+              : '마이크 권한이 거부됐어요. 주소창 옆 🔒 → 마이크 "허용" 후 새로고침하세요. (iOS: 설정 > Safari > 마이크)', true);
           } else if (err === 'audio-capture') {
             fatal = true;
             showToast('마이크를 찾을 수 없어요. 마이크 연결을 확인하세요.', true);
           } else if (err === 'network') {
-            showToast('네트워크가 불안정해요. 다시 연결 중…', true);
-          } else if (err) {
-            showToast('음성인식 오류(' + err + ')', true);
+            setStatus('⚠️ 네트워크 재연결 중…');
+            backoff = Math.min(backoff * 2, 3000);
+          } else if (err === 'no-speech') {
+            setStatus('… 계속 듣는 중 (말씀하세요)');
           }
+          // 재시작은 onend에서만
         };
         rec.onend = function () {
-          running = false;
-          commitSession();   // 이번 세션 확정분을 base로 옮김 (재시작 시 index 초기화 대비)
+          log('onend');
+          if (thisRec !== rec) return;
+          running = false; starting = false;
+          commitSession();
           if (fatal) { fatal = false; stopAll(true); return; }
-          if (wanted) scheduleRestart(); else setUi();
+          if (wanted) scheduleRestart(backoff); else setUi();
         };
-        try { rec.start(); } catch (e) { running = false; scheduleRestart(); }
+        try {
+          rec.start();
+          log('start() ok continuous=' + rec.continuous);
+        } catch (e) {
+          starting = false;
+          log('start() threw ' + e.name);
+          backoff = Math.min(backoff * 2, 3000);
+          scheduleRestart(backoff);
+        }
       }
 
       btn.onclick = function (e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
         if (wanted) { stopAll(false); return; }
-        wanted = true;
-        fatal = false;
-        restartTimes = [];
-        base = $('chunkInput').value;
-        sessionFinals = {};
+        wanted = true; fatal = false; failStreakSince = 0; backoff = 250;
+        base = $('chunkInput').value;   // 시작할 때 한 번만 읽음
+        sessionFinal = '';
         setUi();
-        showToast('듣는 중… 다시 누르면 종료돼요');
+        keepAwake(true);
+        if (isSamsung) showToast('삼성 인터넷에서 잘 안 되면 크롬(Chrome)으로 열어 주세요.');
+        else showToast('듣는 중… 다시 누르면 종료돼요');
         startRec();
       };
       window.stopVoice = function () { if (wanted) stopAll(true); };
