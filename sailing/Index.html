@@ -189,6 +189,18 @@
   </style>
 </head>
 <body>
+  <div id="lockScreen" style="position:fixed;inset:0;z-index:100;background:#e8f0f3;display:none;align-items:center;justify-content:center;padding:20px">
+    <form id="lockForm" style="background:#fff;border-radius:16px;padding:24px;max-width:340px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.08);font-family:inherit">
+      <h2 style="margin:0 0 8px">Sailing · 상담기록</h2>
+      <p style="margin:0 0 14px;color:#557">비밀번호를 입력하세요</p>
+      <input id="lockInput" type="password" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:1px solid #ccd;border-radius:10px">
+      <label style="display:flex;gap:6px;align-items:center;margin:12px 0;font-size:14px"><input type="checkbox" id="lockRemember"> 이 기기에서 기억하기</label>
+      <p id="lockMsg" style="color:#c0392b;min-height:1.2em;font-size:14px;margin:0 0 10px"></p>
+      <button type="submit" id="lockBtn" style="width:100%;padding:12px;font-size:16px;border:0;border-radius:10px;background:#0f6e7a;color:#fff;touch-action:manipulation">들어가기</button>
+    </form>
+  </div>
+  <button type="button" id="logoutBtn" title="잠금" style="position:fixed;top:10px;right:10px;z-index:50;padding:6px 10px;border:1px solid #ccd;border-radius:999px;background:#fff;font-size:13px;touch-action:manipulation">🔒 잠금</button>
+
   <div class="app">
     <div class="brand">
       <div class="mark"></div>
@@ -256,13 +268,13 @@
         </label>
       </div>
 
-      <label class="field">
+      <div class="field">
         <span class="memo-label">
-          <span>키워드 추가</span>
-          <button type="button" class="btn tiny" id="voiceBtn">🎤 음성</button>
+          <label for="chunkInput">키워드 추가</label>
+          <button type="button" class="btn tiny" id="voiceBtn" style="position:relative;z-index:2;touch-action:manipulation">🎤 음성</button>
         </span>
         <textarea id="chunkInput" placeholder="지금 생각난 키워드만 적고 [저장]&#10;&#10;예) 모래놀이·클레이&#10;토리·토토 만들기&#10;차회일시 8/6 13:30"></textarea>
-      </label>
+      </div>
       <div class="actions" style="margin-top:0;margin-bottom:4px">
         <button type="button" class="btn secondary" id="addChunkBtn" disabled>저장</button>
         <button type="button" class="btn ghost" id="clearDraftBtn" disabled>모은 내용 비우기</button>
@@ -302,6 +314,58 @@
     <div id="loadingText">처리 중…</div>
   </div>
 
+  <script>
+    // ▼ Apps Script 웹앱 주소 (새 배포 시 여기만 바꾸면 됩니다)
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwFytQWa_JOvzP9BYRLYmG2VkXdX62cmLnONbiVhCxWDSDAwgdSpZR6x1U1xS2JkThGrw/exec';
+    var PASS_KEY = 'sailing_passcode';
+    function getPass() { return sessionStorage.getItem(PASS_KEY) || localStorage.getItem(PASS_KEY) || ''; }
+    function clearPass() { sessionStorage.removeItem(PASS_KEY); localStorage.removeItem(PASS_KEY); }
+    function showLock(msg) {
+      var el = document.getElementById('lockScreen');
+      if (!el) return;
+      el.style.display = 'flex';
+      document.getElementById('lockMsg').textContent = msg || '';
+      document.getElementById('lockInput').value = '';
+      setTimeout(function () { document.getElementById('lockInput').focus(); }, 50);
+    }
+    function hideLock() { var el = document.getElementById('lockScreen'); if (el) el.style.display = 'none'; }
+    // google.script.run 대체: text/plain POST로 CORS preflight 회피
+    function callApi(action, args) {
+      return fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: action, args: args || [], passcode: getPass() }),
+        redirect: 'follow'
+      }).then(function (r) {
+        if (!r.ok) throw new Error('서버 응답 오류 (' + r.status + ')');
+        return r.text();
+      }).then(function (t) {
+        var j;
+        try { j = JSON.parse(t); } catch (e) { throw new Error('서버 응답을 읽을 수 없어요. 배포 접근 권한이 "모든 사용자"인지 확인하세요.'); }
+        if (!j.ok) {
+          if (j.code === 'BAD_PASSCODE' || j.code === 'LOCKED' || j.code === 'NO_PASSCODE') { clearPass(); showLock(j.error); }
+          var er = new Error(j.error || '서버 오류'); er.code = j.code; throw er;
+        }
+        return j.result;
+      });
+    }
+    window.google = window.google || {};
+    google.script = google.script || {};
+    Object.defineProperty(google.script, 'run', { get: function () {
+      function make(ok, fail) {
+        return new Proxy({}, { get: function (_, name) {
+          if (name === 'withSuccessHandler') return function (f) { return make(f, fail); };
+          if (name === 'withFailureHandler') return function (f) { return make(ok, f); };
+          return function () {
+            var args = Array.prototype.slice.call(arguments);
+            callApi(String(name), args).then(function (res) { if (ok) ok(res); })
+              .catch(function (err) { if (fail) fail(err); else console.error(err); });
+          };
+        } });
+      }
+      return make(null, null);
+    } });
+  </script>
   <script>
     var state = { schedules: [], selected: null, listening: false };
 
@@ -733,9 +797,22 @@
     }
 
     function setupVoice() {
+      var btn = $('voiceBtn');
       var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { $('voiceBtn').style.display = 'none'; return; }
-      var rec = new SR();
+      var dictationHint = '이 브라우저는 음성인식을 지원하지 않아요. 크롬(안드로이드/PC) 또는 사파리(iOS 14.5+)를 쓰거나, 키보드의 🎤 받아쓰기를 사용하세요.';
+      function fallback(msg) {
+        state.listening = false;
+        btn.textContent = '🎤 음성';
+        showToast(msg || dictationHint, true);
+        try { $('chunkInput').focus(); } catch (e) {}
+      }
+      if (!SR) {
+        btn.onclick = function () { fallback(); };
+        return;
+      }
+      var rec;
+      try { rec = new SR(); } catch (e) { btn.onclick = function () { fallback(); }; return; }
+      var blocked = false;
       rec.lang = 'ko-KR';
       rec.continuous = true;
       rec.interimResults = true;
@@ -743,11 +820,26 @@
       rec.onstart = function () {
         state.listening = true;
         base = $('chunkInput').value;
-        $('voiceBtn').textContent = '⏹ 중지';
+        btn.textContent = '⏹ 중지';
+        showToast('듣는 중… 말씀하세요');
       };
       rec.onend = function () {
         state.listening = false;
-        $('voiceBtn').textContent = '🎤 음성';
+        btn.textContent = '🎤 음성';
+      };
+      rec.onerror = function (event) {
+        var err = event && event.error;
+        if (err === 'not-allowed' || err === 'service-not-allowed') {
+          fallback('마이크 권한이 거부됐어요. 주소창 옆 🔒 → 마이크 "허용" 후 새로고침하세요. (iOS: 설정 > Safari > 마이크, 설정 > 개인정보 > 음성 인식)');
+        } else if (err === 'audio-capture') {
+          fallback('마이크를 찾을 수 없어요. 마이크 연결을 확인하세요.');
+        } else if (err === 'no-speech') {
+          showToast('소리가 들리지 않았어요. 다시 눌러 주세요.', true);
+        } else if (err === 'network') {
+          fallback('음성인식 서버에 연결하지 못했어요. 키보드의 🎤 받아쓰기를 사용하세요.');
+        } else if (err && err !== 'aborted') {
+          fallback('음성인식 오류(' + err + '). 키보드의 🎤 받아쓰기를 사용하세요.');
+        }
       };
       rec.onresult = function (event) {
         var interim = '';
@@ -766,9 +858,11 @@
         }
         setButtons();
       };
-      $('voiceBtn').onclick = function () {
-        if (state.listening) rec.stop();
-        else rec.start();
+      btn.onclick = function (e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        if (blocked) { fallback(); return; }
+        if (state.listening) { try { rec.stop(); } catch (err) {} return; }
+        try { rec.start(); } catch (err) { fallback(); }
       };
     }
 
@@ -825,7 +919,26 @@
         .getHealth();
     }
 
-    boot();
+    (function gate() {
+      var booted = false;
+      function start() { hideLock(); if (!booted) { booted = true; boot(); } }
+      document.getElementById('logoutBtn').onclick = function () { clearPass(); showLock('잠금되었습니다'); };
+      document.getElementById('lockForm').onsubmit = function (e) {
+        e.preventDefault();
+        var v = document.getElementById('lockInput').value.trim();
+        if (!v) return;
+        var btn = document.getElementById('lockBtn');
+        btn.disabled = true; btn.textContent = '확인 중…';
+        clearPass();
+        (document.getElementById('lockRemember').checked ? localStorage : sessionStorage).setItem(PASS_KEY, v);
+        callApi('checkPasscode', []).then(start).catch(function (err) {
+          if (!err.code) { clearPass(); showLock(err.message); }
+        }).then(function () { btn.disabled = false; btn.textContent = '들어가기'; });
+      };
+      if (getPass()) {
+        callApi('checkPasscode', []).then(start).catch(function (err) { if (!err.code) showLock(err.message); });
+      } else { showLock(''); }
+    })();
   </script>
 </body>
 </html>
