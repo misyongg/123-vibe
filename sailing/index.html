@@ -321,6 +321,7 @@
     function getPass() { return sessionStorage.getItem(PASS_KEY) || localStorage.getItem(PASS_KEY) || ''; }
     function clearPass() { sessionStorage.removeItem(PASS_KEY); localStorage.removeItem(PASS_KEY); }
     function showLock(msg) {
+      if (window.stopVoice) window.stopVoice();
       var el = document.getElementById('lockScreen');
       if (!el) return;
       el.style.display = 'flex';
@@ -799,71 +800,121 @@
     function setupVoice() {
       var btn = $('voiceBtn');
       var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      var LABEL_IDLE = '🎤 듣기 시작';
+      var LABEL_ON = '🎤 듣는 중…(눌러서 종료)';
       var dictationHint = '이 브라우저는 음성인식을 지원하지 않아요. 크롬(안드로이드/PC) 또는 사파리(iOS 14.5+)를 쓰거나, 키보드의 🎤 받아쓰기를 사용하세요.';
-      function fallback(msg) {
-        state.listening = false;
-        btn.textContent = '🎤 음성';
-        showToast(msg || dictationHint, true);
-        try { $('chunkInput').focus(); } catch (e) {}
-      }
+      btn.textContent = LABEL_IDLE;
       if (!SR) {
-        btn.onclick = function () { fallback(); };
+        btn.onclick = function () { showToast(dictationHint, true); try { $('chunkInput').focus(); } catch (e) {} };
         return;
       }
-      var rec;
-      try { rec = new SR(); } catch (e) { btn.onclick = function () { fallback(); }; return; }
-      var blocked = false;
-      rec.lang = 'ko-KR';
-      rec.continuous = true;
-      rec.interimResults = true;
-      var base = '';
-      rec.onstart = function () {
-        state.listening = true;
-        base = $('chunkInput').value;
-        btn.textContent = '⏹ 중지';
-        showToast('듣는 중… 말씀하세요');
-      };
-      rec.onend = function () {
-        state.listening = false;
-        btn.textContent = '🎤 음성';
-      };
-      rec.onerror = function (event) {
-        var err = event && event.error;
-        if (err === 'not-allowed' || err === 'service-not-allowed') {
-          fallback('마이크 권한이 거부됐어요. 주소창 옆 🔒 → 마이크 "허용" 후 새로고침하세요. (iOS: 설정 > Safari > 마이크, 설정 > 개인정보 > 음성 인식)');
-        } else if (err === 'audio-capture') {
-          fallback('마이크를 찾을 수 없어요. 마이크 연결을 확인하세요.');
-        } else if (err === 'no-speech') {
-          showToast('소리가 들리지 않았어요. 다시 눌러 주세요.', true);
-        } else if (err === 'network') {
-          fallback('음성인식 서버에 연결하지 못했어요. 키보드의 🎤 받아쓰기를 사용하세요.');
-        } else if (err && err !== 'aborted') {
-          fallback('음성인식 오류(' + err + '). 키보드의 🎤 받아쓰기를 사용하세요.');
-        }
-      };
-      rec.onresult = function (event) {
-        var interim = '';
-        var finalChunk = '';
-        for (var i = event.resultIndex; i < event.results.length; i++) {
-          var t = event.results[i][0].transcript;
-          if (event.results[i].isFinal) finalChunk += t;
-          else interim += t;
-        }
-        if (finalChunk) {
-          var sep = base && base.slice(-1) !== '\n' ? '\n' : '';
-          base = base + sep + finalChunk.trim();
-          $('chunkInput').value = base;
-        } else {
-          $('chunkInput').value = base + (base && interim ? '\n' : '') + interim;
-        }
+      var wanted = false;      // 사용자가 켜 둔 상태인지
+      var running = false;     // 인식기가 실제로 동작 중인지
+      var rec = null;
+      var base = '';           // 확정된 텍스트
+      var sessionFinals = {};  // 이번 세션에서 확정된 결과 (index -> text), 중복 방지
+      var restartTimes = [];
+      var restartTimer = null;
+      var fatal = false;
+
+      function render(interim) {
+        var finals = '';
+        Object.keys(sessionFinals).sort(function (x, y) { return x - y; }).forEach(function (k) {
+          var t = sessionFinals[k].trim();
+          if (t) finals += (finals ? ' ' : '') + t;
+        });
+        var text = base;
+        if (finals) text += (text && text.slice(-1) !== '\n' ? '\n' : '') + finals;
+        if (interim) text += (text ? (finals ? ' ' : '\n') : '') + interim;
+        $('chunkInput').value = text;
         setButtons();
-      };
+      }
+      function commitSession() {
+        render('');
+        base = $('chunkInput').value;
+        sessionFinals = {};
+      }
+      function setUi() {
+        btn.textContent = wanted ? LABEL_ON : LABEL_IDLE;
+        state.listening = wanted;
+      }
+      function stopAll(silent) {
+        wanted = false;
+        clearTimeout(restartTimer);
+        if (rec && running) { try { rec.stop(); } catch (e) {} }
+        commitSession();
+        setUi();
+        if (!silent) showToast('음성 입력을 마쳤어요');
+      }
+      function scheduleRestart() {
+        if (!wanted) return;
+        var now = Date.now();
+        restartTimes = restartTimes.filter(function (t) { return now - t < 10000; });
+        if (restartTimes.length >= 8) {
+          stopAll(true);
+          showToast('음성인식이 자꾸 끊겨서 멈췄어요. 다시 눌러 주세요.', true);
+          return;
+        }
+        restartTimes.push(now);
+        clearTimeout(restartTimer);
+        restartTimer = setTimeout(startRec, 300);
+      }
+      function startRec() {
+        if (!wanted || running) return;
+        rec = new SR();
+        rec.lang = 'ko-KR';
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.maxAlternatives = 1;
+        rec.onstart = function () { running = true; };
+        rec.onresult = function (event) {
+          var interim = '';
+          for (var i = event.resultIndex; i < event.results.length; i++) {
+            var r = event.results[i];
+            if (r.isFinal) sessionFinals[i] = r[0].transcript;   // 같은 index는 덮어써서 중복 방지
+            else interim += r[0].transcript;
+          }
+          render(interim.trim());
+        };
+        rec.onerror = function (event) {
+          var err = event && event.error;
+          if (err === 'no-speech' || err === 'aborted') return; // onend에서 재시작
+          if (err === 'not-allowed' || err === 'service-not-allowed') {
+            fatal = true;
+            showToast('마이크 권한이 거부됐어요. 주소창 옆 🔒 → 마이크 "허용" 후 새로고침하세요. (iOS: 설정 > Safari > 마이크, 설정 > 개인정보 > 음성 인식)', true);
+          } else if (err === 'audio-capture') {
+            fatal = true;
+            showToast('마이크를 찾을 수 없어요. 마이크 연결을 확인하세요.', true);
+          } else if (err === 'network') {
+            showToast('네트워크가 불안정해요. 다시 연결 중…', true);
+          } else if (err) {
+            showToast('음성인식 오류(' + err + ')', true);
+          }
+        };
+        rec.onend = function () {
+          running = false;
+          commitSession();   // 이번 세션 확정분을 base로 옮김 (재시작 시 index 초기화 대비)
+          if (fatal) { fatal = false; stopAll(true); return; }
+          if (wanted) scheduleRestart(); else setUi();
+        };
+        try { rec.start(); } catch (e) { running = false; scheduleRestart(); }
+      }
+
       btn.onclick = function (e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
-        if (blocked) { fallback(); return; }
-        if (state.listening) { try { rec.stop(); } catch (err) {} return; }
-        try { rec.start(); } catch (err) { fallback(); }
+        if (wanted) { stopAll(false); return; }
+        wanted = true;
+        fatal = false;
+        restartTimes = [];
+        base = $('chunkInput').value;
+        sessionFinals = {};
+        setUi();
+        showToast('듣는 중… 다시 누르면 종료돼요');
+        startRec();
       };
+      window.stopVoice = function () { if (wanted) stopAll(true); };
+      document.addEventListener('visibilitychange', function () { if (document.hidden) window.stopVoice(); });
+      window.addEventListener('pagehide', function () { window.stopVoice(); });
     }
 
     function boot() {
