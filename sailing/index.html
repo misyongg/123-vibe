@@ -798,8 +798,23 @@
     }
 
     // ── 음성 텍스트 처리 (순수 함수) ──
+    function voiceWords(s) { return String(s || '').trim().split(/\s+/).filter(Boolean); }
+    function voiceDedupeRuns(words) {
+      // 연속 반복되는 단어/구절(1~8단어) 제거: "안녕 안녕 안녕" → "안녕"
+      var changed = true;
+      while (changed) {
+        changed = false;
+        for (var n = 1; n <= 8 && !changed; n++) {
+          for (var i = 0; i + 2 * n <= words.length; i++) {
+            var same = true;
+            for (var k = 0; k < n; k++) if (words[i + k] !== words[i + n + k]) { same = false; break; }
+            if (same) { words.splice(i + n, n); changed = true; break; }
+          }
+        }
+      }
+      return words;
+    }
     function voiceBuild(results) {
-      // results: [{isFinal, transcript}] 형태(또는 SpeechRecognitionResultList). 매번 처음부터 다시 만든다.
       var parts = [], interim = '';
       for (var i = 0; i < results.length; i++) {
         var r = results[i];
@@ -807,15 +822,15 @@
         if (!t) continue;
         if (r.isFinal) {
           var prev = parts.length ? parts[parts.length - 1] : '';
-          if (prev && t === prev) continue;                         // 같은 결과 반복
-          if (prev && t.indexOf(prev) === 0) { parts[parts.length - 1] = t; continue; } // 늘어나는 결과
-          if (prev && prev.indexOf(t) === 0) continue;               // 더 짧은 이전 버전
+          if (prev && t === prev) continue;
+          if (prev && t.indexOf(prev) === 0) { parts[parts.length - 1] = t; continue; }
+          if (prev && prev.indexOf(t) === 0) continue;
           parts.push(t);
         } else {
-          interim = t;                                               // 마지막 미확정만
+          interim = t;
         }
       }
-      return { final: parts.join(' '), interim: interim };
+      return { final: voiceDedupeRuns(voiceWords(parts.join(' '))).join(' '), interim: interim };
     }
     function voiceJoin(a, b) {
       a = a || ''; b = (b || '').trim();
@@ -823,15 +838,131 @@
       if (!a) return b;
       return a + (/\s$/.test(a) ? '' : ' ') + b;
     }
-    function voiceCommit(base, chunk) {
-      chunk = (chunk || '').trim();
-      if (!chunk) return base;
-      var tail = (base || '').replace(/\s+$/, '');
-      if (tail.slice(-chunk.length) === chunk) return base;           // 이미 끝에 있음
-      return voiceJoin(base, chunk);
+    // spoken(이번 듣기에서 이미 받아 적은 말) 뒤에 chunk를 겹침 없이 붙인 "새로 추가할 부분"만 돌려줌
+    function voiceNewPart(spoken, chunk) {
+      var sw = voiceWords(spoken), cw = voiceDedupeRuns(voiceWords(chunk));
+      if (!cw.length) return '';
+      var sj = sw.join(' '), cj = cw.join(' ');
+      if (sj && (' ' + sj + ' ').indexOf(' ' + cj + ' ') !== -1) return '';   // 이미 받아 적은 말
+      // 안드로이드: 재시작 후 이전 문장 전체가 앞에 다시 붙어 오는 경우 → 가장 긴 겹침 제거
+      var max = Math.min(sw.length, cw.length);
+      for (var n = max; n > 0; n--) {
+        var ok = true;
+        for (var k = 0; k < n; k++) if (sw[sw.length - n + k] !== cw[k]) { ok = false; break; }
+        if (ok) return cw.slice(n).join(' ');
+      }
+      return cj;
     }
 
+    // ── 음성 컨트롤러 (페이지 전체에서 하나만) ──
+    function createVoiceController(d) {
+      // d: { SR, isAndroid, getText, setText, onState, log, status, toast, setTimeout, clearTimeout, now }
+      var wanted = false, running = false, fatal = false;
+      var rec = null, token = 0, restartTimer = null;
+      var base = '', spoken = '', sessionFinal = '';
+      var failStreakSince = 0, backoff = 250;
+      var log = d.log || function () {};
+      var now = d.now || function () { return Date.now(); };
+      var setT = d.setTimeout || setTimeout, clrT = d.clearTimeout || clearTimeout;
+
+      function display(interim) { d.setText(voiceJoin(voiceJoin(voiceJoin(base, spoken), sessionFinal), interim)); }
+      function commit() {
+        var add = voiceNewPart(spoken, sessionFinal);
+        if (add) spoken = voiceJoin(spoken, add);
+        sessionFinal = '';
+        display('');
+      }
+      function clearRestart() { if (restartTimer !== null) { clrT(restartTimer); restartTimer = null; } }
+      function scheduleRestart(delay) {
+        if (!wanted) return;
+        clearRestart();                                   // 예약은 항상 하나만
+        if (!failStreakSince) failStreakSince = now();
+        if (now() - failStreakSince > 60000) {
+          stop(true);
+          d.toast && d.toast('1분 동안 소리가 없어 음성 입력을 멈췄어요. 다시 눌러 주세요.');
+          return;
+        }
+        log('restart in ' + delay + 'ms');
+        restartTimer = setT(function () { restartTimer = null; startRec(); }, delay);
+      }
+      function startRec() {
+        if (!wanted || running) { log('skip start running=' + running); return; }
+        var my = ++token;
+        if (!rec) {                                       // 인식기 객체는 하나만 만들어 재사용
+          rec = new d.SR();
+          rec.lang = 'ko-KR';
+          rec.continuous = !d.isAndroid;
+          rec.interimResults = !d.isAndroid;
+          rec.maxAlternatives = 1;
+          rec.onstart = function () { if (rec.__token !== token) return; d.status && d.status('🔴 듣는 중…'); log('onstart #' + token); };
+          rec.onresult = function (event) {
+            if (rec.__token !== token || !running) return;
+            var built = voiceBuild(event.results);
+            sessionFinal = built.final;
+            failStreakSince = 0; backoff = 250;
+            log('result #' + token + ' n=' + event.results.length + ' final="' + built.final + '" interim="' + built.interim + '"');
+            display(built.interim);
+          };
+          rec.onerror = function (event) {
+            var err = event && event.error;
+            log('onerror #' + token + ' ' + err);
+            if (err === 'not-allowed' || err === 'service-not-allowed' || err === 'audio-capture') { fatal = err; }
+            else if (err === 'network') { backoff = Math.min(backoff * 2, 3000); d.status && d.status('⚠️ 네트워크 재연결 중…'); }
+            else if (err === 'no-speech') { d.status && d.status('… 계속 듣는 중 (말씀하세요)'); }
+          };
+          rec.onend = function () {
+            log('onend #' + token + ' running=' + running);
+            if (!running) return;                         // 이미 처리됨(중복 onend)
+            running = false;
+            commit();
+            if (fatal) { var f = fatal; fatal = false; stop(true); d.onFatal && d.onFatal(f); return; }
+            if (wanted) scheduleRestart(backoff);
+          };
+        }
+        rec.__token = my;
+        running = true;                                   // start 전에 표시 → 중복 start 방지
+        sessionFinal = '';
+        try {
+          rec.start();
+          log('start() ok #' + my);
+        } catch (e) {
+          running = false;
+          log('start() threw ' + (e && e.name));
+          backoff = Math.min(backoff * 2, 3000);
+          scheduleRestart(backoff);
+        }
+      }
+      function start() {
+        if (wanted) return;
+        wanted = true; fatal = false; failStreakSince = 0; backoff = 250;
+        base = d.getText(); spoken = ''; sessionFinal = '';   // 시작 시 한 번만 읽음
+        d.onState && d.onState(true);
+        startRec();
+      }
+      function stop(silent) {
+        var was = wanted;
+        wanted = false;
+        clearRestart();
+        if (running) {
+          running = false;
+          commit();
+          token++;                                         // 이후 들어오는 이벤트 무시
+          try { rec.abort(); } catch (e) {}
+        }
+        d.onState && d.onState(false);
+        if (was && !silent && d.toast) d.toast('음성 입력을 마쳤어요');
+      }
+      return {
+        start: start, stop: stop,
+        toggle: function () { if (wanted) stop(false); else start(); },
+        isOn: function () { return wanted; },
+        _debug: function () { return { wanted: wanted, running: running, token: token, pending: restartTimer !== null, hasRec: !!rec }; }
+      };
+    }
+
+    var VOICE = null;   // 단일 인스턴스
     function setupVoice() {
+      if (VOICE) return;                                 // 여러 번 불려도 한 번만
       var btn = $('voiceBtn');
       var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       var ua = navigator.userAgent || '';
@@ -854,14 +985,13 @@
       }
       log('UA ' + ua);
       log('SR=' + (!!SR) + ' android=' + isAndroid + ' samsung=' + isSamsung);
-
       var status = document.createElement('div');
       status.style.cssText = 'font-size:12px;color:#0f6e7a;min-height:1em;margin:4px 0';
       $('chunkInput').parentNode.insertBefore(status, $('chunkInput').nextSibling);
       function setStatus(t) { status.textContent = t || ''; }
-
       btn.textContent = LABEL_IDLE;
       if (!SR) {
+        VOICE = { start: function () {}, stop: function () {}, toggle: function () {}, isOn: function () { return false; } };
         btn.onclick = function () {
           showToast(isSamsung
             ? '삼성 인터넷에서는 음성 입력이 안 될 수 있어요. 이 주소를 크롬(Chrome)으로 열어 주세요. 또는 키보드의 🎤 받아쓰기를 사용하세요.'
@@ -870,132 +1000,39 @@
         };
         return;
       }
-
-      var wanted = false, running = false, starting = false, fatal = false;
-      var rec = null, base = '', restartTimer = null;
-      var failStreakSince = 0;   // 결과 없이 재시작만 반복된 시작 시각
-      var backoff = 250;
       var wakeLock = null;
-
-      var sessionFinal = '';
-      function show(interim) {
-        $('chunkInput').value = voiceJoin(voiceJoin(base, sessionFinal), interim);   // 표시만
-        setButtons();
-      }
-      function commitSession() {
-        base = voiceCommit(base, sessionFinal);
-        sessionFinal = '';
-        $('chunkInput').value = base;
-        setButtons();
-      }
-      function setUi() {
-        btn.textContent = wanted ? LABEL_ON : LABEL_IDLE;
-        state.listening = wanted;
-        if (!wanted) setStatus('');
-      }
       function keepAwake(on) {
         try {
-          if (on && navigator.wakeLock && !wakeLock) {
-            navigator.wakeLock.request('screen').then(function (w) { wakeLock = w; log('wakeLock on'); }).catch(function (e) { log('wakeLock fail ' + e.name); });
-          } else if (!on && wakeLock) { wakeLock.release(); wakeLock = null; }
+          if (on && navigator.wakeLock && !wakeLock) navigator.wakeLock.request('screen').then(function (w) { wakeLock = w; }).catch(function () {});
+          else if (!on && wakeLock) { wakeLock.release(); wakeLock = null; }
         } catch (e) {}
       }
-      function stopAll(silent) {
-        wanted = false;
-        clearTimeout(restartTimer);
-        var old = rec; rec = null;                // 이후 onend 무시
-        if (old) { try { old.abort(); } catch (e) {} }
-        running = false; starting = false;
-        commitSession();
-        keepAwake(false);
-        setUi();
-        log('stopAll');
-        if (!silent) showToast('음성 입력을 마쳤어요');
-      }
-      function scheduleRestart(delay) {
-        if (!wanted) return;
-        if (!failStreakSince) failStreakSince = Date.now();
-        if (Date.now() - failStreakSince > 60000) {   // 1분 동안 아무것도 못 알아들으면 종료
-          stopAll(true);
-          showToast('1분 동안 소리가 없어 음성 입력을 멈췄어요. 다시 눌러 주세요.');
-          return;
+      VOICE = createVoiceController({
+        SR: SR, isAndroid: isAndroid, log: log, status: setStatus,
+        getText: function () { return $('chunkInput').value; },
+        setText: function (t) { $('chunkInput').value = t; setButtons(); },
+        toast: function (m) { showToast(m); },
+        onState: function (on) {
+          btn.textContent = on ? LABEL_ON : LABEL_IDLE;
+          state.listening = on;
+          if (!on) setStatus('');
+          keepAwake(on);
+        },
+        onFatal: function (err) {
+          showToast(err === 'audio-capture' ? '마이크를 찾을 수 없어요. 마이크 연결을 확인하세요.'
+            : isSamsung ? '삼성 인터넷에서 마이크/음성인식이 막혔어요. 크롬(Chrome)으로 열어 주세요.'
+            : '마이크 권한이 거부됐어요. 주소창 옆 🔒 → 마이크 "허용" 후 새로고침하세요. (iOS: 설정 > Safari > 마이크)', true);
         }
-        clearTimeout(restartTimer);
-        restartTimer = setTimeout(startRec, delay);
-        log('restart in ' + delay + 'ms');
-      }
-      function startRec() {
-        if (!wanted || running || starting) return;
-        starting = true;
-        rec = new SR();
-        rec.lang = 'ko-KR';
-        rec.continuous = !isAndroid;   // 안드로이드는 continuous가 불안정 → 한 문장씩 + 자동 재시작
-        rec.interimResults = !isAndroid;   // 안드로이드: 부분 결과가 확정으로 반복되는 버그 회피
-        rec.maxAlternatives = 1;
-        var thisRec = rec;
-        rec.onstart = function () { running = true; starting = false; setStatus('🔴 듣는 중…'); log('onstart'); };
-        rec.onresult = function (event) {
-          if (thisRec !== rec) return;
-          var built = voiceBuild(event.results);
-          sessionFinal = built.final;
-          failStreakSince = 0; backoff = 250;
-          log('result n=' + event.results.length + ' final="' + built.final + '" interim="' + built.interim + '"');
-          show(built.interim);
-        };
-        rec.onerror = function (event) {
-          var err = event && event.error;
-          log('onerror ' + err);
-          if (err === 'not-allowed' || err === 'service-not-allowed') {
-            fatal = true;
-            showToast(isSamsung
-              ? '삼성 인터넷에서 마이크/음성인식이 막혔어요. 크롬(Chrome)으로 열어 주세요.'
-              : '마이크 권한이 거부됐어요. 주소창 옆 🔒 → 마이크 "허용" 후 새로고침하세요. (iOS: 설정 > Safari > 마이크)', true);
-          } else if (err === 'audio-capture') {
-            fatal = true;
-            showToast('마이크를 찾을 수 없어요. 마이크 연결을 확인하세요.', true);
-          } else if (err === 'network') {
-            setStatus('⚠️ 네트워크 재연결 중…');
-            backoff = Math.min(backoff * 2, 3000);
-          } else if (err === 'no-speech') {
-            setStatus('… 계속 듣는 중 (말씀하세요)');
-          }
-          // 재시작은 onend에서만
-        };
-        rec.onend = function () {
-          log('onend');
-          if (thisRec !== rec) return;
-          running = false; starting = false;
-          commitSession();
-          if (fatal) { fatal = false; stopAll(true); return; }
-          if (wanted) scheduleRestart(backoff); else setUi();
-        };
-        try {
-          rec.start();
-          log('start() ok continuous=' + rec.continuous);
-        } catch (e) {
-          starting = false;
-          log('start() threw ' + e.name);
-          backoff = Math.min(backoff * 2, 3000);
-          scheduleRestart(backoff);
-        }
-      }
-
+      });
       btn.onclick = function (e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
-        if (wanted) { stopAll(false); return; }
-        wanted = true; fatal = false; failStreakSince = 0; backoff = 250;
-        base = $('chunkInput').value;   // 시작할 때 한 번만 읽음
-        sessionFinal = '';
-        setUi();
-        keepAwake(true);
-        if (isSamsung) showToast('삼성 인터넷에서 잘 안 되면 크롬(Chrome)으로 열어 주세요.');
-        else showToast('듣는 중… 다시 누르면 종료돼요');
-        startRec();
+        if (!VOICE.isOn()) showToast(isSamsung ? '삼성 인터넷에서 잘 안 되면 크롬(Chrome)으로 열어 주세요.' : '듣는 중… 다시 누르면 종료돼요');
+        VOICE.toggle();
       };
-      window.stopVoice = function () { if (wanted) stopAll(true); };
       document.addEventListener('visibilitychange', function () { if (document.hidden) window.stopVoice(); });
       window.addEventListener('pagehide', function () { window.stopVoice(); });
     }
+    window.stopVoice = function () { if (VOICE && VOICE.isOn()) VOICE.stop(true); };
 
     function boot() {
       $('dateInput').value = todaySeoul();
