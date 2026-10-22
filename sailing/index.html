@@ -866,9 +866,17 @@
       var setT = d.setTimeout || setTimeout, clrT = d.clearTimeout || clearTimeout;
 
       function display(interim) { d.setText(voiceJoin(voiceJoin(voiceJoin(base, spoken), sessionFinal), interim)); }
+      var lastRound = '';
+      function squash(x) { return String(x || '').replace(/[\s.,!?~]/g, ''); }
       function commit() {
-        var add = voiceNewPart(spoken, sessionFinal);
-        if (add) spoken = voiceJoin(spoken, add);
+        var sf = sessionFinal, sq = squash(sf), lq = squash(lastRound);
+        if (sq && lq && sq.indexOf(lq) === 0 && spoken.slice(-lastRound.length) === lastRound) {
+          spoken = voiceJoin(spoken.slice(0, spoken.length - lastRound.length).replace(/\s+$/, ''), sf);   // 앞 문장이 더 길어져서 다시 온 경우 → 교체
+          lastRound = sf; sessionFinal = ''; display(''); return;
+        }
+        if (sq && lq && lq.indexOf(sq) === 0) { sessionFinal = ''; display(''); return; }   // 이미 적은 말의 일부
+        var add = voiceNewPart(spoken, sf);
+        if (add) { spoken = voiceJoin(spoken, add); lastRound = add; }
         sessionFinal = '';
         display('');
       }
@@ -898,6 +906,14 @@
           rec.onresult = function (event) {
             if (rec.__token !== token || !running) return;
             var built = voiceBuild(event.results);
+            if (d.isAndroid) {                            // 갤럭시: 점점 길어지는 문장을 여러 번 보냄 → 가장 마지막(가장 완성된) 것만 사용
+              var lastT = '';
+              for (var li = event.results.length - 1; li >= 0; li--) {
+                var lr = event.results[li]; var lt = String((lr[0] && lr[0].transcript) || '').trim();
+                if (lt) { lastT = lt; break; }
+              }
+              built = { final: lastT, interim: '' };
+            }
             sessionFinal = built.final;
             failStreakSince = 0; backoff = 250;
             log('result #' + token + ' n=' + event.results.length + ' final="' + built.final + '" interim="' + built.interim + '"');
@@ -935,7 +951,7 @@
       function start() {
         if (wanted) return;
         wanted = true; fatal = false; failStreakSince = 0; backoff = 250;
-        base = d.getText(); spoken = ''; sessionFinal = '';   // 시작 시 한 번만 읽음
+        base = d.getText(); spoken = ''; sessionFinal = ''; lastRound = '';   // 시작 시 한 번만 읽음
         d.onState && d.onState(true);
         startRec();
       }
